@@ -8,7 +8,7 @@ export default function StudentProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [isIdModalOpen, setIsIdModalOpen] = useState(false);
   const idCardRef = useRef<HTMLDivElement>(null);
-  const [photo, setPhoto] = useState("");
+  const [photo, setPhoto] = useState<string | null>(null);
   const [templateBg, setTemplateBg] = useState<string | null>(null);
   const [layout, setLayout] = useState({
     name: { top: 225, left: 0 },
@@ -118,8 +118,12 @@ export default function StudentProfile() {
           {/* Profile Photo Section */}
           <div className="relative flex items-end gap-6 -mt-12 mb-8">
             <div className="relative shrink-0">
-              <div className="h-28 w-28 rounded-full border-4 border-white bg-white overflow-hidden shadow-md">
-                <img src={photo} alt="Profile" className="h-full w-full object-cover" />
+              <div className="h-28 w-28 rounded-full border-4 border-white bg-white overflow-hidden shadow-md flex items-center justify-center">
+                {photo ? (
+                  <img src={photo} alt="Profile" className="h-full w-full object-cover" />
+                ) : (
+                  <User className="h-16 w-16 text-gray-300" />
+                )}
               </div>
               <label className="absolute bottom-0 right-0 h-8 w-8 bg-indigo-600 rounded-full border-2 border-white flex items-center justify-center cursor-pointer hover:bg-indigo-700 transition-colors shadow-sm" title="Change Profile Picture">
                 <Camera className="h-4 w-4 text-white" />
@@ -269,8 +273,12 @@ export default function StudentProfile() {
                 )}
 
                 {/* Photo - Aligned to the circular frame */}
-                <div className="absolute top-[10.6%] left-1/2 -translate-x-1/2 w-[146px] h-[146px] rounded-full overflow-hidden z-10">
-                  <img src={photo} alt="Student" className="w-full h-full object-cover" crossOrigin="anonymous" />
+                <div className="absolute top-[10.6%] left-1/2 -translate-x-1/2 w-[146px] h-[146px] rounded-full overflow-hidden z-10 flex items-center justify-center bg-gray-50">
+                  {photo ? (
+                    <img src={photo} alt="Student" className="w-full h-full object-cover" crossOrigin="anonymous" />
+                  ) : (
+                    <User className="h-20 w-20 text-gray-300" />
+                  )}
                 </div>
 
                 {/* Name - Absolute positioned based on layout */}

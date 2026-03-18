@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, FormEvent } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { QrCode, Download, UserCheck, CheckCircle, Upload, Edit2, Save, X, Move } from "lucide-react";
+import { QrCode, Download, UserCheck, CheckCircle, Upload, Edit2, Save, X, Move, Search, Loader2, MessageSquare } from "lucide-react";
 import html2canvas from "html2canvas";
+import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
 
 // Mock Data for Recent Admissions with all required fields
@@ -10,10 +11,12 @@ const initialStudents: any[] = [];
 export default function Operations() {
   const [scanned, setScanned] = useState(false);
   const [templateBg, setTemplateBg] = useState<string | null>(null);
-  const [students, setStudents] = useState(initialStudents);
-  const [selectedStudent, setSelectedStudent] = useState<any>(initialStudents[0] || null);
+  const [students, setStudents] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState<any>(initialStudents[0] || null);
+  const [editData, setEditData] = useState<any>(null);
   
   // Layout State
   const [isLayoutMode, setIsLayoutMode] = useState(false);
@@ -35,6 +38,7 @@ export default function Operations() {
 
   // Load saved template and layout on mount
   useEffect(() => {
+    fetchStudents();
     try {
       const savedTemplate = localStorage.getItem("idCardTemplate");
       if (savedTemplate) setTemplateBg(savedTemplate);
@@ -45,6 +49,46 @@ export default function Operations() {
       console.error("Could not load data from local storage");
     }
   }, []);
+
+  const fetchStudents = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .select('*');
+
+      if (error) throw error;
+
+      const mappedStudents = (data || []).map(s => ({
+        id: s.student_id,
+        name: s.name,
+        course: s.course,
+        photo: s.photo_url || "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&h=400&fit=crop",
+        dob: s.dob || "N/A",
+        phone: s.mobile || "N/A",
+        bloodGroup: s.blood_group || "N/A",
+        fatherName: s.father_name || "N/A",
+        batchNo: s.batch || "N/A",
+        address: s.address || "N/A"
+      }));
+
+      setStudents(mappedStudents);
+      if (mappedStudents.length > 0 && !selectedStudent) {
+        setSelectedStudent(mappedStudents[0]);
+        setEditData(mappedStudents[0]);
+      }
+    } catch (error: any) {
+      console.error("Error fetching students:", error);
+      toast.error("Failed to load students");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filteredStudents = students.filter(s => 
+    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    s.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // Save layout when it changes
   useEffect(() => {
@@ -141,6 +185,15 @@ export default function Operations() {
     }
   };
 
+  const sendWhatsApp = (student: any) => {
+    const coachingName = "English Therapy Coaching Center";
+    const message = `*স্বাগতম ${student.name}!* 🎉\n\nআমাদের প্রতিষ্ঠানে আপনাকে স্বাগতম। আপনার লগইন তথ্য নিচে দেওয়া হলো:\n\n🏢 *প্রতিষ্ঠান:* ${coachingName}\n👤 *ইউজার আইডি:* ${student.id}\n🔑 *পাসওয়ার্ড:* ${student.id}\n\nধন্যবাদ আমাদের সাথে থাকার জন্য! ❤️`;
+    
+    const cleanedMobile = String(student.phone || "").replace(/[^\d+]/g, "");
+    const waLink = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(message)}`;
+    window.open(waLink, '_blank');
+  };
+
   const handleDownload = async () => {
     if (idCardRef.current && selectedStudent) {
       const canvas = await html2canvas(idCardRef.current, { scale: 2, useCORS: true });
@@ -151,13 +204,35 @@ export default function Operations() {
     }
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editData) return;
-    const updatedStudents = students.map(s => s.id === editData.id ? editData : s);
-    setStudents(updatedStudents);
-    setSelectedStudent(editData);
-    setIsEditing(false);
-    toast.success("Student details updated successfully!");
+    
+    try {
+      const { error } = await supabase
+        .from('students')
+        .update({
+          name: editData.name,
+          course: editData.course,
+          photo_url: editData.photo,
+          dob: editData.dob,
+          mobile: editData.phone,
+          blood_group: editData.bloodGroup,
+          father_name: editData.fatherName,
+          batch: editData.batchNo,
+          address: editData.address
+        })
+        .eq('student_id', editData.id);
+
+      if (error) throw error;
+
+      const updatedStudents = students.map(s => s.id === editData.id ? editData : s);
+      setStudents(updatedStudents);
+      setSelectedStudent(editData);
+      setIsEditing(false);
+      toast.success("Student details updated successfully!");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update student details");
+    }
   };
 
   return (
@@ -206,9 +281,27 @@ export default function Operations() {
 
         {/* Recent Admissions List */}
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Admissions</h3>
-          <div className="space-y-3">
-            {students.map((student) => (
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Student List</h3>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input 
+                type="text" 
+                placeholder="Search students..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-4 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none w-48 sm:w-64"
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 text-indigo-600 animate-spin mb-2" />
+                <p className="text-sm text-gray-500">Loading students...</p>
+              </div>
+            ) : filteredStudents.map((student) => (
               <div 
                 key={student.id} 
                 onClick={() => {
@@ -223,20 +316,38 @@ export default function Operations() {
                 }`}
               >
                 <div className="flex items-center gap-4">
-                  <img src={student.photo} alt={student.name} className="w-10 h-10 rounded-full object-cover border border-gray-200" />
+                  <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center border border-gray-200 overflow-hidden">
+                    {student.photo ? (
+                      <img src={student.photo} alt={student.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <UserCheck className="h-6 w-6 text-indigo-500" />
+                    )}
+                  </div>
                   <div>
                     <h4 className="font-medium text-gray-900">{student.name}</h4>
                     <p className="text-xs text-gray-500">ID: {student.id} • {student.course}</p>
                   </div>
                 </div>
-                <div className="text-indigo-600">
-                  <QrCode className="h-5 w-5" />
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      sendWhatsApp(student);
+                    }}
+                    className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
+                    title="Send WhatsApp"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                  </button>
+                  <div className="text-indigo-600">
+                    <QrCode className="h-5 w-5" />
+                  </div>
                 </div>
               </div>
             ))}
-            {students.length === 0 && (
+            {!isLoading && filteredStudents.length === 0 && (
               <div className="py-8 text-center text-gray-500 text-sm">
-                No recent admissions found.
+                No students found.
               </div>
             )}
           </div>
@@ -370,24 +481,30 @@ export default function Operations() {
                 )}
 
                 {/* Photo - Draggable & Resizable */}
-                <div 
-                  className={`absolute z-10 rounded-full overflow-hidden border-[6px] border-white shadow-md ${isLayoutMode ? 'cursor-move outline-dashed outline-2 outline-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/20' : ''}`}
-                  style={{ 
-                    top: `${layout.photo.top}px`, 
-                    left: `${layout.photo.left}px`,
-                    width: `${layout.photo.size}px`,
-                    height: `${layout.photo.size}px`,
-                  }}
-                  onMouseDown={(e) => handleMouseDown(e, 'photo')}
-                >
-                  <img src={selectedStudent.photo} alt="Student" className="w-full h-full object-cover" crossOrigin="anonymous" />
-                  {isLayoutMode && (
-                    <div 
-                      className="absolute bottom-0 right-0 w-4 h-4 bg-indigo-600 cursor-nwse-resize rounded-tl-lg"
-                      onMouseDown={(e) => handleMouseDown(e, 'photo', true)}
-                    />
-                  )}
-                </div>
+                  <div 
+                    className={`absolute z-10 rounded-full overflow-hidden border-[6px] border-white shadow-md ${isLayoutMode ? 'cursor-move outline-dashed outline-2 outline-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/20' : ''}`}
+                    style={{ 
+                      top: `${layout.photo.top}px`, 
+                      left: `${layout.photo.left}px`,
+                      width: `${layout.photo.size}px`,
+                      height: `${layout.photo.size}px`,
+                    }}
+                    onMouseDown={(e) => handleMouseDown(e, 'photo')}
+                  >
+                    {selectedStudent.photo ? (
+                      <img src={selectedStudent.photo} alt="Student" className="w-full h-full object-cover" crossOrigin="anonymous" />
+                    ) : (
+                      <div className="w-full h-full bg-indigo-100 flex items-center justify-center">
+                        <UserCheck className="h-1/2 w-1/2 text-indigo-300" />
+                      </div>
+                    )}
+                    {isLayoutMode && (
+                      <div 
+                        className="absolute bottom-0 right-0 w-4 h-4 bg-indigo-600 cursor-nwse-resize rounded-tl-lg"
+                        onMouseDown={(e) => handleMouseDown(e, 'photo', true)}
+                      />
+                    )}
+                  </div>
 
                 {/* Name - Draggable */}
                 <div 

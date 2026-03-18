@@ -1,5 +1,5 @@
-import { useState, useEffect, FormEvent } from "react";
-import { Search, Phone, BookOpen, UserCircle, MoreVertical, Edit, Trash2, X, Loader2 } from "lucide-react";
+import { useState, useEffect, FormEvent, ChangeEvent } from "react";
+import { Search, Phone, BookOpen, UserCircle, MoreVertical, Edit, Trash2, X, Loader2, MessageSquare, Camera, Save, User, Calendar, Mail, Briefcase, GraduationCap } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
 
@@ -90,25 +90,78 @@ export default function StudentsList() {
   const handleSaveEdit = async (e: FormEvent) => {
     e.preventDefault();
     if (editingStudent) {
+      setIsLoading(true);
       try {
         const { error } = await supabase
           .from('students')
           .update({
             name: editingStudent.name,
+            nickname: editingStudent.nickname,
+            gender: editingStudent.gender,
+            dob: editingStudent.dob,
+            blood_group: editingStudent.blood_group,
+            religion: editingStudent.religion,
             mobile: editingStudent.mobile,
+            father_name: editingStudent.father_name,
+            mother_name: editingStudent.mother_name,
+            guardian_mobile: editingStudent.guardian_mobile,
+            occupation: editingStudent.occupation,
+            email: editingStudent.email,
             course: editingStudent.course,
             batch: editingStudent.batch,
+            session: editingStudent.session,
+            board: editingStudent.board,
+            roll: editingStudent.roll,
+            gpa: editingStudent.gpa,
+            fee: parseFloat(editingStudent.fee) || 0,
+            discount: parseFloat(editingStudent.discount) || 0,
+            paid_amount: parseFloat(editingStudent.paid_amount) || 0,
+            due_amount: (parseFloat(editingStudent.fee) || 0) - (parseFloat(editingStudent.discount) || 0) - (parseFloat(editingStudent.paid_amount) || 0),
+            photo_url: editingStudent.photo_url
           })
           .eq('student_id', editingStudent.student_id);
 
         if (error) throw error;
 
-        setStudents(students.map(s => s.student_id === editingStudent.student_id ? editingStudent : s));
+        // Update local state with the calculated due amount
+        const updatedStudent = {
+          ...editingStudent,
+          due_amount: (parseFloat(editingStudent.fee) || 0) - (parseFloat(editingStudent.discount) || 0) - (parseFloat(editingStudent.paid_amount) || 0)
+        };
+
+        setStudents(students.map(s => s.student_id === editingStudent.student_id ? updatedStudent : s));
         setEditingStudent(null);
         toast.success("Student details updated successfully!");
       } catch (error: any) {
+        console.error("Update Error:", error);
         toast.error("Failed to update student");
+      } finally {
+        setIsLoading(false);
       }
+    }
+  };
+
+  const sendWhatsAppCredentials = (student: any) => {
+    const coachingName = "English Therapy Coaching Center";
+    const message = `*স্বাগতম ${student.name}!* 🎉\n\nআমাদের প্রতিষ্ঠানে আপনাকে স্বাগতম। আপনার লগইন তথ্য নিচে দেওয়া হলো:\n\n🏢 *প্রতিষ্ঠান:* ${coachingName}\n👤 *ইউজার আইডি:* ${student.student_id}\n🔑 *পাসওয়ার্ড:* ${student.student_id}\n\nধন্যবাদ আমাদের সাথে থাকার জন্য! ❤️`;
+    
+    const cleanedMobile = String(student.mobile || "").replace(/[^\d+]/g, "");
+    const waLink = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(message)}`;
+    window.open(waLink, '_blank');
+  };
+
+  const handlePhotoUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 1024 * 1024) { // 1MB limit for base64
+        toast.error("Photo is too large. Please select a photo under 1MB.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditingStudent({ ...editingStudent, photo_url: reader.result as string });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -173,8 +226,12 @@ export default function StudentsList() {
               <div className="p-5 flex-1">
                 <div className="flex justify-between items-start mb-4">
                   <div className="relative">
-                    <div className="h-16 w-16 rounded-full bg-indigo-100 flex items-center justify-center border-2 border-gray-100">
-                      <UserCircle className="h-10 w-10 text-indigo-500" />
+                    <div className="h-16 w-16 rounded-full bg-indigo-100 flex items-center justify-center border-2 border-gray-100 overflow-hidden">
+                      {student.photo_url ? (
+                        <img src={student.photo_url} alt={student.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <UserCircle className="h-10 w-10 text-indigo-500" />
+                      )}
                     </div>
                     <span className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500`}></span>
                   </div>
@@ -195,6 +252,12 @@ export default function StudentsList() {
                           onClick={() => setActiveDropdown(null)}
                         ></div>
                         <div className="absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-lg border border-gray-200 z-20 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                          <button 
+                            onClick={() => sendWhatsAppCredentials(student)}
+                            className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 flex items-center gap-2"
+                          >
+                            <MessageSquare className="h-4 w-4" /> Send WhatsApp
+                          </button>
                           <button 
                             onClick={() => handleEdit(student)}
                             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
@@ -268,10 +331,10 @@ export default function StudentsList() {
 
       {/* Edit Profile Modal */}
       {editingStudent && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100">
-              <h3 className="text-xl font-bold text-gray-900">Edit Student</h3>
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-4xl w-full my-8 overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
+              <h3 className="text-xl font-bold text-gray-900">Edit Student Profile</h3>
               <button 
                 onClick={() => setEditingStudent(null)}
                 className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-1.5 transition-colors"
@@ -279,62 +342,263 @@ export default function StudentsList() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleSaveEdit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                <input 
-                  type="text" 
-                  value={editingStudent.name} 
-                  onChange={e => setEditingStudent({...editingStudent, name: e.target.value})} 
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
-                  required 
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                <input 
-                  type="text" 
-                  value={editingStudent.mobile} 
-                  onChange={e => setEditingStudent({...editingStudent, mobile: e.target.value})} 
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
-                  required 
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Course</label>
-                  <select 
-                    value={editingStudent.course} 
-                    onChange={e => setEditingStudent({...editingStudent, course: e.target.value})} 
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
-                  >
-                    {COURSES.filter(c => c !== "All Courses").map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+            <form onSubmit={handleSaveEdit} className="p-8 space-y-8 overflow-y-auto max-h-[75vh]">
+              {/* Photo Upload Section */}
+              <div className="flex flex-col items-center justify-center pb-6 border-b border-gray-100">
+                <div className="relative group">
+                  <div className="h-24 w-24 rounded-full bg-indigo-50 border-4 border-white shadow-md overflow-hidden flex items-center justify-center">
+                    {editingStudent.photo_url ? (
+                      <img src={editingStudent.photo_url} alt="Preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <UserCircle className="h-16 w-16 text-indigo-200" />
+                    )}
+                  </div>
+                  <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                    <Camera className="h-6 w-6" />
+                    <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                  </label>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Batch</label>
-                  <input 
-                    type="text" 
-                    value={editingStudent.batch} 
-                    onChange={e => setEditingStudent({...editingStudent, batch: e.target.value})} 
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
-                    required 
-                  />
+                <p className="text-xs text-gray-500 mt-2 font-medium">Click to change photo</p>
+              </div>
+
+              {/* Personal Information */}
+              <div>
+                <h4 className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <User className="h-4 w-4" /> Personal Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Full Name</label>
+                    <input 
+                      type="text" 
+                      value={editingStudent.name || ""} 
+                      onChange={e => setEditingStudent({...editingStudent, name: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      required 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nickname</label>
+                    <input 
+                      type="text" 
+                      value={editingStudent.nickname || ""} 
+                      onChange={e => setEditingStudent({...editingStudent, nickname: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Gender</label>
+                    <select 
+                      value={editingStudent.gender || "Male"} 
+                      onChange={e => setEditingStudent({...editingStudent, gender: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                    >
+                      <option>Male</option>
+                      <option>Female</option>
+                      <option>Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Date of Birth</label>
+                    <input 
+                      type="date" 
+                      value={editingStudent.dob || ""} 
+                      onChange={e => setEditingStudent({...editingStudent, dob: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Blood Group</label>
+                    <select 
+                      value={editingStudent.blood_group || "A+"} 
+                      onChange={e => setEditingStudent({...editingStudent, blood_group: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                    >
+                      <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                      <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Religion</label>
+                    <input 
+                      type="text" 
+                      value={editingStudent.religion || ""} 
+                      onChange={e => setEditingStudent({...editingStudent, religion: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Mobile / WhatsApp</label>
+                    <input 
+                      type="text" 
+                      value={editingStudent.mobile || ""} 
+                      onChange={e => setEditingStudent({...editingStudent, mobile: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
+                    <input 
+                      type="email" 
+                      value={editingStudent.email || ""} 
+                      onChange={e => setEditingStudent({...editingStudent, email: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="pt-4 flex gap-3">
+
+              {/* Guardian Information */}
+              <div>
+                <h4 className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <Briefcase className="h-4 w-4" /> Guardian Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Father's Name</label>
+                    <input 
+                      type="text" 
+                      value={editingStudent.father_name || ""} 
+                      onChange={e => setEditingStudent({...editingStudent, father_name: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Mother's Name</label>
+                    <input 
+                      type="text" 
+                      value={editingStudent.mother_name || ""} 
+                      onChange={e => setEditingStudent({...editingStudent, mother_name: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Guardian Mobile</label>
+                    <input 
+                      type="text" 
+                      value={editingStudent.guardian_mobile || ""} 
+                      onChange={e => setEditingStudent({...editingStudent, guardian_mobile: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Occupation</label>
+                    <input 
+                      type="text" 
+                      value={editingStudent.occupation || ""} 
+                      onChange={e => setEditingStudent({...editingStudent, occupation: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Academic & Course */}
+              <div>
+                <h4 className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4" /> Academic & Course
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Course</label>
+                    <select 
+                      value={editingStudent.course || ""} 
+                      onChange={e => setEditingStudent({...editingStudent, course: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                    >
+                      {COURSES.filter(c => c !== "All Courses").map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Batch</label>
+                    <input 
+                      type="text" 
+                      value={editingStudent.batch || ""} 
+                      onChange={e => setEditingStudent({...editingStudent, batch: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Session</label>
+                    <input 
+                      type="text" 
+                      value={editingStudent.session || ""} 
+                      onChange={e => setEditingStudent({...editingStudent, session: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Board</label>
+                    <input 
+                      type="text" 
+                      value={editingStudent.board || ""} 
+                      onChange={e => setEditingStudent({...editingStudent, board: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Roll</label>
+                    <input 
+                      type="text" 
+                      value={editingStudent.roll || ""} 
+                      onChange={e => setEditingStudent({...editingStudent, roll: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">GPA</label>
+                    <input 
+                      type="text" 
+                      value={editingStudent.gpa || ""} 
+                      onChange={e => setEditingStudent({...editingStudent, gpa: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Course Fee (৳)</label>
+                    <input 
+                      type="number" 
+                      value={editingStudent.fee || 0} 
+                      onChange={e => setEditingStudent({...editingStudent, fee: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Discount (৳)</label>
+                    <input 
+                      type="number" 
+                      value={editingStudent.discount || 0} 
+                      onChange={e => setEditingStudent({...editingStudent, discount: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Paid Amount (৳)</label>
+                    <input 
+                      type="number" 
+                      value={editingStudent.paid_amount || 0} 
+                      onChange={e => setEditingStudent({...editingStudent, paid_amount: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-8 border-t border-gray-100 flex gap-4 sticky bottom-0 bg-white pb-2">
                 <button 
                   type="button" 
                   onClick={() => setEditingStudent(null)} 
-                  className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+                  className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
-                  className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                  disabled={isLoading}
+                  className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 disabled:opacity-70"
                 >
-                  <Edit className="h-4 w-4" /> Save Changes
+                  {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+                  Save All Changes
                 </button>
               </div>
             </form>
@@ -345,7 +609,7 @@ export default function StudentsList() {
       {/* View Profile Modal */}
       {viewingStudent && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 h-28 relative">
               <button 
                 onClick={() => setViewingStudent(null)}
@@ -356,8 +620,12 @@ export default function StudentsList() {
             </div>
             <div className="px-8 pb-8 relative">
               <div className="absolute -top-14 left-8">
-                <div className="h-28 w-28 rounded-full border-4 border-white bg-indigo-100 flex items-center justify-center shadow-md">
-                  <UserCircle className="h-20 w-20 text-indigo-500" />
+                <div className="h-28 w-28 rounded-full border-4 border-white bg-indigo-100 flex items-center justify-center shadow-md overflow-hidden">
+                  {viewingStudent.photo_url ? (
+                    <img src={viewingStudent.photo_url} alt={viewingStudent.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <UserCircle className="h-20 w-20 text-indigo-500" />
+                  )}
                 </div>
               </div>
               <div className="pt-16">
@@ -374,7 +642,7 @@ export default function StudentsList() {
                     <div className="bg-indigo-100 p-2 rounded-lg">
                       <BookOpen className="h-5 w-5 text-indigo-600" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Course</p>
                       <p className="font-semibold text-gray-900">{viewingStudent.course}</p>
                     </div>
@@ -384,10 +652,17 @@ export default function StudentsList() {
                     <div className="bg-emerald-100 p-2 rounded-lg">
                       <Phone className="h-5 w-5 text-emerald-600" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Phone Number</p>
                       <p className="font-semibold text-gray-900">{viewingStudent.mobile}</p>
                     </div>
+                    <button 
+                      onClick={() => sendWhatsAppCredentials(viewingStudent)}
+                      className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
+                      title="Send WhatsApp Credentials"
+                    >
+                      <MessageSquare className="h-5 w-5" />
+                    </button>
                   </div>
                   
                   <div className="flex items-center gap-4 text-gray-700 bg-gray-50 p-4 rounded-xl border border-gray-100">

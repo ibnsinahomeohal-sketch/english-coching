@@ -27,6 +27,7 @@ export default function Admission() {
     gpa: "",
     fee: "",
     discount: "",
+    paidAmount: "",
   });
 
   const generateStudentId = () => {
@@ -54,6 +55,11 @@ export default function Admission() {
 
       console.log("Submitting student data to Supabase:", { ...formData, studentId });
 
+      const fee = parseFloat(formData.fee) || 0;
+      const discount = parseFloat(formData.discount) || 0;
+      const paid = parseFloat(formData.paidAmount) || 0;
+      const due = fee - discount - paid;
+
       // 1. Save to Supabase
       const { data, error } = await supabase
         .from('students')
@@ -77,8 +83,10 @@ export default function Admission() {
           board: formData.board,
           roll: formData.roll,
           gpa: formData.gpa,
-          fee: parseFloat(formData.fee) || 0,
-          discount: parseFloat(formData.discount) || 0,
+          fee: fee,
+          discount: discount,
+          paid_amount: paid,
+          due_amount: due,
         }])
         .select(); // Use select() to get the inserted data back for confirmation
 
@@ -137,6 +145,7 @@ export default function Admission() {
         gpa: "",
         fee: "",
         discount: "",
+        paidAmount: "",
       });
     } catch (error: any) {
       console.error(error);
@@ -147,7 +156,9 @@ export default function Admission() {
   };
 
   const sendWhatsApp = () => {
-    const message = `Hello ${formData.fullName}, your admission is successful!`;
+    const coachingName = "English Therapy Coaching Center";
+    const message = `*স্বাগতম ${formData.fullName}!* 🎉\n\nআমাদের প্রতিষ্ঠানে আপনাকে স্বাগতম। আপনার লগইন তথ্য নিচে দেওয়া হলো:\n\n🏢 *প্রতিষ্ঠান:* ${coachingName}\n👤 *ইউজার আইডি:* ${formData.studentId}\n🔑 *পাসওয়ার্ড:* ${formData.studentId}\n\nধন্যবাদ আমাদের সাথে থাকার জন্য! ❤️`;
+    
     // Clean the phone number: remove all non-numeric characters except the leading '+' if present
     const cleanedMobile = formData.mobile.replace(/[^\d+]/g, "");
     const waLink = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(message)}`;
@@ -306,6 +317,10 @@ export default function Admission() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Discount (৳)</label>
                 <input type="number" value={formData.discount} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. 500" onChange={(e) => setFormData({...formData, discount: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Paid Amount (৳)</label>
+                <input type="number" value={formData.paidAmount} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. 2000" onChange={(e) => setFormData({...formData, paidAmount: e.target.value})} />
               </div>
             </div>
           </div>
