@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  /* LIGHT MODE VARIABLES */
+  --bg: #F7F8FC;
+  --bg2: #FFFFFF;
+  --bg3: #EEF0F8;
+  --text: #111827;
+  --text2: #4B5563;
+  --text3: #9CA3AF;
+  --bd: #E5E7EB;
+  --bd2: #D1D5DB;
+  --pri: #5B4FE9;
+  --pri-bg: #EEECFD;
+  --pri-t: #3730A3;
+  --green: #059669;
+  --green-bg: #ECFDF5;
+  --green-t: #065F46;
+  --amber: #D97706;
+  --amber-bg: #FFFBEB;
+  --amber-t: #92400E;
+  --red: #DC2626;
+  --red-bg: #FEF2F2;
+  --red-t: #991B1B;
+  --blue: #2563EB;
+  --blue-bg: #EFF6FF;
+  --blue-t: #1E40AF;
+}
+
+.dark {
+  /* DARK MODE VARIABLES */
+  --bg: #0F1117;
+  --bg2: #161820;
+  --bg3: #1C1F2A;
+  --card: #1E2130;
+  --text: #F1F3F9;
+  --text2: #9AA0B8;
+  --text3: #4B5268;
+  --bd: #272B3D;
+  --bd2: #353A50;
+  --pri: #7C73F5;
+  --pri-bg: #1F1D3A;
+  --pri-t: #A8A3FF;
+  --green: #10B981;
+  --green-bg: #052E1C;
+  --green-t: #6EE7B7;
+  --amber: #F59E0B;
+  --amber-bg: #2D1F07;
+  --amber-t: #FCD34D;
+  --red: #F87171;
+  --red-bg: #2D1010;
+  --red-t: #FCA5A5;
+  --blue: #60A5FA;
+  --blue-bg: #0D1D35;
+  --blue-t: #93C5FD;
+}
+
+@layer base {
+  body {
+    @apply bg-[var(--bg)] text-[var(--text)] font-sans transition-colors duration-300;
+  }
+}
