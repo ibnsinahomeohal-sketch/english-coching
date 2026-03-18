@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { 
   LayoutDashboard, UserPlus, Users, IdCard, BookOpen, Library, Bot, Wallet, Mic,
@@ -7,6 +7,8 @@ import {
   TrendingDown, Award, User, Sun, Moon
 } from "lucide-react";
 import { cn } from "../lib/utils";
+import { supabase } from "../lib/supabaseClient";
+import { toast } from "sonner";
 
 const navigationGroups = [
   {
@@ -59,7 +61,15 @@ const navigationGroups = [
 
 export function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isDark, setIsDark] = useState(localStorage.getItem("theme") === "dark");
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+  }, []);
 
   useEffect(() => {
     if (isDark) {
@@ -70,6 +80,17 @@ export function Layout() {
       localStorage.setItem("theme", "light");
     }
   }, [isDark]);
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      toast.success("Logged out successfully");
+      navigate("/login");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to logout");
+    }
+  };
 
   return (
     <div className="flex h-screen bg-[var(--bg)] text-[var(--text)]">
@@ -109,7 +130,10 @@ export function Layout() {
           ))}
         </nav>
         <div className="p-4 border-t border-[var(--bd)]">
-          <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-[var(--red)] bg-[var(--red-bg)] rounded-lg hover:opacity-90 transition-all">
+          <button 
+            onClick={handleLogout}
+            className="flex items-center w-full px-3 py-2 text-sm font-medium text-[var(--red)] bg-[var(--red-bg)] rounded-lg hover:opacity-90 transition-all"
+          >
             <LogOut className="mr-3 h-4 w-4" />
             Logout
           </button>
@@ -128,8 +152,8 @@ export function Layout() {
             </button>
             <button className="px-3 py-1.5 text-xs font-semibold border border-[var(--bd)] rounded-lg text-[var(--text2)] hover:bg-[var(--bg3)]">View ID Card</button>
             <button className="px-3 py-1.5 text-xs font-semibold bg-[var(--pri)] text-white rounded-lg hover:opacity-90">Edit Profile</button>
-            <div className="h-8 w-8 rounded-full bg-[var(--bg3)] flex items-center justify-center text-[var(--pri)] font-bold text-xs border border-[var(--bd)]">
-              A
+            <div className="h-8 w-8 rounded-full bg-[var(--bg3)] flex items-center justify-center text-[var(--pri)] font-bold text-xs border border-[var(--bd)]" title={user?.email}>
+              {user?.email?.[0].toUpperCase() || "A"}
             </div>
           </div>
         </header>

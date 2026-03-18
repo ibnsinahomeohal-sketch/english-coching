@@ -3,8 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import { Toaster } from "sonner";
+import { supabase } from "./lib/supabaseClient";
 import { Layout } from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Admission from "./pages/Admission";
@@ -29,16 +31,47 @@ import Expenses from "./pages/Expenses";
 import Homework from "./pages/Homework";
 import Certificates from "./pages/Certificates";
 import ParentPortal from "./pages/ParentPortal";
+import StudentPortal from "./pages/StudentPortal";
+import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
+import AuthCallback from "./pages/AuthCallback";
 import LearningModule from "./pages/LearningModule";
 import SpeakingPractice from "./pages/SpeakingPractice";
 import Community from "./pages/Community";
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading) return null;
+  if (!session) return <Navigate to="/login" />;
+
+  return <>{children}</>;
+}
 
 export default function App() {
   return (
     <BrowserRouter>
       <Toaster position="top-right" richColors />
       <Routes>
-        <Route path="/" element={<Layout />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/student-portal" element={<StudentPortal />} />
+        <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route index element={<Dashboard />} />
           <Route path="admission" element={<Admission />} />
           <Route path="students" element={<StudentsList />} />

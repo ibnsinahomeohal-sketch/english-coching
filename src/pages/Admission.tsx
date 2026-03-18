@@ -18,6 +18,7 @@ export default function Admission() {
     motherName: "",
     guardianMobile: "",
     occupation: "",
+    email: "",
     course: "Spoken English",
     batch: "",
     session: "",
@@ -61,6 +62,7 @@ export default function Admission() {
           mother_name: formData.motherName,
           guardian_mobile: formData.guardianMobile,
           occupation: formData.occupation,
+          email: formData.email,
           course: formData.course,
           batch: formData.batch,
           session: formData.session,
@@ -79,7 +81,7 @@ export default function Admission() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            to: 'student@example.com', 
+            to: formData.email || 'student@example.com', 
             subject: 'Admission Successful!',
             html: `<p>Welcome ${formData.fullName}! Your admission is successful.</p>`
           })
@@ -107,6 +109,7 @@ export default function Admission() {
         motherName: "",
         guardianMobile: "",
         occupation: "",
+        email: "",
         course: "Spoken English",
         batch: "",
         session: "",
@@ -211,6 +214,10 @@ export default function Admission() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Student Mobile / WhatsApp</label>
                 <input type="tel" value={formData.mobile} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="01XXX-XXXXXX" onChange={(e) => setFormData({...formData, mobile: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Student Email (For Login)</label>
+                <input type="email" value={formData.email} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="student@example.com" onChange={(e) => setFormData({...formData, email: e.target.value})} />
               </div>
             </div>
           </div>
