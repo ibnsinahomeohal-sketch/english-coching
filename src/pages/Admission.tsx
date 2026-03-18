@@ -69,8 +69,8 @@ export default function Admission() {
           board: formData.board,
           roll: formData.roll,
           gpa: formData.gpa,
-          fee: formData.fee,
-          discount: formData.discount,
+          fee: parseFloat(formData.fee) || 0,
+          discount: parseFloat(formData.discount) || 0,
         }]);
 
       if (error) throw error;
