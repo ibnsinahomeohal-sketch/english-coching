@@ -10,6 +10,34 @@ export default function ParentPortal() {
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
+  React.useEffect(() => {
+    const checkSession = async () => {
+      const sessionStr = localStorage.getItem('studentSession');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        if (session.role === 'parent') {
+          const { data, error } = await supabase
+            .from("students")
+            .select("*")
+            .eq("student_id", session.studentId)
+            .single();
+          
+          if (!error && data) {
+            setStudent(data);
+            setIsLoggedIn(true);
+          }
+        }
+      }
+    };
+    checkSession();
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('studentSession');
+    setIsLoggedIn(false);
+    setStudent(null);
+  };
+
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);

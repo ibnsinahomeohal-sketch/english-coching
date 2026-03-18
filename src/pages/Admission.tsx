@@ -19,6 +19,7 @@ export default function Admission() {
     guardianMobile: "",
     occupation: "",
     email: "",
+    password: "",
     course: "Spoken English",
     batch: "",
     session: "",
@@ -36,9 +37,20 @@ export default function Admission() {
     return `${year}${random}`;
   };
 
+  const generatePassword = (name: string, id: string) => {
+    const cleanName = (name || "").split(" ")[0].replace(/[^a-zA-Z]/g, "") || "Student";
+    const last3 = (id || "").slice(-3);
+    return `ET@${cleanName}${last3}`;
+  };
+
   useEffect(() => {
     if (formData.fullName.trim().length > 0 && !formData.studentId) {
-      setFormData(prev => ({ ...prev, studentId: generateStudentId() }));
+      const newId = generateStudentId();
+      setFormData(prev => ({ 
+        ...prev, 
+        studentId: newId,
+        password: generatePassword(formData.fullName, newId)
+      }));
     }
   }, [formData.fullName, formData.studentId]);
 
@@ -77,6 +89,7 @@ export default function Admission() {
           guardian_mobile: formData.guardianMobile,
           occupation: formData.occupation,
           email: formData.email,
+          password: formData.password,
           course: formData.course,
           batch: formData.batch,
           session: formData.session,
@@ -88,7 +101,7 @@ export default function Admission() {
           paid_amount: paid,
           due_amount: due,
         }])
-        .select(); // Use select() to get the inserted data back for confirmation
+        .select();
 
       if (error) {
         console.error("Supabase Insert Error:", error);
@@ -157,7 +170,9 @@ export default function Admission() {
 
   const sendWhatsApp = () => {
     const coachingName = "English Therapy Coaching Center";
-    const message = `*স্বাগতম ${formData.fullName}!* 🎉\n\nআমাদের প্রতিষ্ঠানে আপনাকে স্বাগতম। আপনার লগইন তথ্য নিচে দেওয়া হলো:\n\n🏢 *প্রতিষ্ঠান:* ${coachingName}\n👤 *ইউজার আইডি:* ${formData.studentId}\n🔑 *পাসওয়ার্ড:* ${formData.studentId}\n\nধন্যবাদ আমাদের সাথে থাকার জন্য! ❤️`;
+    const loginUrl = "https://english-coching.vercel.app/login";
+    
+    const message = `🌟 *অভিনন্দন ${formData.fullName}!* 🌟\n\nআপনি সফলভাবে *${coachingName}*-এ ভর্তি হয়েছেন। আপনার ডিজিটাল যাত্রা শুরু হোক আমাদের সাথে! 🚀\n\nআপনার লগইন তথ্য নিচে দেওয়া হলো:\n\n━━━━━━━━━━━━━━━━━━━━\n🏢 *প্রতিষ্ঠান:* ${coachingName}\n👤 *ইউজার আইডি:* ${formData.studentId}\n🔑 *পাসওয়ার্ড:* ${formData.password}\n━━━━━━━━━━━━━━━━━━━━\n\n🌐 *লগইন লিঙ্ক:* ${loginUrl}\n\nআপনার উজ্জ্বল ভবিষ্যৎ কামনা করি! ❤️`;
     
     // Clean the phone number: remove all non-numeric characters except the leading '+' if present
     const cleanedMobile = formData.mobile.replace(/[^\d+]/g, "");
@@ -250,6 +265,10 @@ export default function Admission() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Student Email (For Login)</label>
                 <input type="email" value={formData.email} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="student@example.com" onChange={(e) => setFormData({...formData, email: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Login Password</label>
+                <input type="text" value={formData.password} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Auto-generated" onChange={(e) => setFormData({...formData, password: e.target.value})} />
               </div>
             </div>
           </div>

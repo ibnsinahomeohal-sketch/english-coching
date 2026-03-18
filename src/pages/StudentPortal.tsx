@@ -22,6 +22,24 @@ export default function StudentPortal() {
 
   useEffect(() => {
     const fetchStudentData = async () => {
+      // 1. Check for table-based session first
+      const studentSession = localStorage.getItem('studentSession');
+      if (studentSession) {
+        const session = JSON.parse(studentSession);
+        const { data, error } = await supabase
+          .from("students")
+          .select("*")
+          .eq("student_id", session.studentId)
+          .single();
+
+        if (!error && data) {
+          setStudent(data);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 2. Fallback to Supabase Auth
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         navigate("/login");
@@ -49,6 +67,7 @@ export default function StudentPortal() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    localStorage.removeItem('studentSession');
     navigate("/login");
   };
 

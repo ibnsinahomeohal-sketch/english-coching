@@ -143,7 +143,10 @@ export default function StudentsList() {
 
   const sendWhatsAppCredentials = (student: any) => {
     const coachingName = "English Therapy Coaching Center";
-    const message = `*স্বাগতম ${student.name}!* 🎉\n\nআমাদের প্রতিষ্ঠানে আপনাকে স্বাগতম। আপনার লগইন তথ্য নিচে দেওয়া হলো:\n\n🏢 *প্রতিষ্ঠান:* ${coachingName}\n👤 *ইউজার আইডি:* ${student.student_id}\n🔑 *পাসওয়ার্ড:* ${student.student_id}\n\nধন্যবাদ আমাদের সাথে থাকার জন্য! ❤️`;
+    const password = student.password || student.student_id;
+    const loginUrl = "https://english-coching.vercel.app/login";
+    
+    const message = `🌟 *অভিনন্দন ${student.name}!* 🌟\n\nআপনি সফলভাবে *${coachingName}*-এ ভর্তি হয়েছেন। আপনার ডিজিটাল যাত্রা শুরু হোক আমাদের সাথে! 🚀\n\nআপনার লগইন তথ্য নিচে দেওয়া হলো:\n\n━━━━━━━━━━━━━━━━━━━━\n🏢 *প্রতিষ্ঠান:* ${coachingName}\n👤 *ইউজার আইডি:* ${student.student_id}\n🔑 *পাসওয়ার্ড:* ${password}\n━━━━━━━━━━━━━━━━━━━━\n\n🌐 *লগইন লিঙ্ক:* ${loginUrl}\n\nআপনার উজ্জ্বল ভবিষ্যৎ কামনা করি! ❤️`;
     
     const cleanedMobile = String(student.mobile || "").replace(/[^\d+]/g, "");
     const waLink = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(message)}`;

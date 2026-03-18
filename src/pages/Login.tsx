@@ -26,6 +26,36 @@ export default function Login() {
     setLoading(true);
 
     try {
+      if (role === 'student' || role === 'parent') {
+        // Table-based login for students and parents
+        const { data, error } = await supabase
+          .from('students')
+          .select('*')
+          .eq('student_id', email)
+          .eq('password', password)
+          .single();
+
+        if (error || !data) {
+          throw new Error("ভুল আইডি অথবা পাসওয়ার্ড। আবার চেষ্টা করুন।");
+        }
+
+        // Store student session locally
+        localStorage.setItem('studentSession', JSON.stringify({
+          role,
+          studentId: data.student_id,
+          name: data.name
+        }));
+
+        toast.success("লগইন সফল হয়েছে!");
+        if (role === 'parent') {
+          navigate("/parent-portal");
+        } else {
+          navigate("/student-portal");
+        }
+        return;
+      }
+
+      // Standard Auth for Admin/Teacher
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -101,18 +131,20 @@ export default function Login() {
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Email Address</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                {role === 'student' ? 'Student ID' : 'Email Address'}
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-slate-400" />
+                  {role === 'student' ? <User className="h-5 w-5 text-slate-400" /> : <Mail className="h-5 w-5 text-slate-400" />}
                 </div>
                 <input
-                  type="email"
+                  type="text"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                  placeholder="name@example.com"
+                  placeholder={role === 'student' ? "Enter Student ID" : "name@example.com"}
                 />
               </div>
             </div>
