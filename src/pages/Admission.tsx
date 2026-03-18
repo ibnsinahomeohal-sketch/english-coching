@@ -46,11 +46,19 @@ export default function Admission() {
     setIsSubmitting(true);
 
     try {
+      // Ensure studentId is generated if missing
+      let studentId = formData.studentId;
+      if (!studentId) {
+        studentId = generateStudentId();
+      }
+
+      console.log("Submitting student data to Supabase:", { ...formData, studentId });
+
       // 1. Save to Supabase
       const { data, error } = await supabase
         .from('students')
         .insert([{ 
-          student_id: formData.studentId,
+          student_id: studentId,
           name: formData.fullName,
           nickname: formData.nickname,
           gender: formData.gender,
@@ -71,9 +79,15 @@ export default function Admission() {
           gpa: formData.gpa,
           fee: parseFloat(formData.fee) || 0,
           discount: parseFloat(formData.discount) || 0,
-        }]);
+        }])
+        .select(); // Use select() to get the inserted data back for confirmation
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase Insert Error:", error);
+        throw error;
+      }
+
+      console.log("Insert Successful. Data returned:", data);
 
       // 2. Send Email via Backend (Optional, don't block if fails)
       try {
@@ -94,6 +108,11 @@ export default function Admission() {
       
       // Trigger WhatsApp automatically
       sendWhatsApp();
+      
+      // Navigate to students list after a short delay
+      setTimeout(() => {
+        window.location.href = "/students";
+      }, 2000);
       
       // Reset form and generate new ID
       setFormData({
@@ -129,7 +148,9 @@ export default function Admission() {
 
   const sendWhatsApp = () => {
     const message = `Hello ${formData.fullName}, your admission is successful!`;
-    const waLink = `https://wa.me/${formData.mobile}?text=${encodeURIComponent(message)}`;
+    // Clean the phone number: remove all non-numeric characters except the leading '+' if present
+    const cleanedMobile = formData.mobile.replace(/[^\d+]/g, "");
+    const waLink = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(message)}`;
     window.open(waLink, '_blank');
   };
 
