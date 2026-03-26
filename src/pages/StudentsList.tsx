@@ -1,5 +1,7 @@
 import { useState, useEffect, FormEvent, ChangeEvent } from "react";
-import { Search, Phone, BookOpen, UserCircle, MoreVertical, Edit, Trash2, X, Loader2, MessageSquare, Camera, Save, User, Calendar, Mail, Briefcase, GraduationCap } from "lucide-react";
+import { Search, Phone, BookOpen, UserCircle, MoreVertical, Edit, Trash2, X, Loader2, MessageSquare, Camera, Save, User, Calendar, Mail, Briefcase, GraduationCap, UserPlus } from "lucide-react";
+import { PageHero } from "../components/PageHero";
+import { SectionBanner } from "../components/SectionBanner";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
 
@@ -109,6 +111,7 @@ export default function StudentsList() {
             email: editingStudent.email,
             course: editingStudent.course,
             batch: editingStudent.batch,
+            batch_time: editingStudent.batch_time,
             session: editingStudent.session,
             board: editingStudent.board,
             roll: editingStudent.roll,
@@ -169,45 +172,57 @@ export default function StudentsList() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto pb-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">All Students</h2>
-          <p className="text-sm text-gray-500 mt-1">View and manage all admitted students across different courses</p>
+    <div className="max-w-7xl mx-auto pb-8 min-h-screen" style={{ backgroundColor: 'rgba(7, 26, 19, 0.06)' }}>
+      <PageHero 
+        title="All Students" 
+        subtitle="Manage and view all registered students"
+        icon={UserPlus}
+        darkColor="#071a13"
+        badge="Students"
+        pattern={
+          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs>
+              <pattern id="circles" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                <circle cx="10" cy="10" r="3" fill="#1D9E75" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#circles)" />
+          </svg>
+        }
+      />
+
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 px-4">
+        <div className="bg-white px-4 py-2 rounded-[14px] border border-[#B5D4F4] shadow-sm">
+          <span className="text-sm font-medium text-[#1D9E75]">Total Students: {students.length}</span>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-100">
-            <span className="text-sm font-medium text-indigo-600">Total Students: {students.length}</span>
-          </div>
-          <button 
-            onClick={fetchStudents}
-            className="flex items-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <Loader2 className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
-        </div>
+        <button 
+          onClick={fetchStudents}
+          className="flex items-center gap-2 bg-white border border-[#B5D4F4] px-4 py-2 rounded-[14px] text-sm font-medium text-[#1D9E75] hover:bg-emerald-50 transition-colors"
+        >
+          <Loader2 className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6 flex flex-col sm:flex-row gap-4">
+      <div className="bg-white p-4 rounded-[14px] border border-[#B5D4F4] shadow-sm mb-6 flex flex-col sm:flex-row gap-4 mx-4">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
+            <Search className="h-5 w-5 text-[#1D9E75]" />
           </div>
           <input
             type="text"
             placeholder="Search by Name, ID, or Phone Number..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+            className="w-full pl-10 pr-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none"
           />
         </div>
         <div className="sm:w-64">
           <select
             value={selectedCourse}
             onChange={(e) => setSelectedCourse(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50 font-medium text-gray-700"
+            className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none bg-white font-medium text-gray-700"
           >
             {COURSES.map(course => (
               <option key={course} value={course}>{course}</option>
@@ -219,21 +234,21 @@ export default function StudentsList() {
       {/* Students Grid */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="h-10 w-10 text-indigo-600 animate-spin mb-4" />
-          <p className="text-gray-500 font-medium">Loading students...</p>
+          <Loader2 className="h-10 w-10 text-[#1D9E75] animate-spin mb-4" />
+          <p className="text-[#1D9E75] font-medium">Loading students...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-4">
           {filteredStudents.map((student, index) => (
-            <div key={student.student_id || student.id || index} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col">
+            <div key={student.student_id || student.id || index} className="bg-white rounded-[14px] border border-[#B5D4F4] shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col">
               <div className="p-5 flex-1">
                 <div className="flex justify-between items-start mb-4">
                   <div className="relative">
-                    <div className="h-16 w-16 rounded-full bg-indigo-100 flex items-center justify-center border-2 border-gray-100 overflow-hidden">
+                    <div className="h-16 w-16 rounded-full bg-[#1D9E75]/10 flex items-center justify-center border-2 border-white shadow-sm overflow-hidden">
                       {student.photo_url ? (
                         <img src={student.photo_url} alt={student.name} className="h-full w-full object-cover" />
                       ) : (
-                        <UserCircle className="h-10 w-10 text-indigo-500" />
+                        <UserCircle className="h-10 w-10 text-[#1D9E75]" />
                       )}
                     </div>
                     <span className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500`}></span>
@@ -243,7 +258,7 @@ export default function StudentsList() {
                   <div className="relative">
                     <button 
                       onClick={() => setActiveDropdown(activeDropdown === student.student_id ? null : student.student_id)}
-                      className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100 transition-colors"
+                      className="text-gray-400 hover:text-[#1D9E75] p-1 rounded-md hover:bg-emerald-50 transition-colors"
                     >
                       <MoreVertical className="h-5 w-5" />
                     </button>
@@ -254,7 +269,7 @@ export default function StudentsList() {
                           className="fixed inset-0 z-10" 
                           onClick={() => setActiveDropdown(null)}
                         ></div>
-                        <div className="absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-lg border border-gray-200 z-20 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                        <div className="absolute right-0 mt-1 w-36 bg-white rounded-[14px] shadow-lg border border-[#B5D4F4] z-20 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
                           <button 
                             onClick={() => sendWhatsAppCredentials(student)}
                             className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 flex items-center gap-2"
@@ -284,23 +299,23 @@ export default function StudentsList() {
                 
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <BookOpen className="h-4 w-4 text-indigo-500" />
+                    <BookOpen className="h-4 w-4 text-[#1D9E75]" />
                     <span className="truncate font-medium">{student.course}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Phone className="h-4 w-4 text-emerald-500" />
+                    <Phone className="h-4 w-4 text-[#1D9E75]" />
                     <span>{student.mobile}</span>
                   </div>
                 </div>
               </div>
               
-              <div className="border-t border-gray-100 p-3 bg-gray-50 flex justify-between items-center">
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-200 px-2 py-1 rounded-md">
+              <div className="border-t border-[#B5D4F4] p-3 bg-emerald-50/50 flex justify-between items-center">
+                <span className="text-xs font-bold text-[#1D9E75] uppercase tracking-wider bg-white px-2 py-1 rounded-md border border-[#B5D4F4]">
                   {student.batch || "N/A"}
                 </span>
                 <button 
                   onClick={() => setViewingStudent(student)}
-                  className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
+                  className="text-sm font-semibold text-[#1D9E75] hover:text-emerald-800 flex items-center gap-1 transition-colors"
                 >
                   <UserCircle className="h-4 w-4" /> View Profile
                 </button>
@@ -309,8 +324,8 @@ export default function StudentsList() {
           ))}
 
           {filteredStudents.length === 0 && (
-            <div className="col-span-full py-12 text-center bg-white rounded-xl border border-gray-200 border-dashed">
-              <UserCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+            <div className="col-span-full py-12 text-center bg-white rounded-[14px] border border-[#B5D4F4] border-dashed">
+              <UserCircle className="h-12 w-12 text-[#1D9E75]/30 mx-auto mb-3" />
               <h3 className="text-lg font-medium text-gray-900">
                 {students.length === 0 ? "No students in database" : "No students match your search"}
               </h3>
@@ -322,7 +337,7 @@ export default function StudentsList() {
               {students.length === 0 && (
                 <button 
                   onClick={() => window.location.href = '/admission'}
-                  className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-[14px] shadow-sm text-white bg-[#1D9E75] hover:bg-[#188865] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1D9E75]"
                 >
                   Go to Admission
                 </button>
@@ -335,8 +350,8 @@ export default function StudentsList() {
       {/* Edit Profile Modal */}
       {editingStudent && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-4xl w-full my-8 overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
+          <div className="bg-white rounded-[24px] max-w-4xl w-full my-8 overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-6 border-b border-[#B5D4F4] sticky top-0 bg-white z-10">
               <h3 className="text-xl font-bold text-gray-900">Edit Student Profile</h3>
               <button 
                 onClick={() => setEditingStudent(null)}
@@ -347,13 +362,13 @@ export default function StudentsList() {
             </div>
             <form onSubmit={handleSaveEdit} className="p-8 space-y-8 overflow-y-auto max-h-[75vh]">
               {/* Photo Upload Section */}
-              <div className="flex flex-col items-center justify-center pb-6 border-b border-gray-100">
+              <div className="flex flex-col items-center justify-center pb-6 border-b border-[#B5D4F4]">
                 <div className="relative group">
-                  <div className="h-24 w-24 rounded-full bg-indigo-50 border-4 border-white shadow-md overflow-hidden flex items-center justify-center">
+                  <div className="h-24 w-24 rounded-full bg-[#1D9E75]/10 border-4 border-white shadow-md overflow-hidden flex items-center justify-center">
                     {editingStudent.photo_url ? (
                       <img src={editingStudent.photo_url} alt="Preview" className="h-full w-full object-cover" />
                     ) : (
-                      <UserCircle className="h-16 w-16 text-indigo-200" />
+                      <UserCircle className="h-16 w-16 text-[#1D9E75]/30" />
                     )}
                   </div>
                   <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
@@ -366,17 +381,15 @@ export default function StudentsList() {
 
               {/* Personal Information */}
               <div>
-                <h4 className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <User className="h-4 w-4" /> Personal Information
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <SectionBanner title="Personal Information" color="var(--color-students)" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Full Name</label>
                     <input 
                       type="text" 
                       value={editingStudent.name || ""} 
                       onChange={e => setEditingStudent({...editingStudent, name: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
                       required 
                     />
                   </div>
@@ -386,7 +399,7 @@ export default function StudentsList() {
                       type="text" 
                       value={editingStudent.nickname || ""} 
                       onChange={e => setEditingStudent({...editingStudent, nickname: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
                     />
                   </div>
                   <div>
@@ -394,11 +407,9 @@ export default function StudentsList() {
                     <select 
                       value={editingStudent.gender || "Male"} 
                       onChange={e => setEditingStudent({...editingStudent, gender: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none bg-white"
                     >
-                      <option>Male</option>
-                      <option>Female</option>
-                      <option>Other</option>
+                      <option>Male</option><option>Female</option><option>Other</option>
                     </select>
                   </div>
                   <div>
@@ -407,7 +418,7 @@ export default function StudentsList() {
                       type="date" 
                       value={editingStudent.dob || ""} 
                       onChange={e => setEditingStudent({...editingStudent, dob: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
                     />
                   </div>
                   <div>
@@ -415,7 +426,7 @@ export default function StudentsList() {
                     <select 
                       value={editingStudent.blood_group || "A+"} 
                       onChange={e => setEditingStudent({...editingStudent, blood_group: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none bg-white"
                     >
                       <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
                       <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
@@ -427,7 +438,7 @@ export default function StudentsList() {
                       type="text" 
                       value={editingStudent.religion || ""} 
                       onChange={e => setEditingStudent({...editingStudent, religion: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
                     />
                   </div>
                   <div>
@@ -436,7 +447,7 @@ export default function StudentsList() {
                       type="text" 
                       value={editingStudent.mobile || ""} 
                       onChange={e => setEditingStudent({...editingStudent, mobile: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
                     />
                   </div>
                   <div>
@@ -445,7 +456,7 @@ export default function StudentsList() {
                       type="email" 
                       value={editingStudent.email || ""} 
                       onChange={e => setEditingStudent({...editingStudent, email: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
                     />
                   </div>
                 </div>
@@ -453,17 +464,15 @@ export default function StudentsList() {
 
               {/* Guardian Information */}
               <div>
-                <h4 className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <Briefcase className="h-4 w-4" /> Guardian Information
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <SectionBanner title="Guardian Information" color="var(--color-students)" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Father's Name</label>
                     <input 
                       type="text" 
                       value={editingStudent.father_name || ""} 
                       onChange={e => setEditingStudent({...editingStudent, father_name: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
                     />
                   </div>
                   <div>
@@ -472,7 +481,7 @@ export default function StudentsList() {
                       type="text" 
                       value={editingStudent.mother_name || ""} 
                       onChange={e => setEditingStudent({...editingStudent, mother_name: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
                     />
                   </div>
                   <div>
@@ -481,7 +490,7 @@ export default function StudentsList() {
                       type="text" 
                       value={editingStudent.guardian_mobile || ""} 
                       onChange={e => setEditingStudent({...editingStudent, guardian_mobile: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
                     />
                   </div>
                   <div>
@@ -490,7 +499,7 @@ export default function StudentsList() {
                       type="text" 
                       value={editingStudent.occupation || ""} 
                       onChange={e => setEditingStudent({...editingStudent, occupation: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
                     />
                   </div>
                 </div>
@@ -498,16 +507,14 @@ export default function StudentsList() {
 
               {/* Academic & Course */}
               <div>
-                <h4 className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4" /> Academic & Course
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <SectionBanner title="Academic & Course" color="var(--color-students)" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Course</label>
                     <select 
                       value={editingStudent.course || ""} 
                       onChange={e => setEditingStudent({...editingStudent, course: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none bg-white"
                     >
                       {COURSES.filter(c => c !== "All Courses").map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
@@ -518,7 +525,16 @@ export default function StudentsList() {
                       type="text" 
                       value={editingStudent.batch || ""} 
                       onChange={e => setEditingStudent({...editingStudent, batch: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Batch Time</label>
+                    <input 
+                      type="text" 
+                      value={editingStudent.batch_time || ""} 
+                      onChange={e => setEditingStudent({...editingStudent, batch_time: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
                     />
                   </div>
                   <div>
@@ -527,7 +543,7 @@ export default function StudentsList() {
                       type="text" 
                       value={editingStudent.session || ""} 
                       onChange={e => setEditingStudent({...editingStudent, session: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
                     />
                   </div>
                   <div>
@@ -536,7 +552,7 @@ export default function StudentsList() {
                       type="text" 
                       value={editingStudent.board || ""} 
                       onChange={e => setEditingStudent({...editingStudent, board: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
                     />
                   </div>
                   <div>
@@ -545,7 +561,7 @@ export default function StudentsList() {
                       type="text" 
                       value={editingStudent.roll || ""} 
                       onChange={e => setEditingStudent({...editingStudent, roll: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
                     />
                   </div>
                   <div>
@@ -554,7 +570,7 @@ export default function StudentsList() {
                       type="text" 
                       value={editingStudent.gpa || ""} 
                       onChange={e => setEditingStudent({...editingStudent, gpa: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
                     />
                   </div>
                   <div>
@@ -563,7 +579,7 @@ export default function StudentsList() {
                       type="number" 
                       value={editingStudent.fee || 0} 
                       onChange={e => setEditingStudent({...editingStudent, fee: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
                     />
                   </div>
                   <div>
@@ -572,7 +588,7 @@ export default function StudentsList() {
                       type="number" 
                       value={editingStudent.discount || 0} 
                       onChange={e => setEditingStudent({...editingStudent, discount: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
                     />
                   </div>
                   <div>
@@ -581,24 +597,25 @@ export default function StudentsList() {
                       type="number" 
                       value={editingStudent.paid_amount || 0} 
                       onChange={e => setEditingStudent({...editingStudent, paid_amount: e.target.value})} 
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                      className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none" 
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="pt-8 border-t border-gray-100 flex gap-4 sticky bottom-0 bg-white pb-2">
+              <div className="pt-8 border-t border-[#B5D4F4] flex gap-4 sticky bottom-0 bg-white pb-2">
                 <button 
                   type="button" 
                   onClick={() => setEditingStudent(null)} 
-                  className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                  className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-[14px] font-bold hover:bg-gray-200 transition-colors"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
                   disabled={isLoading}
-                  className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 disabled:opacity-70"
+                  className="flex-1 px-6 py-3 text-white rounded-[14px] font-bold hover:opacity-90 transition-colors flex items-center justify-center gap-2 shadow-lg"
+                  style={{ backgroundColor: 'var(--color-students)' }}
                 >
                   {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
                   Save All Changes
@@ -612,8 +629,8 @@ export default function StudentsList() {
       {/* View Profile Modal */}
       {viewingStudent && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 h-28 relative">
+            <div className="bg-white rounded-[24px] max-w-md w-full overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="h-28 relative" style={{ backgroundColor: 'var(--color-students)' }}>
               <button 
                 onClick={() => setViewingStudent(null)}
                 className="absolute top-4 right-4 text-white/80 hover:text-white bg-black/20 hover:bg-black/40 rounded-full p-1.5 transition-colors"
@@ -623,27 +640,27 @@ export default function StudentsList() {
             </div>
             <div className="px-8 pb-8 relative">
               <div className="absolute -top-14 left-8">
-                <div className="h-28 w-28 rounded-full border-4 border-white bg-indigo-100 flex items-center justify-center shadow-md overflow-hidden">
+                <div className="h-28 w-28 rounded-full border-4 border-white bg-[#1D9E75]/10 flex items-center justify-center shadow-md overflow-hidden">
                   {viewingStudent.photo_url ? (
                     <img src={viewingStudent.photo_url} alt={viewingStudent.name} className="h-full w-full object-cover" />
                   ) : (
-                    <UserCircle className="h-20 w-20 text-indigo-500" />
+                    <UserCircle className="h-20 w-20 text-[#1D9E75]/30" />
                   )}
                 </div>
               </div>
               <div className="pt-16">
                 <div className="flex justify-between items-start mb-1">
                   <h2 className="text-2xl font-bold text-gray-900">{viewingStudent.name}</h2>
-                  <span className={`px-3 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-700`}>
+                  <span className={`px-3 py-1 text-xs font-bold rounded-full bg-emerald-100 text-[#1D9E75]`}>
                     Active
                   </span>
                 </div>
-                <p className="text-indigo-600 font-semibold mb-6">Student ID: {viewingStudent.student_id}</p>
+                <p className="font-semibold mb-6" style={{ color: 'var(--color-students)' }}>Student ID: {viewingStudent.student_id}</p>
                 
                 <div className="space-y-4">
-                  <div className="flex items-center gap-4 text-gray-700 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <div className="bg-indigo-100 p-2 rounded-lg">
-                      <BookOpen className="h-5 w-5 text-indigo-600" />
+                  <div className="flex items-center gap-4 text-gray-700 bg-emerald-50/50 p-4 rounded-[14px] border border-[#B5D4F4]">
+                    <div className="bg-[#1D9E75]/10 p-2 rounded-lg">
+                      <BookOpen className="h-5 w-5 text-[#1D9E75]" />
                     </div>
                     <div className="flex-1">
                       <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Course</p>
@@ -651,9 +668,9 @@ export default function StudentsList() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-4 text-gray-700 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <div className="bg-emerald-100 p-2 rounded-lg">
-                      <Phone className="h-5 w-5 text-emerald-600" />
+                  <div className="flex items-center gap-4 text-gray-700 bg-emerald-50/50 p-4 rounded-[14px] border border-[#B5D4F4]">
+                    <div className="bg-[#1D9E75]/10 p-2 rounded-lg">
+                      <Phone className="h-5 w-5 text-[#1D9E75]" />
                     </div>
                     <div className="flex-1">
                       <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Phone Number</p>
@@ -661,16 +678,16 @@ export default function StudentsList() {
                     </div>
                     <button 
                       onClick={() => sendWhatsAppCredentials(viewingStudent)}
-                      className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
+                      className="p-2 bg-emerald-100 text-[#1D9E75] rounded-lg hover:bg-emerald-200 transition-colors"
                       title="Send WhatsApp Credentials"
                     >
                       <MessageSquare className="h-5 w-5" />
                     </button>
                   </div>
                   
-                  <div className="flex items-center gap-4 text-gray-700 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <div className="bg-blue-100 p-2 rounded-lg">
-                      <UserCircle className="h-5 w-5 text-blue-600" />
+                  <div className="flex items-center gap-4 text-gray-700 bg-emerald-50/50 p-4 rounded-[14px] border border-[#B5D4F4]">
+                    <div className="bg-[#1D9E75]/10 p-2 rounded-lg">
+                      <UserCircle className="h-5 w-5 text-[#1D9E75]" />
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Batch</p>
@@ -682,13 +699,14 @@ export default function StudentsList() {
                 <div className="mt-8 flex gap-3">
                   <button 
                     onClick={() => { handleEdit(viewingStudent); setViewingStudent(null); }}
-                    className="flex-1 bg-indigo-50 text-indigo-700 font-semibold py-2.5 rounded-xl hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 font-semibold py-2.5 rounded-[14px] transition-colors flex items-center justify-center gap-2"
+                    style={{ backgroundColor: 'rgba(29, 158, 117, 0.1)', color: 'var(--color-students)' }}
                   >
                     <Edit className="h-4 w-4" /> Edit Details
                   </button>
                   <button 
                     onClick={() => setViewingStudent(null)}
-                    className="flex-1 bg-gray-100 text-gray-700 font-semibold py-2.5 rounded-xl hover:bg-gray-200 transition-colors"
+                    className="flex-1 bg-gray-100 text-gray-700 font-semibold py-2.5 rounded-[14px] hover:bg-gray-200 transition-colors"
                   >
                     Close
                   </button>

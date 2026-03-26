@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { BookOpen, CheckCircle, XCircle, ArrowRight, Volume2 } from "lucide-react";
+import { PageHero } from "../components/PageHero";
 
 const quizData = {
   "Daily Life": [
@@ -73,56 +74,71 @@ export default function LearningModule() {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Learning Module</h1>
-      
-      <div className="flex gap-4 mb-6 overflow-x-auto pb-2">
-        {Object.keys(quizData).map((category) => (
-          <button
-            key={category}
-            onClick={() => { setSelectedCategory(category as keyof typeof quizData); setCurrentQuestionIndex(0); setSelectedOption(null); setIsCorrect(null); }}
-            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${selectedCategory === category ? "bg-indigo-600 text-white" : "bg-white text-gray-700 border border-gray-200"}`}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
-
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm max-w-2xl">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Question {currentQuestionIndex + 1}</h2>
-          <button onClick={speakQuestion} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-full">
-            <Volume2 className="h-6 w-6" />
-          </button>
-        </div>
-        <p className="text-gray-700 mb-6 text-xl">{currentQuestion.question}</p>
-        
-        <div className="space-y-3">
-          {currentQuestion.options.map((option) => (
+    <div className="min-h-screen" style={{ backgroundColor: 'rgba(10, 21, 0, 0.06)' }}>
+      <PageHero 
+        title="Learning Module"
+        subtitle="Interactive learning and progress tracking"
+        icon={BookOpen}
+        darkColor="#0a1500"
+        badge="Learning"
+        pattern={
+          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <pattern id="leaves" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 10 0 C 15 5 15 15 10 20 C 5 15 5 5 10 0" fill="none" stroke="#15803d" strokeWidth="1" />
+            </pattern>
+            <rect width="100%" height="100%" fill="url(#leaves)" />
+          </svg>
+        }
+      />
+      <div className="max-w-2xl mx-auto pb-8 pt-6">
+        <div className="flex gap-4 mb-6 overflow-x-auto pb-2">
+          {Object.keys(quizData).map((category) => (
             <button
-              key={option}
-              onClick={() => setSelectedOption(option)}
-              className={`w-full text-left p-3 rounded-lg border ${selectedOption === option ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-indigo-300"}`}
+              key={category}
+              onClick={() => { setSelectedCategory(category as keyof typeof quizData); setCurrentQuestionIndex(0); setSelectedOption(null); setIsCorrect(null); }}
+              className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${selectedCategory === category ? "bg-indigo-600 text-white" : "bg-white text-gray-700 border border-gray-200"}`}
             >
-              {option}
+              {category}
             </button>
           ))}
         </div>
 
-        <div className="mt-6 flex justify-between items-center">
-          {isCorrect === null ? (
-            <button onClick={handleCheck} disabled={!selectedOption} className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium disabled:opacity-50">Check</button>
-          ) : (
-            <div className="flex items-center gap-4">
-              <div className={`flex items-center gap-2 font-medium ${isCorrect ? "text-emerald-600" : "text-rose-600"}`}>
-                {isCorrect ? <CheckCircle className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
-                {isCorrect ? "Correct!" : `Incorrect. Correct answer: ${currentQuestion.answer}`}
-              </div>
-              <button onClick={nextQuestion} className="bg-gray-900 text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2">
-                Next <ArrowRight className="h-4 w-4" />
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Question {currentQuestionIndex + 1}</h2>
+            <button onClick={speakQuestion} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-full">
+              <Volume2 className="h-6 w-6" />
+            </button>
+          </div>
+          <p className="text-gray-700 mb-6 text-xl">{currentQuestion.question}</p>
+          
+          <div className="space-y-3">
+            {currentQuestion.options.map((option) => (
+              <button
+                key={option}
+                onClick={() => setSelectedOption(option)}
+                className={`w-full text-left p-3 rounded-lg border ${selectedOption === option ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-indigo-300"}`}
+              >
+                {option}
               </button>
-            </div>
-          )}
+            ))}
+          </div>
+
+          <div className="mt-6 flex justify-between items-center">
+            {isCorrect === null ? (
+              <button onClick={handleCheck} disabled={!selectedOption} className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium disabled:opacity-50">Check</button>
+            ) : (
+              <div className="flex items-center gap-4">
+                <div className={`flex items-center gap-2 font-medium ${isCorrect ? "text-emerald-600" : "text-rose-600"}`}>
+                  {isCorrect ? <CheckCircle className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
+                  {isCorrect ? "Correct!" : `Incorrect. Correct answer: ${currentQuestion.answer}`}
+                </div>
+                <button onClick={nextQuestion} className="bg-gray-900 text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2">
+                  Next <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

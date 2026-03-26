@@ -1,7 +1,9 @@
 import React, { useState, useEffect, FormEvent } from "react";
-import { Save, User, Phone, Calendar } from "lucide-react";
+import { Save, UserPlus } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
+import { PageHero } from "../components/PageHero";
+import { SectionBanner } from "../components/SectionBanner";
 
 export default function Admission() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,6 +24,7 @@ export default function Admission() {
     password: "",
     course: "Spoken English",
     batch: "",
+    batchTime: "",
     session: "",
     board: "",
     roll: "",
@@ -59,20 +62,16 @@ export default function Admission() {
     setIsSubmitting(true);
 
     try {
-      // Ensure studentId is generated if missing
       let studentId = formData.studentId;
       if (!studentId) {
         studentId = generateStudentId();
       }
-
-      console.log("Submitting student data to Supabase:", { ...formData, studentId });
 
       const fee = parseFloat(formData.fee) || 0;
       const discount = parseFloat(formData.discount) || 0;
       const paid = parseFloat(formData.paidAmount) || 0;
       const due = fee - discount - paid;
 
-      // 1. Save to Supabase
       const { data, error } = await supabase
         .from('students')
         .insert([{ 
@@ -92,6 +91,7 @@ export default function Admission() {
           password: formData.password,
           course: formData.course,
           batch: formData.batch,
+          batch_time: formData.batchTime,
           session: formData.session,
           board: formData.board,
           roll: formData.roll,
@@ -103,39 +103,15 @@ export default function Admission() {
         }])
         .select();
 
-      if (error) {
-        console.error("Supabase Insert Error:", error);
-        throw error;
-      }
-
-      console.log("Insert Successful. Data returned:", data);
-
-      // 2. Send Email via Backend (Optional, don't block if fails)
-      try {
-        await fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            to: formData.email || 'student@example.com', 
-            subject: 'Admission Successful!',
-            html: `<p>Welcome ${formData.fullName}! Your admission is successful.</p>`
-          })
-        });
-      } catch (e) {
-        console.warn("Email failed to send", e);
-      }
+      if (error) throw error;
 
       toast.success("Student admitted successfully!");
-      
-      // Trigger WhatsApp automatically
       sendWhatsApp();
       
-      // Navigate to students list after a short delay
       setTimeout(() => {
         window.location.href = "/students";
       }, 2000);
       
-      // Reset form and generate new ID
       setFormData({
         studentId: "",
         fullName: "",
@@ -150,8 +126,10 @@ export default function Admission() {
         guardianMobile: "",
         occupation: "",
         email: "",
+        password: "",
         course: "Spoken English",
         batch: "",
+        batchTime: "",
         session: "",
         board: "",
         roll: "",
@@ -161,7 +139,6 @@ export default function Admission() {
         paidAmount: "",
       });
     } catch (error: any) {
-      console.error(error);
       toast.error(`Failed to admit student: ${error.message || "Unknown error"}`);
     } finally {
       setIsSubmitting(false);
@@ -171,175 +148,169 @@ export default function Admission() {
   const sendWhatsApp = () => {
     const coachingName = "English Therapy Coaching Center";
     const loginUrl = "https://english-coching.vercel.app/login";
-    
     const message = `🌟 *অভিনন্দন ${formData.fullName}!* 🌟\n\nআপনি সফলভাবে *${coachingName}*-এ ভর্তি হয়েছেন। আপনার ডিজিটাল যাত্রা শুরু হোক আমাদের সাথে! 🚀\n\nআপনার লগইন তথ্য নিচে দেওয়া হলো:\n\n━━━━━━━━━━━━━━━━━━━━\n🏢 *প্রতিষ্ঠান:* ${coachingName}\n👤 *ইউজার আইডি:* ${formData.studentId}\n🔑 *পাসওয়ার্ড:* ${formData.password}\n━━━━━━━━━━━━━━━━━━━━\n\n🌐 *লগইন লিঙ্ক:* ${loginUrl}\n\nআপনার উজ্জ্বল ভবিষ্যৎ কামনা করি! ❤️`;
-    
-    // Clean the phone number: remove all non-numeric characters except the leading '+' if present
     const cleanedMobile = formData.mobile.replace(/[^\d+]/g, "");
     const waLink = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(message)}`;
     window.open(waLink, '_blank');
   };
 
   return (
-    <div className="max-w-5xl mx-auto pb-8">
-      <form onSubmit={handleSubmit}>
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Student Admission</h2>
-            <p className="text-sm text-gray-500 mt-1">Fill in the details to enroll a new student</p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={sendWhatsApp}
-              className="flex items-center gap-2 bg-green-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-green-700 transition-colors"
-            >
-              Send via WhatsApp
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-70"
-            >
-              <Save className="h-4 w-4" />
-              {isSubmitting ? "Saving..." : "Save Student"}
-            </button>
-          </div>
+    <div className="min-h-screen" style={{ backgroundColor: 'rgba(7, 24, 40, 0.06)' }}>
+      <PageHero 
+        title="Student Admission"
+        subtitle="Register a new student to the system"
+        icon={UserPlus}
+        darkColor="#071828"
+        badge="Admission"
+        pattern={
+          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <rect x="10" y="10" width="20" height="15" fill="#378ADD" />
+            <rect x="50" y="20" width="30" height="20" fill="#378ADD" />
+            <rect x="20" y="50" width="25" height="15" fill="#378ADD" />
+            <rect x="70" y="60" width="20" height="25" fill="#378ADD" />
+          </svg>
+        }
+      />
+      
+      <form onSubmit={handleSubmit} className="max-w-5xl mx-auto p-6">
+        <div className="flex justify-end gap-2 mb-6">
+          <button
+            type="button"
+            onClick={sendWhatsApp}
+            className="flex items-center gap-2 text-white px-6 py-2.5 rounded-lg font-medium hover:opacity-90 transition-colors"
+            style={{ backgroundColor: 'var(--color-whatsapp)' }}
+          >
+            Send via WhatsApp
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex items-center gap-2 text-white px-6 py-2.5 rounded-lg font-medium hover:opacity-90 transition-colors disabled:opacity-70"
+            style={{ backgroundColor: '#378ADD' }}
+          >
+            <Save className="h-4 w-4" />
+            {isSubmitting ? "Saving..." : "Save Student"}
+          </button>
         </div>
 
-        <div className="space-y-6">
-          {/* Personal Information */}
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-5">Personal Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="space-y-8">
+          <div className="bg-white p-8 rounded-[24px] border border-[#B5D4F4] shadow-lg shadow-[#B5D4F4]/20">
+            <SectionBanner title="Personal Information" color="#378ADD" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center justify-between">
-                  Student Number (ID)
-                  <span className="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded uppercase font-bold">Auto</span>
-                </label>
-                <input 
-                  type="text" 
-                  required 
-                  readOnly
-                  value={formData.studentId}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed outline-none" 
-                  placeholder="Auto-generated after name" 
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Student Number (ID)</label>
+                <input type="text" required readOnly value={formData.studentId} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg bg-gray-50 text-gray-500 outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                <input type="text" required value={formData.fullName} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Enter full name" onChange={(e) => setFormData({...formData, fullName: e.target.value})} />
+                <input type="text" required value={formData.fullName} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, fullName: e.target.value})} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nickname</label>
-                <input type="text" value={formData.nickname} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Enter nickname" onChange={(e) => setFormData({...formData, nickname: e.target.value})} />
+                <input type="text" value={formData.nickname} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, nickname: e.target.value})} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                <select value={formData.gender} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white" onChange={(e) => setFormData({...formData, gender: e.target.value})}>
-                  <option>Male</option>
-                  <option>Female</option>
-                  <option>Other</option>
+                <select value={formData.gender} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none bg-white" onChange={(e) => setFormData({...formData, gender: e.target.value})}>
+                  <option>Male</option><option>Female</option><option>Other</option>
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-                <input type="date" value={formData.dob} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" onChange={(e) => setFormData({...formData, dob: e.target.value})} />
+                <input type="date" value={formData.dob} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, dob: e.target.value})} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Blood Group</label>
-                <select value={formData.bloodGroup} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white" onChange={(e) => setFormData({...formData, bloodGroup: e.target.value})}>
+                <select value={formData.bloodGroup} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none bg-white" onChange={(e) => setFormData({...formData, bloodGroup: e.target.value})}>
                   <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
                   <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Religion</label>
-                <input type="text" value={formData.religion} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. Islam" onChange={(e) => setFormData({...formData, religion: e.target.value})} />
+                <input type="text" value={formData.religion} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, religion: e.target.value})} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Student Mobile / WhatsApp</label>
-                <input type="tel" value={formData.mobile} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="01XXX-XXXXXX" onChange={(e) => setFormData({...formData, mobile: e.target.value})} />
+                <input type="tel" value={formData.mobile} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, mobile: e.target.value})} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Student Email (For Login)</label>
-                <input type="email" value={formData.email} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="student@example.com" onChange={(e) => setFormData({...formData, email: e.target.value})} />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Student Email</label>
+                <input type="email" value={formData.email} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, email: e.target.value})} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Login Password</label>
-                <input type="text" value={formData.password} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Auto-generated" onChange={(e) => setFormData({...formData, password: e.target.value})} />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Generated Password</label>
+                <input type="text" readOnly value={formData.password} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg bg-gray-50 text-gray-500 outline-none" />
               </div>
             </div>
           </div>
 
-          {/* Guardian Information */}
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-5">Guardian Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white p-8 rounded-[24px] border border-[#B5D4F4] shadow-lg shadow-[#B5D4F4]/20">
+            <SectionBanner title="Guardian Information" color="#378ADD" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Father's Name</label>
-                <input type="text" value={formData.fatherName} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Enter father's name" onChange={(e) => setFormData({...formData, fatherName: e.target.value})} />
+                <input type="text" value={formData.fatherName} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, fatherName: e.target.value})} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Mother's Name</label>
-                <input type="text" value={formData.motherName} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Enter mother's name" onChange={(e) => setFormData({...formData, motherName: e.target.value})} />
+                <input type="text" value={formData.motherName} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, motherName: e.target.value})} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
-                <input type="tel" required value={formData.guardianMobile} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="01XXX-XXXXXX" onChange={(e) => setFormData({...formData, guardianMobile: e.target.value})} />
+                <input type="tel" required value={formData.guardianMobile} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, guardianMobile: e.target.value})} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Occupation</label>
-                <input type="text" value={formData.occupation} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Guardian's occupation" onChange={(e) => setFormData({...formData, occupation: e.target.value})} />
+                <input type="text" value={formData.occupation} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, occupation: e.target.value})} />
               </div>
             </div>
           </div>
 
-          {/* Academic & Course */}
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-5">Academic & Course</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white p-8 rounded-[24px] border border-[#B5D4F4] shadow-lg shadow-[#B5D4F4]/20">
+            <SectionBanner title="Academic & Course" color="#378ADD" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Course</label>
-                <select value={formData.course} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white" onChange={(e) => setFormData({...formData, course: e.target.value})}>
-                  <option>Spoken English</option>
-                  <option>Writing</option>
-                  <option>Kids English</option>
-                  <option>SSC/HSC English</option>
+                <select value={formData.course} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none bg-white" onChange={(e) => setFormData({...formData, course: e.target.value})}>
+                  <option>Spoken English</option><option>Writing</option><option>Kids English</option><option>SSC/HSC English</option>
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Batch Name</label>
-                <input type="text" value={formData.batch} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. Morning A" onChange={(e) => setFormData({...formData, batch: e.target.value})} />
+                <input type="text" value={formData.batch} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, batch: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Batch Time</label>
+                <input type="text" value={formData.batchTime} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, batchTime: e.target.value})} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Session</label>
-                <input type="text" value={formData.session} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="2025-26" onChange={(e) => setFormData({...formData, session: e.target.value})} />
+                <input type="text" value={formData.session} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, session: e.target.value})} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Previous Board</label>
-                <input type="text" value={formData.board} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. Dhaka" onChange={(e) => setFormData({...formData, board: e.target.value})} />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Board</label>
+                <input type="text" value={formData.board} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, board: e.target.value})} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Previous Roll</label>
-                <input type="text" value={formData.roll} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Roll number" onChange={(e) => setFormData({...formData, roll: e.target.value})} />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Roll</label>
+                <input type="text" value={formData.roll} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, roll: e.target.value})} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Previous GPA</label>
-                <input type="text" value={formData.gpa} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. 5.00" onChange={(e) => setFormData({...formData, gpa: e.target.value})} />
+                <label className="block text-sm font-medium text-gray-700 mb-1">GPA</label>
+                <input type="text" value={formData.gpa} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, gpa: e.target.value})} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Total Course Fee (৳)</label>
-                <input type="number" required value={formData.fee} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. 5000" onChange={(e) => setFormData({...formData, fee: e.target.value})} />
+                <input type="number" required value={formData.fee} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, fee: e.target.value})} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Discount (৳)</label>
-                <input type="number" value={formData.discount} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. 500" onChange={(e) => setFormData({...formData, discount: e.target.value})} />
+                <input type="number" value={formData.discount} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, discount: e.target.value})} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Paid Amount (৳)</label>
-                <input type="number" value={formData.paidAmount} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. 2000" onChange={(e) => setFormData({...formData, paidAmount: e.target.value})} />
+                <input type="number" value={formData.paidAmount} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, paidAmount: e.target.value})} />
               </div>
             </div>
           </div>

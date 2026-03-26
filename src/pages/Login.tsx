@@ -2,12 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
-import { Lock, Mail, User, GraduationCap, Users, ArrowRight } from "lucide-react";
+import { Lock, Mail, User, GraduationCap, ArrowRight, Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<"admin" | "teacher" | "student" | "parent">("admin");
   const navigate = useNavigate();
 
@@ -76,35 +77,34 @@ export default function Login() {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="max-w-4xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-slate-200">
         {/* Left Side - Branding */}
-        <div className="md:w-1/2 bg-indigo-600 p-12 text-white flex flex-col justify-between relative overflow-hidden">
+        <div className="md:w-1/2 bg-gradient-to-br from-indigo-600 to-purple-700 p-12 text-white flex flex-col justify-between relative overflow-hidden">
           <div className="relative z-10">
-            <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center mb-8 backdrop-blur-sm">
-              <GraduationCap className="h-8 w-8 text-white" />
+            <div className="h-16 w-16 bg-white/10 rounded-2xl flex items-center justify-center mb-8 backdrop-blur-md border border-white/20">
+              <GraduationCap className="h-10 w-10 text-white" />
             </div>
-            <h1 className="text-4xl font-bold mb-4 leading-tight">English Therapy Management System</h1>
-            <p className="text-indigo-100 text-lg">Empowering education through technology and personalized learning.</p>
+            <h1 className="text-5xl font-extrabold mb-6 leading-tight tracking-tight">English Therapy<br/>Management</h1>
+            <p className="text-indigo-100 text-lg font-medium max-w-sm">Empowering education through technology and personalized learning experiences.</p>
           </div>
           
           <div className="relative z-10 mt-12">
-            <div className="flex -space-x-2 mb-4">
-              {[1, 2, 3, 4].map((i) => (
-                <img 
-                  key={i}
-                  src={`https://i.pravatar.cc/100?img=${i + 10}`} 
-                  className="w-10 h-10 rounded-full border-2 border-indigo-600" 
-                  alt="User"
-                />
-              ))}
-              <div className="w-10 h-10 rounded-full bg-indigo-400 border-2 border-indigo-600 flex items-center justify-center text-xs font-bold">
-                +2k
+            <div className="flex items-center gap-4">
+              <div className="flex -space-x-3">
+                {[1, 2, 3].map((i) => (
+                  <img 
+                    key={i}
+                    src={`https://i.pravatar.cc/100?img=${i + 10}`} 
+                    className="w-10 h-10 rounded-full border-2 border-indigo-500" 
+                    alt="User"
+                  />
+                ))}
               </div>
+              <p className="text-sm text-indigo-100 font-medium">Join 2,000+ students</p>
             </div>
-            <p className="text-sm text-indigo-200 italic">"The best way to predict the future is to create it."</p>
           </div>
 
-          {/* Decorative Circles */}
-          <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-500 rounded-full opacity-20"></div>
-          <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-indigo-700 rounded-full opacity-20"></div>
+          {/* Decorative Elements */}
+          <div className="absolute -top-24 -right-24 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
+          <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
         </div>
 
         {/* Right Side - Form */}
@@ -159,13 +159,20 @@ export default function Login() {
                   <Lock className="h-5 w-5 text-slate-400" />
                 </div>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                  className="w-full pl-11 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                  placeholder="••••••••"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-indigo-600"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
             </div>
 

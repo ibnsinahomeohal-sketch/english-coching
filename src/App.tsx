@@ -8,6 +8,7 @@ import React, { useState, useEffect } from "react";
 import { Toaster } from "sonner";
 import { supabase } from "./lib/supabaseClient";
 import { Layout } from "./components/Layout";
+import { StudentLayout } from "./components/StudentLayout";
 import Dashboard from "./pages/Dashboard";
 import Admission from "./pages/Admission";
 import Operations from "./pages/Operations";
@@ -31,7 +32,7 @@ import Expenses from "./pages/Expenses";
 import Homework from "./pages/Homework";
 import Certificates from "./pages/Certificates";
 import ParentPortal from "./pages/ParentPortal";
-import StudentPortal from "./pages/StudentPortal";
+import StudentDashboard from "./pages/StudentPortal";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
 import AuthCallback from "./pages/AuthCallback";
@@ -70,7 +71,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/student-portal" element={<StudentPortal />} />
+
         <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route index element={<Dashboard />} />
           <Route path="admission" element={<Admission />} />
@@ -98,6 +99,19 @@ export default function App() {
           <Route path="learning" element={<LearningModule />} />
           <Route path="speaking" element={<SpeakingPractice />} />
           <Route path="community" element={<Community />} />
+        </Route>
+
+        <Route path="/student" element={<ProtectedRoute><StudentLayout /></ProtectedRoute>}>
+          <Route index element={<StudentDashboard />} />
+          <Route path="schedule" element={<ClassSchedule />} />
+          <Route path="homework" element={<Homework />} />
+          <Route path="notes" element={<Notes />} />
+          <Route path="my-exams" element={<StudentExams />} />
+          <Route path="speaking" element={<SpeakingPractice />} />
+          <Route path="community" element={<Community />} />
+          <Route path="ai-support" element={<AISupport />} />
+          <Route path="profile" element={<StudentProfile />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </BrowserRouter>

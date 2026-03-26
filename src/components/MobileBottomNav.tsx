@@ -4,35 +4,35 @@ import { useState } from "react";
 import { cn } from "../lib/utils";
 
 const navItems = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Students", href: "/students", icon: Users },
-  { name: "Attendance", href: "/attendance", icon: CalendarCheck },
-  { name: "Fees", href: "/fees", icon: CreditCard },
-  { name: "More", href: "#", icon: MoreHorizontal, isMore: true },
+  { name: "Dashboard", href: "/", icon: LayoutDashboard, color: "var(--color-dashboard)" },
+  { name: "Students", href: "/students", icon: Users, color: "var(--color-dashboard)" },
+  { name: "Attendance", href: "/attendance", icon: CalendarCheck, color: "var(--color-attendance)" },
+  { name: "Fees", href: "/fees", icon: CreditCard, color: "var(--color-fees)" },
+  { name: "More", href: "#", icon: MoreHorizontal, isMore: true, color: "var(--color-dashboard)" },
 ];
 
 const allItems = [
-  { name: "Admission", href: "/admission", icon: UserPlus },
-  { name: "Teachers", href: "/teachers", icon: GraduationCap },
-  { name: "Operations", href: "/operations", icon: IdCard },
-  { name: "Class Schedule", href: "/schedule", icon: Clock },
-  { name: "Expenses", href: "/expenses", icon: TrendingDown },
-  { name: "Homework", href: "/homework", icon: BookOpen },
-  { name: "Certificates", href: "/certificates", icon: Award },
-  { name: "Parent Portal", href: "/parent-portal", icon: UserCircle },
-  { name: "Student Chat", href: "/chat", icon: MessageSquare },
-  { name: "Course Notes", href: "/notes", icon: FileText },
-  { name: "Exams", href: "/exams", icon: FileQuestion },
-  { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
-  { name: "Learning", href: "/learning", icon: BookOpen },
-  { name: "Speaking", href: "/speaking", icon: Mic },
-  { name: "Community", href: "/community", icon: Users },
-  { name: "EdTech", href: "/edtech", icon: BookOpen },
-  { name: "Resources", href: "/resources", icon: Library },
-  { name: "AI Support", href: "/ai-support", icon: Bot },
-  { name: "Finance", href: "/finance", icon: Wallet },
-  { name: "Profile", href: "/profile", icon: UserCircle },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Admission", href: "/admission", icon: UserPlus, color: "var(--color-dashboard)" },
+  { name: "Teachers", href: "/teachers", icon: GraduationCap, color: "var(--color-dashboard)" },
+  { name: "Operations", href: "/operations", icon: IdCard, color: "var(--color-dashboard)" },
+  { name: "Class Schedule", href: "/schedule", icon: Clock, color: "var(--color-schedule)" },
+  { name: "Expenses", href: "/expenses", icon: TrendingDown, color: "var(--color-fees)" },
+  { name: "Homework", href: "/homework", icon: BookOpen, color: "var(--color-homework)" },
+  { name: "Certificates", href: "/certificates", icon: Award, color: "var(--color-learning)" },
+  { name: "Parent Portal", href: "/parent-portal", icon: UserCircle, color: "var(--color-dashboard)" },
+  { name: "Student Chat", href: "/chat", icon: MessageSquare, color: "var(--color-dashboard)" },
+  { name: "Course Notes", href: "/notes", icon: FileText, color: "var(--color-learning)" },
+  { name: "Exams", href: "/exams", icon: FileQuestion, color: "var(--color-exams)" },
+  { name: "Leaderboard", href: "/leaderboard", icon: Trophy, color: "var(--color-exams)" },
+  { name: "Learning", href: "/learning", icon: BookOpen, color: "var(--color-learning)" },
+  { name: "Speaking", href: "/speaking", icon: Mic, color: "var(--color-learning)" },
+  { name: "Community", href: "/community", icon: Users, color: "var(--color-dashboard)" },
+  { name: "EdTech", href: "/edtech", icon: BookOpen, color: "var(--color-learning)" },
+  { name: "Resources", href: "/resources", icon: Library, color: "var(--color-learning)" },
+  { name: "AI Support", href: "/ai-support", icon: Bot, color: "var(--color-dashboard)" },
+  { name: "Finance", href: "/finance", icon: Wallet, color: "var(--color-fees)" },
+  { name: "Profile", href: "/profile", icon: UserCircle, color: "var(--color-dashboard)" },
+  { name: "Settings", href: "/settings", icon: Settings, color: "var(--color-dashboard)" },
 ];
 
 export function MobileBottomNav() {
@@ -48,8 +48,9 @@ export function MobileBottomNav() {
             onClick={() => item.isMore ? setIsMoreOpen(true) : null}
             className={cn(
               "flex flex-col items-center justify-center w-full h-full",
-              location.pathname === item.href ? "text-[var(--pri)]" : "text-[var(--text3)]"
+              location.pathname === item.href ? "font-semibold" : "text-[var(--text3)]"
             )}
+            style={{ color: location.pathname === item.href ? item.color : undefined }}
           >
             {!item.isMore ? (
               <Link to={item.href} className="flex flex-col items-center">
@@ -80,7 +81,7 @@ export function MobileBottomNav() {
                 onClick={() => setIsMoreOpen(false)}
                 className="flex flex-col items-center text-center p-2 rounded-xl hover:bg-[var(--bg3)]"
               >
-                <item.icon className="h-8 w-8 text-[var(--pri)] mb-2" />
+                <item.icon className="h-8 w-8 mb-2" style={{ color: item.color }} />
                 <span className="text-xs font-medium text-[var(--text2)]">{item.name}</span>
               </Link>
             ))}

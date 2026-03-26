@@ -75,7 +75,29 @@ body {
 }
 
 :root {
-  /* LIGHT MODE VARIABLES */
+  /* Section Colors */
+  --color-dashboard: #6C4DEF;
+  --color-admission: #378ADD;
+  --color-students: #1D9E75;
+  --color-teachers: #BA7517;
+  --color-schedule: #BA7517;
+  --color-attendance: #1D9E75;
+  --color-fees: #378ADD;
+  --color-expenses: #E9650A;
+  --color-homework: #E9650A;
+  --color-certificates: #B03070;
+  --color-exams: #D4537E;
+  --color-leaderboard: #6C4DEF;
+  --color-learning: #639922;
+  --color-speaking: #6C4DEF;
+  --color-finance: #378ADD;
+  --color-settings: #444444;
+  --color-whatsapp: #25D366;
+
+  /* Base Colors */
+  --bg-sidebar: #1a1a2e;
+  --text-sidebar: #aaaaaa;
+  
   --bg: #F7F8FC;
   --bg2: #FFFFFF;
   --bg3: #EEF0F8;
@@ -83,22 +105,11 @@ body {
   --text2: #4B5563;
   --text3: #9CA3AF;
   --bd: #E5E7EB;
-  --bd2: #D1D5DB;
-  --pri: #5B4FE9;
-  --pri-bg: #EEECFD;
-  --pri-t: #3730A3;
-  --green: #059669;
-  --green-bg: #ECFDF5;
-  --green-t: #065F46;
-  --amber: #D97706;
-  --amber-bg: #FFFBEB;
-  --amber-t: #92400E;
-  --red: #DC2626;
-  --red-bg: #FEF2F2;
-  --red-t: #991B1B;
-  --blue: #2563EB;
-  --blue-bg: #EFF6FF;
-  --blue-t: #1E40AF;
+  --pri: #6C4DEF;
+  --pri-bg: #EDE9FE;
+  --pri-t: #5B4FE9;
+  
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 .dark {

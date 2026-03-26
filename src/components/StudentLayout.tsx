@@ -1,66 +1,44 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { 
-  LayoutDashboard, UserPlus, Users, IdCard, BookOpen, Library, Bot, Wallet, Mic,
-  UserCircle, FileQuestion, GraduationCap, Trophy, LogOut, CalendarCheck,
-  MessageSquare, FileText, Settings as SettingsIcon, Clock, CreditCard,
-  TrendingDown, Award, User, Sun, Moon, Menu
+  LayoutDashboard, BookOpen, Clock, MessageSquare, FileText, 
+  UserCircle, Settings as SettingsIcon, Mic, Users, Award, 
+  LogOut, Bell, Sun, Moon, Menu, Bot
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
 import { MobileBottomNav } from "./MobileBottomNav";
 
-const navigationGroups = [
-  {
-    label: "MAIN",
-    items: [
-      { name: "Dashboard", href: "/", icon: LayoutDashboard, color: "var(--color-dashboard)" },
-      { name: "Admission", href: "/admission", icon: UserPlus, color: "var(--color-dashboard)" },
-      { name: "All Students", href: "/students", icon: Users, color: "var(--color-dashboard)" },
-      { name: "Teachers", href: "/teachers", icon: GraduationCap, color: "var(--color-dashboard)" },
-      { name: "Operations", href: "/operations", icon: IdCard, color: "var(--color-dashboard)" },
-    ]
-  },
-  {
-    label: "ACADEMIC",
-    items: [
-      { name: "Class Schedule", href: "/schedule", icon: Clock, color: "var(--color-schedule)" },
-      { name: "Attendance", href: "/attendance", icon: CalendarCheck, color: "var(--color-attendance)" },
-      { name: "Fees & Payments", href: "/fees", icon: CreditCard, color: "var(--color-fees)" },
-      { name: "Expenses", href: "/expenses", icon: TrendingDown, color: "var(--color-fees)" },
-      { name: "Homework", href: "/homework", icon: BookOpen, color: "var(--color-homework)" },
-      { name: "Certificates", href: "/certificates", icon: Award, color: "var(--color-learning)" },
-      { name: "Parent Portal", href: "/parent-portal", icon: User, color: "var(--color-dashboard)" },
-      { name: "Student Chat", href: "/chat", icon: MessageSquare, color: "var(--color-dashboard)" },
-      { name: "Course Notes", href: "/notes", icon: FileText, color: "var(--color-learning)" },
-      { name: "Exams (Admin)", href: "/exams", icon: FileQuestion, color: "var(--color-exams)" },
-      { name: "My Exams (Student)", href: "/my-exams", icon: GraduationCap, color: "var(--color-exams)" },
-      { name: "Leaderboard", href: "/leaderboard", icon: Trophy, color: "var(--color-exams)" },
-    ]
-  },
+const studentNavigation = [
   {
     label: "LEARNING",
     items: [
-      { name: "Learning Module", href: "/learning", icon: BookOpen, color: "var(--color-learning)" },
+      { name: "Dashboard", href: "/student-portal", icon: LayoutDashboard, color: "var(--color-dashboard)" },
+      { name: "Class Schedule", href: "/schedule", icon: Clock, color: "var(--color-schedule)" },
+      { name: "Homework", href: "/homework", icon: BookOpen, color: "var(--color-homework)" },
+      { name: "Course Notes", href: "/notes", icon: FileText, color: "var(--color-learning)" },
+      { name: "My Exams", href: "/my-exams", icon: Award, color: "var(--color-exams)" },
+    ]
+  },
+  {
+    label: "PRACTICE",
+    items: [
       { name: "Speaking Practice", href: "/speaking", icon: Mic, color: "var(--color-learning)" },
       { name: "Community", href: "/community", icon: Users, color: "var(--color-dashboard)" },
-      { name: "EdTech", href: "/edtech", icon: BookOpen, color: "var(--color-learning)" },
-      { name: "Resources", href: "/resources", icon: Library, color: "var(--color-learning)" },
       { name: "AI & Support", href: "/ai-support", icon: Bot, color: "var(--color-dashboard)" },
     ]
   },
   {
     label: "ACCOUNT",
     items: [
-      { name: "Finance", href: "/finance", icon: Wallet, color: "var(--color-fees)" },
       { name: "Student Profile", href: "/profile", icon: UserCircle, color: "var(--color-dashboard)" },
       { name: "Settings", href: "/settings", icon: SettingsIcon, color: "var(--color-dashboard)" },
     ]
   }
 ];
 
-export function Layout() {
+export function StudentLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isDark, setIsDark] = useState(localStorage.getItem("theme") === "dark");
@@ -103,10 +81,10 @@ export function Layout() {
       )}>
         <div className="h-14 flex items-center px-6 border-b border-[#2a2a3e]">
           <div className="w-6 h-6 bg-[var(--color-dashboard)] rounded-md mr-2 flex items-center justify-center text-white text-xs font-bold">ET</div>
-          <h1 className="text-sm font-bold tracking-tight text-white">English Therapy</h1>
+          <h1 className="text-sm font-bold tracking-tight text-white">Student Portal</h1>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-6 overflow-y-auto">
-          {navigationGroups.map((group) => (
+          {studentNavigation.map((group) => (
             <div key={group.label}>
               <h3 className="px-3 text-[9px] font-bold text-[#666] uppercase tracking-[0.1em] mb-2">
                 {group.label}
@@ -164,14 +142,14 @@ export function Layout() {
             <Menu className="h-6 w-6" />
           </button>
           <h2 className="text-sm font-bold text-[var(--text)]">
-            {navigationGroups.flatMap(g => g.items).find((n) => n.href === location.pathname)?.name || "Dashboard"}
+            {studentNavigation.flatMap(g => g.items).find((n) => n.href === location.pathname)?.name || "Dashboard"}
           </h2>
           <div className="flex items-center gap-3">
             <button onClick={() => setIsDark(!isDark)} className="p-2 rounded-lg bg-[var(--bg3)] text-[var(--text2)] hover:text-[var(--pri)]">
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
             <div className="h-8 w-8 rounded-full bg-[var(--bg3)] flex items-center justify-center text-[var(--pri)] font-bold text-xs border border-[var(--bd)]" title={user?.email}>
-              {user?.email?.[0].toUpperCase() || "A"}
+              {user?.email?.[0].toUpperCase() || "S"}
             </div>
           </div>
         </header>
@@ -179,7 +157,6 @@ export function Layout() {
           <Outlet />
         </main>
       </div>
-      <MobileBottomNav />
     </div>
   );
 }
