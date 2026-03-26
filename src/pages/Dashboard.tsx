@@ -1,14 +1,17 @@
-import { Zap, Flame, BookOpen, Award, TrendingUp, Target, MapPin, RefreshCw, CalendarCheck, CreditCard, FileQuestion, LayoutDashboard } from "lucide-react";
+import { 
+  Users, GraduationCap, CreditCard, CalendarCheck, 
+  TrendingUp, ArrowUpRight, ArrowDownRight, 
+  Clock, BookOpen, FileQuestion, Trophy, Activity
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { ColoredStatBox } from "../components/ColoredStatBox";
-import { SectionBanner } from "../components/SectionBanner";
-import { PageHero } from "../components/PageHero";
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
     totalStudents: 0,
-    recentAdmissions: 0
+    recentAdmissions: 0,
+    totalRevenue: 12540,
+    attendanceRate: 94
   });
 
   useEffect(() => {
@@ -40,84 +43,126 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'rgba(15, 10, 30, 0.06)' }}>
-      <PageHero 
-        title="Dashboard"
-        subtitle="Overview of your English Therapy center"
-        icon={LayoutDashboard}
-        darkColor="#0f0a1e"
-        badge="Overview"
-        pattern={
-          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <defs>
-              <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#6C4DEF" strokeWidth="0.5"/>
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-            <path d="M 0 0 L 20 0 L 0 20 Z" fill="#6C4DEF" />
-            <path d="M 80 0 L 100 0 L 100 20 Z" fill="#6C4DEF" />
-            <path d="M 0 80 L 0 100 L 20 100 Z" fill="#6C4DEF" />
-            <path d="M 80 100 L 100 100 L 100 80 Z" fill="#6C4DEF" />
-          </svg>
-        }
-      />
-      
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* Quick Actions Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          {[
-            { name: "Attendance", icon: CalendarCheck, color: "var(--color-attendance)" },
-            { name: "Fees", icon: CreditCard, color: "var(--color-fees)" },
-            { name: "Homework", icon: BookOpen, color: "var(--color-homework)" },
-            { name: "Exam", icon: FileQuestion, color: "var(--color-exams)" },
-          ].map((action, i) => (
-            <button key={i} className="flex items-center gap-3 p-4 rounded-xl text-white font-bold" style={{ backgroundColor: action.color }}>
-              <action.icon className="h-5 w-5" />
-              <span>{action.name}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <ColoredStatBox title="Total Students" value={stats.totalStudents} icon={Zap} trend={`+${stats.recentAdmissions} this week`} color="var(--color-dashboard)" />
-          <ColoredStatBox title="Current Streak" value="0 Days" icon={Flame} trend="Start learning!" color="var(--color-attendance)" />
-          <ColoredStatBox title="Lessons" value="0/0" icon={BookOpen} color="var(--color-homework)" />
-          <ColoredStatBox title="Rank" value="None" icon={Award} color="var(--color-exams)" />
-        </div>
-
-        {/* Progress & Goal */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-[14px] border border-[#E2E8F0] shadow-sm">
-            <h3 className="text-sm font-bold text-[var(--color-dashboard)] uppercase mb-4">Learning Progress</h3>
-            <div className="w-full bg-[#EDE9FE] rounded-full h-3">
-              <div className="bg-[var(--color-dashboard)] h-3 rounded-full" style={{ width: '65%' }}></div>
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: "Total Students", value: stats.totalStudents, icon: Users, trend: `+${stats.recentAdmissions}`, color: "primary" },
+          { label: "Attendance Rate", value: `${stats.attendanceRate}%`, icon: Activity, trend: "+2.4%", color: "secondary" },
+          { label: "Total Revenue", value: `$${stats.totalRevenue.toLocaleString()}`, icon: CreditCard, trend: "+12.5%", color: "accent" },
+          { label: "Active Classes", value: "12", icon: Clock, trend: "Stable", color: "primary" },
+        ].map((stat, i) => (
+          <div key={i} className="card-premium p-6 group">
+            <div className="flex items-start justify-between mb-4">
+              <div className={`p-3 rounded-xl bg-${stat.color}/10 text-${stat.color} group-hover:scale-110 transition-transform duration-300`}>
+                <stat.icon className="h-6 w-6" />
+              </div>
+              <div className={`flex items-center gap-1 text-xs font-bold ${stat.trend.startsWith('+') ? 'text-secondary' : 'text-gray-400'}`}>
+                {stat.trend.startsWith('+') && <ArrowUpRight className="h-3 w-3" />}
+                {stat.trend}
+              </div>
             </div>
-            <p className="text-xs font-medium text-gray-600 mt-2">20 out of 30 days completed</p>
-          </div>
-
-          <div className="bg-white p-6 rounded-[14px] border border-[#E2E8F0] shadow-sm">
-            <h3 className="text-sm font-bold text-[var(--color-dashboard)] uppercase mb-4">Weekly Goal</h3>
-            <div className="flex items-end gap-2">
-              <span className="text-3xl font-bold text-gray-900">0%</span>
-              <span className="text-sm text-gray-600 mb-1">of weekly goal</span>
+            <div className="space-y-1">
+              <h3 className="text-3xl font-display font-bold text-gray-900 tracking-tight">{stat.value}</h3>
+              <p className="text-sm text-gray-400 font-medium">{stat.label}</p>
             </div>
           </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Chart Area Placeholder */}
+        <div className="lg:col-span-2 space-y-8">
+          <div className="card-premium p-8">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h3 className="text-lg font-display font-bold text-gray-900">Student Growth</h3>
+                <p className="text-sm text-gray-400 font-medium">Monthly enrollment statistics</p>
+              </div>
+              <select className="px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm font-semibold text-gray-600 outline-none focus:ring-2 focus:ring-primary/20">
+                <option>Last 6 Months</option>
+                <option>Last Year</option>
+              </select>
+            </div>
+            <div className="h-64 flex items-end justify-between gap-2">
+              {[45, 60, 55, 85, 70, 95].map((h, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-3 group">
+                  <div 
+                    className="w-full bg-primary/10 rounded-t-xl group-hover:bg-primary/20 transition-all duration-500 relative"
+                    style={{ height: `${h}%` }}
+                  >
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                      {h}%
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'][i]}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="card-premium p-6 flex items-center gap-6">
+              <div className="w-16 h-16 rounded-full border-4 border-primary/10 border-t-primary flex items-center justify-center">
+                <span className="text-sm font-bold text-gray-900">75%</span>
+              </div>
+              <div>
+                <h4 className="font-display font-bold text-gray-900">Daily Target</h4>
+                <p className="text-xs text-gray-400 font-medium">15/20 classes completed</p>
+              </div>
+            </div>
+            <div className="card-premium p-6 flex items-center gap-6">
+              <div className="w-16 h-16 rounded-full border-4 border-secondary/10 border-t-secondary flex items-center justify-center">
+                <span className="text-sm font-bold text-gray-900">82%</span>
+              </div>
+              <div>
+                <h4 className="font-display font-bold text-gray-900">Student Satisfaction</h4>
+                <p className="text-xs text-gray-400 font-medium">Based on recent feedback</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Location */}
-        <div className="bg-white p-6 rounded-[14px] border border-[#E2E8F0] shadow-sm">
-          <SectionBanner title="Our Location" color="var(--color-dashboard)" />
-          <div className="aspect-video w-full rounded-xl overflow-hidden border border-[#E2E8F0]">
-            <iframe 
-              width="100%" 
-              height="100%" 
-              frameBorder="0" 
-              style={{ border: 0 }}
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3688.825638166548!2d91.1474771!3d23.0383828!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x37549f23f6d9b553%3A0xb28b2edc93a5eadb!2sChatarpaiya%20Bazar!5e0!3m2!1sen!2sbd!4v1710780000000!5m2!1sen!2sbd" 
-              allowFullScreen
-            ></iframe>
+        {/* Sidebar Actions */}
+        <div className="space-y-8">
+          <div className="card-premium p-8">
+            <h3 className="text-lg font-display font-bold text-gray-900 mb-6">Quick Actions</h3>
+            <div className="grid grid-cols-1 gap-3">
+              {[
+                { name: "Take Attendance", icon: CalendarCheck, color: "primary" },
+                { name: "Collect Fees", icon: CreditCard, color: "secondary" },
+                { name: "Assign Homework", icon: BookOpen, color: "accent" },
+                { name: "Create Exam", icon: FileQuestion, color: "primary" },
+              ].map((action, i) => (
+                <button key={i} className={`flex items-center gap-4 p-4 rounded-2xl bg-${action.color}/5 text-${action.color} hover:bg-${action.color}/10 transition-all duration-200 group`}>
+                  <div className={`p-2 rounded-lg bg-white shadow-sm group-hover:scale-110 transition-transform`}>
+                    <action.icon className="h-5 w-5" />
+                  </div>
+                  <span className="font-bold text-sm">{action.name}</span>
+                  <ArrowUpRight className="ml-auto h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="card-premium p-8 overflow-hidden relative">
+            <div className="relative z-10">
+              <h3 className="text-lg font-display font-bold text-gray-900 mb-2">Center Location</h3>
+              <p className="text-xs text-gray-400 font-medium mb-6">Chatarpaiya Bazar, Feni</p>
+              <div className="aspect-square w-full rounded-2xl overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 border border-gray-100">
+                <iframe 
+                  width="100%" 
+                  height="100%" 
+                  frameBorder="0" 
+                  style={{ border: 0 }}
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3688.825638166548!2d91.1474771!3d23.0383828!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x37549f23f6d9b553%3A0xb28b2edc93a5eadb!2sChatarpaiya%20Bazar!5e0!3m2!1sen!2sbd!4v1710780000000!5m2!1sen!2sbd" 
+                  allowFullScreen
+                ></iframe>
+              </div>
+            </div>
+            <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl" />
           </div>
         </div>
       </div>

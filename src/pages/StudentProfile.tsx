@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, ChangeEvent } from "react";
-import { Camera, Save, User, Mail, Phone, BookOpen, Trophy, Star, Target, IdCard, Download, X, Upload, Clock } from "lucide-react";
+import { Camera, Save, User, Mail, Phone, BookOpen, Trophy, Star, Target, IdCard, Download, X, Upload, Clock, MapPin, Calendar, Hash, Shield, Award, Zap, CheckCircle2, ArrowRight } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { QRCodeSVG } from "qrcode.react";
@@ -108,7 +108,7 @@ export default function StudentProfile() {
 
   const handleSave = () => {
     setIsEditing(false);
-    alert("Profile updated successfully!");
+    toast.success("Profile updated successfully!");
   };
 
   const handleDownloadIdCard = async () => {
@@ -123,30 +123,31 @@ export default function StudentProfile() {
       pdf.save(`${studentData.name}_ID_Card.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
-      alert("Failed to download ID card.");
+      toast.error("Failed to download ID card.");
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto pb-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">My Profile</h2>
-          <p className="text-sm text-gray-500 mt-1">Manage your personal information and view your performance</p>
+          <h1 className="text-2xl font-display font-bold text-gray-900">Student Profile</h1>
+          <p className="text-sm text-gray-400 font-medium">Manage your personal information and view your performance</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <button
             onClick={() => setIsIdModalOpen(true)}
-            className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors shadow-sm"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-white border border-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-soft"
           >
-            <IdCard className="h-4 w-4" /> View ID Card
+            <IdCard className="h-4 w-4 text-primary" />
+            Digital ID
           </button>
           <button
             onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-            className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors shadow-sm"
+            className="flex-1 sm:flex-none btn-primary flex items-center justify-center gap-2"
           >
             {isEditing ? (
-              <><Save className="h-4 w-4" /> Save Profile</>
+              <><Save className="h-4 w-4" /> Save Changes</>
             ) : (
               <><User className="h-4 w-4" /> Edit Profile</>
             )}
@@ -154,161 +155,232 @@ export default function StudentProfile() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-6">
-        {/* Cover Photo */}
-        <div className="h-32 bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center px-8 relative overflow-hidden">
-          {/* Decorative background elements */}
-          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white opacity-10 rounded-full blur-2xl"></div>
-          <div className="absolute bottom-0 left-20 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
-          
-          <h1 className="text-3xl md:text-4xl font-black text-white tracking-widest opacity-90 drop-shadow-lg z-10 uppercase">
-            Basic English Therapy
-          </h1>
-        </div>
-        
-        <div className="px-8 pb-8">
-          {/* Profile Photo Section */}
-          <div className="relative flex items-end gap-6 -mt-12 mb-8">
-            <div className="relative shrink-0">
-              <div className="h-28 w-28 rounded-full border-4 border-white bg-white overflow-hidden shadow-md flex items-center justify-center">
-                {photo ? (
-                  <img src={photo} alt="Profile" className="h-full w-full object-cover" />
-                ) : (
-                  <User className="h-16 w-16 text-gray-300" />
-                )}
-              </div>
-              <label className="absolute bottom-0 right-0 h-8 w-8 bg-indigo-600 rounded-full border-2 border-white flex items-center justify-center cursor-pointer hover:bg-indigo-700 transition-colors shadow-sm" title="Change Profile Picture">
-                <Camera className="h-4 w-4 text-white" />
-                <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
-              </label>
-            </div>
-            <div className="pb-2">
-              <h3 className="text-2xl font-bold text-gray-900">{studentData.name}</h3>
-              <p className="text-sm text-gray-500 font-medium">ID: {studentData.id}</p>
-            </div>
-          </div>
-
-          {/* Performance Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center gap-4">
-              <div className="h-12 w-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                <Trophy className="h-6 w-6 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-yellow-800">Current Rank</p>
-                <p className="text-2xl font-black text-yellow-900">{studentData.rank}st <span className="text-sm font-medium text-yellow-700">Place</span></p>
-              </div>
-            </div>
-            <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex items-center gap-4">
-              <div className="h-12 w-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                <Star className="h-6 w-6 text-indigo-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-indigo-800">Total Points</p>
-                <p className="text-2xl font-black text-indigo-900">{studentData.points}</p>
-              </div>
-            </div>
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-4">
-              <div className="h-12 w-12 bg-emerald-100 rounded-full flex items-center justify-center">
-                <Target className="h-6 w-6 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-emerald-800">Exams Completed</p>
-                <p className="text-2xl font-black text-emerald-900">{studentData.examsTaken}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Form Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-4 w-4 text-gray-400" />
-                </div>
-                <input 
-                  type="text" 
-                  disabled={true}
-                  value={studentData.name}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 outline-none" 
-                />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          {/* Profile Card */}
+          <div className="card-premium overflow-hidden">
+            <div className="h-32 bg-gradient-to-r from-primary to-primary-light relative">
+              <div className="absolute inset-0 opacity-10">
+                <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <path d="M0 100 C 20 0 50 0 100 100 Z" fill="white" />
+                </svg>
               </div>
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Phone className="h-4 w-4 text-gray-400" />
+            <div className="px-8 pb-8">
+              <div className="relative flex items-end gap-6 -mt-12 mb-8">
+                <div className="relative shrink-0">
+                  <div className="h-32 w-32 rounded-3xl border-4 border-white bg-white overflow-hidden shadow-lg flex items-center justify-center">
+                    {photo ? (
+                      <img src={photo} alt="Profile" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="h-full w-full bg-primary/5 flex items-center justify-center">
+                        <User className="h-16 w-16 text-primary/20" />
+                      </div>
+                    )}
+                  </div>
+                  <label className="absolute -bottom-2 -right-2 h-10 w-10 bg-primary text-white rounded-xl border-4 border-white flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-md" title="Change Profile Picture">
+                    <Camera className="h-4 w-4" />
+                    <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                  </label>
                 </div>
-                <input 
-                  type="text" 
-                  disabled={true}
-                  value={studentData.phone}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 outline-none" 
-                />
+                <div className="pb-2">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-2xl font-display font-bold text-gray-900">{studentData.name}</h3>
+                    <div className="p-1 rounded-full bg-emerald-500 text-white">
+                      <CheckCircle2 className="h-3 w-3" />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-400 font-medium">
+                    <Hash className="h-3 w-3" />
+                    <span>{studentData.id}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Full Name</label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="text" 
+                      disabled={!isEditing}
+                      value={studentData.name}
+                      className="input-premium pl-11 disabled:bg-gray-50/50 disabled:text-gray-500" 
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Phone Number</label>
+                  <div className="relative">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="text" 
+                      disabled={!isEditing}
+                      value={studentData.phone}
+                      className="input-premium pl-11 disabled:bg-gray-50/50 disabled:text-gray-500" 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Email Address</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="email" 
+                      disabled={!isEditing}
+                      value={studentData.email}
+                      className="input-premium pl-11 disabled:bg-gray-50/50 disabled:text-gray-500" 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Address</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="text" 
+                      disabled={!isEditing}
+                      value={studentData.address}
+                      className="input-premium pl-11 disabled:bg-gray-50/50 disabled:text-gray-500" 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Date of Birth</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="text" 
+                      disabled={!isEditing}
+                      value={studentData.dob}
+                      className="input-premium pl-11 disabled:bg-gray-50/50 disabled:text-gray-500" 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Blood Group</label>
+                  <div className="relative">
+                    <Zap className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="text" 
+                      disabled={!isEditing}
+                      value={studentData.bloodGroup}
+                      className="input-premium pl-11 disabled:bg-gray-50/50 disabled:text-gray-500" 
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Academic Info */}
+          <div className="card-premium p-8">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-2 rounded-lg bg-secondary/10 text-secondary">
+                <BookOpen className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-display font-bold text-gray-900">Academic Details</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Enrolled Course</p>
+                <p className="font-bold text-gray-900">{studentData.course || "N/A"}</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Batch Name</p>
+                <p className="font-bold text-gray-900">{studentData.batchNo || "N/A"}</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Batch Time</p>
+                <p className="font-bold text-gray-900">{studentData.batchTime || "N/A"}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-8">
+          {/* Performance Stats */}
+          <div className="card-premium p-8 space-y-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-lg bg-accent/10 text-accent">
+                <Award className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-display font-bold text-gray-900">Performance</h3>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 p-4 rounded-2xl bg-amber-50 border border-amber-100">
+                <div className="h-12 w-12 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600">
+                  <Trophy className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-amber-800/60 uppercase tracking-wider">Current Rank</p>
+                  <p className="text-xl font-black text-amber-900">{studentData.rank}st Place</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 p-4 rounded-2xl bg-primary/5 border border-primary/10">
+                <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                  <Star className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-primary/60 uppercase tracking-wider">Total Points</p>
+                  <p className="text-xl font-black text-primary">{studentData.points}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 p-4 rounded-2xl bg-secondary/5 border border-secondary/10">
+                <div className="h-12 w-12 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary">
+                  <Target className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-secondary/60 uppercase tracking-wider">Exams Completed</p>
+                  <p className="text-xl font-black text-secondary">{studentData.examsTaken}</p>
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-4 w-4 text-gray-400" />
-                </div>
-                <input 
-                  type="email" 
-                  disabled={true}
-                  value={studentData.email}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 outline-none" 
-                />
+            <div className="pt-4">
+              <div className="flex justify-between text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                <span>Course Progress</span>
+                <span>65%</span>
+              </div>
+              <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: '65%' }}></div>
               </div>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Enrolled Course</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <BookOpen className="h-4 w-4 text-gray-400" />
+          {/* Quick Actions */}
+          <div className="card-premium p-8">
+            <h3 className="text-sm font-bold text-gray-900 mb-4">Quick Links</h3>
+            <div className="space-y-2">
+              <button className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors group">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                    <BookOpen className="h-4 w-4" />
+                  </div>
+                  <span className="text-sm font-bold text-gray-700">Course Materials</span>
                 </div>
-                <input 
-                  type="text" 
-                  disabled={true}
-                  value={studentData.course}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 outline-none" 
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Batch Name</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <BookOpen className="h-4 w-4 text-gray-400" />
+                <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-primary transition-colors" />
+              </button>
+              <button className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors group">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-secondary/10 text-secondary flex items-center justify-center">
+                    <Clock className="h-4 w-4" />
+                  </div>
+                  <span className="text-sm font-bold text-gray-700">Class Schedule</span>
                 </div>
-                <input 
-                  type="text" 
-                  disabled={true}
-                  value={studentData.batchNo}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 outline-none" 
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Batch Time</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Clock className="h-4 w-4 text-gray-400" />
-                </div>
-                <input 
-                  type="text" 
-                  disabled={true}
-                  value={studentData.batchTime}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 outline-none" 
-                />
-              </div>
+                <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-secondary transition-colors" />
+              </button>
             </div>
           </div>
         </div>
@@ -316,26 +388,25 @@ export default function StudentProfile() {
 
       {/* ID Card Modal */}
       {isIdModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <IdCard className="h-5 w-5 text-indigo-600" />
-                Student ID Card
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="flex justify-between items-center p-6 border-b border-gray-50">
+              <h3 className="text-lg font-display font-bold text-gray-900 flex items-center gap-2">
+                <IdCard className="h-5 w-5 text-primary" />
+                Digital ID Card
               </h3>
               <button 
                 onClick={() => setIsIdModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-2 rounded-full transition-colors"
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             
-            <div className="p-6 flex justify-center bg-gray-100 overflow-auto">
-              {/* ID Card Design (Exactly matching Operations.tsx Live Preview) */}
+            <div className="p-8 flex justify-center bg-gray-50 overflow-auto max-h-[60vh]">
               <div 
                 ref={idCardRef}
-                className="w-[340px] h-[540px] relative bg-white shadow-sm shrink-0"
+                className="w-[340px] h-[540px] relative bg-white shadow-2xl rounded-2xl overflow-hidden shrink-0"
                 style={{
                   backgroundImage: templateBg ? `url(${templateBg})` : 'none',
                   backgroundSize: '100% 100%',
@@ -346,13 +417,12 @@ export default function StudentProfile() {
                 {!templateBg && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 text-gray-400 text-center p-6 border-2 border-dashed border-gray-200 m-4 rounded-xl">
                     <Upload className="h-10 w-10 mb-2 opacity-50" />
-                    <p className="text-sm">No template found.</p>
+                    <p className="text-sm font-bold">No template found.</p>
                     <p className="text-xs mt-2">Please ask the admin to upload an ID card template in Operations.</p>
                   </div>
                 )}
 
-                {/* Photo - Aligned to the circular frame */}
-                <div className="absolute top-[12%] left-1/2 -translate-x-1/2 w-[140px] h-[140px] rounded-full overflow-hidden z-10 flex items-center justify-center bg-gray-50 border-2 border-white shadow-sm">
+                <div className="absolute top-[12%] left-1/2 -translate-x-1/2 w-[140px] h-[140px] rounded-full overflow-hidden z-10 flex items-center justify-center bg-gray-50 border-4 border-white shadow-md">
                   {photo ? (
                     <img src={photo} alt="Student" className="w-full h-full object-cover" crossOrigin="anonymous" />
                   ) : (
@@ -360,7 +430,6 @@ export default function StudentProfile() {
                   )}
                 </div>
 
-                {/* Name - Absolute positioned based on layout */}
                 <div 
                   className="absolute w-full text-center z-10"
                   style={{ top: `${layout.name.top}px`, left: `${layout.name.left}px` }}
@@ -370,7 +439,6 @@ export default function StudentProfile() {
                   </h2>
                 </div>
 
-                {/* Details - Aligned exactly next to the labels in the template */}
                 <div className="absolute top-[52%] left-[45%] w-[50%] flex flex-col gap-[14px] z-10">
                   <p className="text-[13px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{studentData.id}</p>
                   <p className="text-[13px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{studentData.course}</p>
@@ -381,7 +449,6 @@ export default function StudentProfile() {
                   <p className="text-[13px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{studentData.batchNo}</p>
                 </div>
 
-                {/* QR Code Container - Absolute positioned based on layout */}
                 <div 
                   className="absolute z-10 flex items-center justify-center overflow-hidden"
                   style={{ 
@@ -399,10 +466,10 @@ export default function StudentProfile() {
               </div>
             </div>
 
-            <div className="p-4 border-t border-gray-100 bg-white">
+            <div className="p-6 border-t border-gray-50 bg-white">
               <button 
                 onClick={handleDownloadIdCard}
-                className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                className="w-full btn-primary flex items-center justify-center gap-2"
               >
                 <Download className="h-5 w-5" />
                 Download PDF

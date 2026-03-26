@@ -13,49 +13,38 @@ import { MobileBottomNav } from "./MobileBottomNav";
 
 const navigationGroups = [
   {
-    label: "MAIN",
+    label: "PLATFORM",
     items: [
-      { name: "Dashboard", href: "/", icon: LayoutDashboard, color: "var(--color-dashboard)" },
-      { name: "Admission", href: "/admission", icon: UserPlus, color: "var(--color-dashboard)" },
-      { name: "All Students", href: "/students", icon: Users, color: "var(--color-dashboard)" },
-      { name: "Teachers", href: "/teachers", icon: GraduationCap, color: "var(--color-dashboard)" },
-      { name: "Operations", href: "/operations", icon: IdCard, color: "var(--color-dashboard)" },
+      { name: "Dashboard", href: "/", icon: LayoutDashboard },
+      { name: "Students", href: "/students", icon: Users },
+      { name: "Teachers", href: "/teachers", icon: GraduationCap },
+      { name: "Classes", href: "/schedule", icon: Clock },
+      { name: "Payments", href: "/fees", icon: CreditCard },
+      { name: "Exams", href: "/exams", icon: FileQuestion },
     ]
   },
   {
     label: "ACADEMIC",
     items: [
-      { name: "Class Schedule", href: "/schedule", icon: Clock, color: "var(--color-schedule)" },
-      { name: "Attendance", href: "/attendance", icon: CalendarCheck, color: "var(--color-attendance)" },
-      { name: "Fees & Payments", href: "/fees", icon: CreditCard, color: "var(--color-fees)" },
-      { name: "Expenses", href: "/expenses", icon: TrendingDown, color: "var(--color-fees)" },
-      { name: "Homework", href: "/homework", icon: BookOpen, color: "var(--color-homework)" },
-      { name: "Certificates", href: "/certificates", icon: Award, color: "var(--color-learning)" },
-      { name: "Parent Portal", href: "/parent-portal", icon: User, color: "var(--color-dashboard)" },
-      { name: "Student Chat", href: "/chat", icon: MessageSquare, color: "var(--color-dashboard)" },
-      { name: "Course Notes", href: "/notes", icon: FileText, color: "var(--color-learning)" },
-      { name: "Exams (Admin)", href: "/exams", icon: FileQuestion, color: "var(--color-exams)" },
-      { name: "My Exams (Student)", href: "/my-exams", icon: GraduationCap, color: "var(--color-exams)" },
-      { name: "Leaderboard", href: "/leaderboard", icon: Trophy, color: "var(--color-exams)" },
+      { name: "Admission", href: "/admission", icon: UserPlus },
+      { name: "Attendance", href: "/attendance", icon: CalendarCheck },
+      { name: "Homework", href: "/homework", icon: BookOpen },
+      { name: "Certificates", href: "/certificates", icon: Award },
     ]
   },
   {
     label: "LEARNING",
     items: [
-      { name: "Learning Module", href: "/learning", icon: BookOpen, color: "var(--color-learning)" },
-      { name: "Speaking Practice", href: "/speaking", icon: Mic, color: "var(--color-learning)" },
-      { name: "Community", href: "/community", icon: Users, color: "var(--color-dashboard)" },
-      { name: "EdTech", href: "/edtech", icon: BookOpen, color: "var(--color-learning)" },
-      { name: "Resources", href: "/resources", icon: Library, color: "var(--color-learning)" },
-      { name: "AI & Support", href: "/ai-support", icon: Bot, color: "var(--color-dashboard)" },
+      { name: "Learning", href: "/learning", icon: BookOpen },
+      { name: "Speaking", href: "/speaking", icon: Mic },
+      { name: "Community", href: "/community", icon: Users },
     ]
   },
   {
-    label: "ACCOUNT",
+    label: "SYSTEM",
     items: [
-      { name: "Finance", href: "/finance", icon: Wallet, color: "var(--color-fees)" },
-      { name: "Student Profile", href: "/profile", icon: UserCircle, color: "var(--color-dashboard)" },
-      { name: "Settings", href: "/settings", icon: SettingsIcon, color: "var(--color-dashboard)" },
+      { name: "Settings", href: "/settings", icon: SettingsIcon },
+      { name: "Finance", href: "/finance", icon: Wallet },
     ]
   }
 ];
@@ -95,23 +84,25 @@ export function Layout() {
   };
 
   return (
-    <div className="flex h-screen bg-[var(--bg)] text-[var(--text)]">
+    <div className="flex h-screen bg-[var(--bg-main)] text-[var(--text-main)] overflow-hidden">
       {/* Sidebar */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-56 bg-[#1a1a2e] text-[#aaaaaa] flex flex-col transition-transform duration-300 md:relative md:translate-x-0",
+        "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 flex flex-col transition-transform duration-300 md:relative md:translate-x-0",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="h-14 flex items-center px-6 border-b border-[#2a2a3e]">
-          <div className="w-6 h-6 bg-[var(--color-dashboard)] rounded-md mr-2 flex items-center justify-center text-white text-xs font-bold">ET</div>
-          <h1 className="text-sm font-bold tracking-tight text-white">English Therapy</h1>
+        <div className="h-20 flex items-center px-8">
+          <div className="w-8 h-8 bg-primary rounded-xl mr-3 flex items-center justify-center text-white shadow-lg shadow-primary/30">
+            <GraduationCap className="h-5 w-5" />
+          </div>
+          <h1 className="text-lg font-display font-bold tracking-tight text-gray-900">English Therapy</h1>
         </div>
-        <nav className="flex-1 px-3 py-4 space-y-6 overflow-y-auto">
+        <nav className="flex-1 px-4 py-4 space-y-8 overflow-y-auto">
           {navigationGroups.map((group) => (
             <div key={group.label}>
-              <h3 className="px-3 text-[9px] font-bold text-[#666] uppercase tracking-[0.1em] mb-2">
+              <h3 className="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">
                 {group.label}
               </h3>
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 {group.items.map((item) => {
                   const isActive = location.pathname === item.href;
                   return (
@@ -120,20 +111,18 @@ export function Layout() {
                       to={item.href}
                       onClick={() => setIsSidebarOpen(false)}
                       className={cn(
-                        "relative flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300",
-                        isActive ? "font-semibold" : "hover:bg-[#2a2a3e] hover:text-white"
+                        "group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200",
+                        isActive 
+                          ? "bg-primary-light text-primary shadow-sm" 
+                          : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                       )}
-                      style={{ color: isActive ? "white" : undefined }}
                     >
-                      {isActive && <div className="absolute inset-0 rounded-lg opacity-15" style={{ backgroundColor: item.color }} />}
-                      <div className={cn(
-                        "relative flex items-center justify-center w-7 h-7 rounded-lg mr-3 transition-colors",
-                      )}
-                      style={{ backgroundColor: item.color }}
-                      >
-                        <item.icon className="h-4 w-4 text-white" />
-                      </div>
-                      <span className="relative">{item.name}</span>
+                      <item.icon className={cn(
+                        "h-5 w-5 mr-3 transition-colors",
+                        isActive ? "text-primary" : "text-gray-400 group-hover:text-gray-600"
+                      )} />
+                      <span>{item.name}</span>
+                      {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(79,70,229,0.6)]" />}
                     </Link>
                   );
                 })}
@@ -141,12 +130,12 @@ export function Layout() {
             </div>
           ))}
         </nav>
-        <div className="p-4 border-t border-[#2a2a3e]">
+        <div className="p-6 border-t border-gray-50">
           <button 
             onClick={handleLogout}
-            className="flex items-center w-full px-3 py-2 text-sm font-medium text-[var(--color-exams)] rounded-lg hover:bg-[#2a2a3e] transition-all"
+            className="flex items-center w-full px-4 py-3 text-sm font-semibold text-red-500 rounded-xl hover:bg-red-50 transition-all duration-200"
           >
-            <LogOut className="mr-3 h-4 w-4" />
+            <LogOut className="mr-3 h-5 w-5" />
             Logout
           </button>
         </div>
@@ -154,29 +143,35 @@ export function Layout() {
 
       {/* Overlay */}
       {isSidebarOpen && (
-        <div className="md:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setIsSidebarOpen(false)} />
+        <div className="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-40" onClick={() => setIsSidebarOpen(false)} />
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-14 bg-[var(--bg2)] border-b border-[var(--bd)] flex items-center justify-between px-4 md:px-8 sticky top-0 z-10">
-          <button className="md:hidden p-2" onClick={() => setIsSidebarOpen(true)}>
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-8 sticky top-0 z-10">
+          <button className="md:hidden p-2 text-gray-600" onClick={() => setIsSidebarOpen(true)}>
             <Menu className="h-6 w-6" />
           </button>
-          <h2 className="text-sm font-bold text-[var(--text)]">
-            {navigationGroups.flatMap(g => g.items).find((n) => n.href === location.pathname)?.name || "Dashboard"}
-          </h2>
-          <div className="flex items-center gap-3">
-            <button onClick={() => setIsDark(!isDark)} className="p-2 rounded-lg bg-[var(--bg3)] text-[var(--text2)] hover:text-[var(--pri)]">
-              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
-            <div className="h-8 w-8 rounded-full bg-[var(--bg3)] flex items-center justify-center text-[var(--pri)] font-bold text-xs border border-[var(--bd)]" title={user?.email}>
+          <div className="flex flex-col">
+            <h2 className="text-xl font-display font-bold text-gray-900">
+              {navigationGroups.flatMap(g => g.items).find((n) => n.href === location.pathname)?.name || "Dashboard"}
+            </h2>
+            <p className="text-xs text-gray-400 font-medium">Welcome back, {user?.email?.split('@')[0] || "Admin"}</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full border border-gray-100">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">System Online</span>
+            </div>
+            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-sm border border-primary/20 shadow-sm" title={user?.email}>
               {user?.email?.[0].toUpperCase() || "A"}
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-20 md:pb-8">
-          <Outlet />
+        <main className="flex-1 overflow-y-auto p-8 pb-24 md:pb-8">
+          <div className="max-w-7xl mx-auto">
+            <Outlet />
+          </div>
         </main>
       </div>
       <MobileBottomNav />

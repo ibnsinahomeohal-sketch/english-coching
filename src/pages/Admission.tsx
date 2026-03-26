@@ -1,14 +1,19 @@
 import React, { useState, useEffect, FormEvent } from "react";
-import { Save, UserPlus } from "lucide-react";
+import { Save, UserPlus, Send, ArrowRight, User, Phone, Mail, BookOpen, Hash, Calendar, Shield, MapPin, Briefcase, GraduationCap, Users, Droplet, Milestone, Clock, ClipboardList, Star, DollarSign, X, Loader2, Trash2 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
-import { PageHero } from "../components/PageHero";
-import { SectionBanner } from "../components/SectionBanner";
 
 export default function Admission() {
   const [courses, setCourses] = useState<any[]>([]);
   const [batches, setBatches] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCourseModal, setShowCourseModal] = useState(false);
+  const [newCourseName, setNewCourseName] = useState("");
+  const [newCourseDuration, setNewCourseDuration] = useState("");
+  const [newBatchName, setNewBatchName] = useState("");
+  const [isAddingCourse, setIsAddingCourse] = useState(false);
+  const [isAddingBatch, setIsAddingBatch] = useState(false);
+
   const [formData, setFormData] = useState({
     studentId: "",
     fullName: "",
@@ -36,13 +41,64 @@ export default function Admission() {
     address: "",
   });
 
+  const fetchInitialData = async () => {
+    const { data: coursesData } = await supabase.from('courses').select('*').order('name');
+    if (coursesData) setCourses(coursesData);
+  };
+
   useEffect(() => {
-    const fetchInitialData = async () => {
-      const { data: coursesData } = await supabase.from('courses').select('*');
-      if (coursesData) setCourses(coursesData);
-    };
     fetchInitialData();
   }, []);
+
+  const handleAddCourse = async () => {
+    if (!newCourseName.trim()) return;
+    setIsAddingCourse(true);
+    try {
+      const { data, error } = await supabase
+        .from('courses')
+        .insert([{ 
+          name: newCourseName.trim(),
+          duration: newCourseDuration.trim() || "3 Months"
+        }])
+        .select();
+      
+      if (error) throw error;
+      toast.success("Course added successfully!");
+      setNewCourseName("");
+      setNewCourseDuration("");
+      fetchInitialData();
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsAddingCourse(false);
+    }
+  };
+
+  const handleAddBatch = async () => {
+    if (!newBatchName.trim() || !formData.course_id) {
+      toast.error("Please select a course first");
+      return;
+    }
+    setIsAddingBatch(true);
+    try {
+      const { data, error } = await supabase
+        .from('batches')
+        .insert([{ 
+          name: newBatchName.trim(),
+          course_id: formData.course_id
+        }])
+        .select();
+      
+      if (error) throw error;
+      toast.success("Batch added successfully!");
+      setNewBatchName("");
+      handleCourseChange(formData.course_id);
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsAddingBatch(false);
+    }
+  };
 
   const handleCourseChange = async (courseId: string) => {
     setFormData(prev => ({ ...prev, course_id: courseId, batch_id: "" }));
@@ -130,33 +186,6 @@ export default function Admission() {
       setTimeout(() => {
         window.location.href = "/students";
       }, 2000);
-      
-      setFormData({
-        studentId: "",
-        fullName: "",
-        nickname: "",
-        gender: "Male",
-        dob: "",
-        bloodGroup: "A+",
-        religion: "",
-        mobile: "",
-        fatherName: "",
-        motherName: "",
-        guardianMobile: "",
-        occupation: "",
-        email: "",
-        password: "",
-        course: "Spoken English",
-        batch: "",
-        batchTime: "",
-        session: "",
-        board: "",
-        roll: "",
-        gpa: "",
-        fee: "",
-        discount: "",
-        paidAmount: "",
-      });
     } catch (error: any) {
       toast.error(`Failed to admit student: ${error.message || "Unknown error"}`);
     } finally {
@@ -174,181 +203,571 @@ export default function Admission() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'rgba(7, 24, 40, 0.06)' }}>
-      <PageHero 
-        title="Student Admission"
-        subtitle="Register a new student to the system"
-        icon={UserPlus}
-        darkColor="#071828"
-        badge="Admission"
-        pattern={
-          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <rect x="10" y="10" width="20" height="15" fill="#378ADD" />
-            <rect x="50" y="20" width="30" height="20" fill="#378ADD" />
-            <rect x="20" y="50" width="25" height="15" fill="#378ADD" />
-            <rect x="70" y="60" width="20" height="25" fill="#378ADD" />
-          </svg>
-        }
-      />
-      
-      <form onSubmit={handleSubmit} className="max-w-5xl mx-auto p-6">
-        <div className="flex justify-end gap-2 mb-6">
-          <button
-            type="button"
-            onClick={sendWhatsApp}
-            className="flex items-center gap-2 text-white px-6 py-2.5 rounded-lg font-medium hover:opacity-90 transition-colors"
-            style={{ backgroundColor: 'var(--color-whatsapp)' }}
-          >
-            Send via WhatsApp
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="flex items-center gap-2 text-white px-6 py-2.5 rounded-lg font-medium hover:opacity-90 transition-colors disabled:opacity-70"
-            style={{ backgroundColor: '#378ADD' }}
-          >
-            <Save className="h-4 w-4" />
-            {isSubmitting ? "Saving..." : "Save Student"}
-          </button>
-        </div>
-
-        <div className="space-y-8">
-          <div className="bg-white p-8 rounded-[24px] border border-[#B5D4F4] shadow-lg shadow-[#B5D4F4]/20">
-            <SectionBanner title="Personal Information" color="#378ADD" />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Student Number (ID)</label>
-                <input type="text" required readOnly value={formData.studentId} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg bg-gray-50 text-gray-500 outline-none" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                <input type="text" required value={formData.fullName} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, fullName: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nickname</label>
-                <input type="text" value={formData.nickname} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, nickname: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                <select value={formData.gender} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none bg-white" onChange={(e) => setFormData({...formData, gender: e.target.value})}>
-                  <option>Male</option><option>Female</option><option>Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-                <input type="date" value={formData.dob} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, dob: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Blood Group</label>
-                <select value={formData.bloodGroup} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none bg-white" onChange={(e) => setFormData({...formData, bloodGroup: e.target.value})}>
-                  <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
-                  <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Religion</label>
-                <input type="text" value={formData.religion} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, religion: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Student Mobile / WhatsApp</label>
-                <input type="tel" value={formData.mobile} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, mobile: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Student Email</label>
-                <input type="email" value={formData.email} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, email: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Generated Password</label>
-                <input type="text" readOnly value={formData.password} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg bg-gray-50 text-gray-500 outline-none" />
-              </div>
-            </div>
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <form onSubmit={handleSubmit} className="space-y-10">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-display font-bold text-gray-900">New Admission</h1>
+            <p className="text-sm text-gray-400 font-medium">Complete the form below to register a new student</p>
           </div>
-
-          <div className="bg-white p-8 rounded-[24px] border border-[#B5D4F4] shadow-lg shadow-[#B5D4F4]/20">
-            <SectionBanner title="Guardian Information" color="#378ADD" />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Father's Name</label>
-                <input type="text" value={formData.fatherName} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, fatherName: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mother's Name</label>
-                <input type="text" value={formData.motherName} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, motherName: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
-                <input type="tel" required value={formData.guardianMobile} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, guardianMobile: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Occupation</label>
-                <input type="text" value={formData.occupation} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, occupation: e.target.value})} />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-8 rounded-[24px] border border-[#B5D4F4] shadow-lg shadow-[#B5D4F4]/20">
-            <SectionBanner title="Academic & Course" color="#378ADD" />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Course</label>
-                <select 
-                  required
-                  value={formData.course_id} 
-                  className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none bg-white" 
-                  onChange={(e) => handleCourseChange(e.target.value)}
-                >
-                  <option value="">Select Course</option>
-                  {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Batch Name</label>
-                <select 
-                  required
-                  disabled={!formData.course_id}
-                  value={formData.batch_id} 
-                  className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none bg-white disabled:bg-gray-50" 
-                  onChange={(e) => setFormData({...formData, batch_id: e.target.value})}
-                >
-                  <option value="">Select Batch</option>
-                  {batches.map(b => <option key={b.id} value={b.id}>{b.name} ({b.batch_time})</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                <input type="text" value={formData.address} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, address: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Session</label>
-                <input type="text" value={formData.session} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, session: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Board</label>
-                <input type="text" value={formData.board} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, board: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Roll</label>
-                <input type="text" value={formData.roll} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, roll: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">GPA</label>
-                <input type="text" value={formData.gpa} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, gpa: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Total Course Fee (৳)</label>
-                <input type="number" required value={formData.fee} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, fee: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Discount (৳)</label>
-                <input type="number" value={formData.discount} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, discount: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Paid Amount (৳)</label>
-                <input type="number" value={formData.paidAmount} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, paidAmount: e.target.value})} />
-              </div>
-            </div>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={sendWhatsApp}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-[#25D366]/10 text-[#25D366] font-bold rounded-xl hover:bg-[#25D366]/20 transition-all duration-200"
+            >
+              <Send className="h-4 w-4" />
+              WhatsApp
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 sm:flex-none btn-primary flex items-center justify-center gap-2 disabled:opacity-70"
+            >
+              <Save className="h-4 w-4" />
+              {isSubmitting ? "Saving..." : "Save Student"}
+            </button>
           </div>
         </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            {/* Personal Info */}
+            <div className="card-premium p-8">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                  <User className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-display font-bold text-gray-900">Personal Information</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Student ID</label>
+                  <div className="relative">
+                    <Hash className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="text" 
+                      readOnly
+                      placeholder="Auto-generated"
+                      className="input-premium pl-11 bg-gray-50 font-mono font-bold text-primary" 
+                      value={formData.studentId}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Full Name</label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="text" 
+                      required 
+                      placeholder="e.g. John Doe"
+                      className="input-premium pl-11" 
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({...formData, fullName: e.target.value})} 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Nickname</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Johnny"
+                    className="input-premium" 
+                    value={formData.nickname}
+                    onChange={(e) => setFormData({...formData, nickname: e.target.value})} 
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Gender</label>
+                  <select 
+                    className="input-premium appearance-none bg-white" 
+                    value={formData.gender}
+                    onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                  >
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Date of Birth</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="date" 
+                      className="input-premium pl-11" 
+                      value={formData.dob}
+                      onChange={(e) => setFormData({...formData, dob: e.target.value})} 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Blood Group</label>
+                  <div className="relative">
+                    <Droplet className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <select 
+                      className="input-premium pl-11 appearance-none bg-white" 
+                      value={formData.bloodGroup}
+                      onChange={(e) => setFormData({...formData, bloodGroup: e.target.value})}
+                    >
+                      {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(bg => (
+                        <option key={bg} value={bg}>{bg}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Religion</label>
+                  <div className="relative">
+                    <Milestone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Islam"
+                      className="input-premium pl-11" 
+                      value={formData.religion}
+                      onChange={(e) => setFormData({...formData, religion: e.target.value})} 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Mobile / WhatsApp</label>
+                  <div className="relative">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="tel" 
+                      placeholder="+880 1XXX XXXXXX"
+                      className="input-premium pl-11" 
+                      value={formData.mobile}
+                      onChange={(e) => setFormData({...formData, mobile: e.target.value})} 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Email Address</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="email" 
+                      placeholder="john@example.com"
+                      className="input-premium pl-11" 
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})} 
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Guardian Info */}
+            <div className="card-premium p-8">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 rounded-lg bg-secondary/10 text-secondary">
+                  <Shield className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-display font-bold text-gray-900">Guardian Information</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Father's Name</label>
+                  <input 
+                    type="text" 
+                    className="input-premium" 
+                    value={formData.fatherName}
+                    onChange={(e) => setFormData({...formData, fatherName: e.target.value})} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Mother's Name</label>
+                  <input 
+                    type="text" 
+                    className="input-premium" 
+                    value={formData.motherName}
+                    onChange={(e) => setFormData({...formData, motherName: e.target.value})} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Guardian Mobile</label>
+                  <div className="relative">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="tel" 
+                      required 
+                      className="input-premium pl-11" 
+                      value={formData.guardianMobile}
+                      onChange={(e) => setFormData({...formData, guardianMobile: e.target.value})} 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Occupation</label>
+                  <div className="relative">
+                    <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="text" 
+                      className="input-premium pl-11" 
+                      value={formData.occupation}
+                      onChange={(e) => setFormData({...formData, occupation: e.target.value})} 
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            {/* Academic & Course Info */}
+            <div className="card-premium p-8">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 rounded-lg bg-accent/10 text-accent">
+                  <GraduationCap className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-display font-bold text-gray-900">Academic & Course Details</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center ml-1">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Course</label>
+                    <button 
+                      type="button"
+                      onClick={() => setShowCourseModal(true)}
+                      className="text-[10px] font-bold text-primary hover:underline"
+                    >
+                      + Add New
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <select 
+                      required
+                      className="input-premium pl-11 appearance-none bg-white" 
+                      value={formData.course_id}
+                      onChange={(e) => handleCourseChange(e.target.value)}
+                    >
+                      <option value="">Select Course</option>
+                      {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center ml-1">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Batch</label>
+                    {formData.course_id && (
+                      <button 
+                        type="button"
+                        onClick={() => setShowCourseModal(true)}
+                        className="text-[10px] font-bold text-primary hover:underline"
+                      >
+                        + Add New
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <Users className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <select 
+                      required
+                      disabled={!formData.course_id}
+                      className="input-premium pl-11 appearance-none bg-white disabled:bg-gray-50" 
+                      value={formData.batch_id}
+                      onChange={(e) => setFormData({...formData, batch_id: e.target.value})}
+                    >
+                      <option value="">Select Batch</option>
+                      {batches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Address</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="text" 
+                      className="input-premium pl-11" 
+                      value={formData.address}
+                      onChange={(e) => setFormData({...formData, address: e.target.value})} 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Session</label>
+                  <div className="relative">
+                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="text" 
+                      placeholder="e.g. 2023-24"
+                      className="input-premium pl-11" 
+                      value={formData.session}
+                      onChange={(e) => setFormData({...formData, session: e.target.value})} 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Board</label>
+                  <div className="relative">
+                    <ClipboardList className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Dhaka"
+                      className="input-premium pl-11" 
+                      value={formData.board}
+                      onChange={(e) => setFormData({...formData, board: e.target.value})} 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Roll</label>
+                  <div className="relative">
+                    <Hash className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="text" 
+                      className="input-premium pl-11" 
+                      value={formData.roll}
+                      onChange={(e) => setFormData({...formData, roll: e.target.value})} 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">GPA</label>
+                  <div className="relative">
+                    <Star className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="text" 
+                      placeholder="e.g. 5.00"
+                      className="input-premium pl-11" 
+                      value={formData.gpa}
+                      onChange={(e) => setFormData({...formData, gpa: e.target.value})} 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Total Course Fee</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="number" 
+                      className="input-premium pl-11" 
+                      value={formData.fee}
+                      onChange={(e) => setFormData({...formData, fee: e.target.value})} 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Discount</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="number" 
+                      className="input-premium pl-11" 
+                      value={formData.discount}
+                      onChange={(e) => setFormData({...formData, discount: e.target.value})} 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Paid Amount</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input 
+                      type="number" 
+                      className="input-premium pl-11" 
+                      value={formData.paidAmount}
+                      onChange={(e) => setFormData({...formData, paidAmount: e.target.value})} 
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* System Info */}
+            <div className="card-premium p-8 bg-primary/5 border-primary/10">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 rounded-lg bg-primary text-white">
+                  <Hash className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-display font-bold text-gray-900">System Credentials</h3>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Auto-Generated Password</label>
+                  <input 
+                    type="text" 
+                    readOnly 
+                    className="input-premium bg-white/50 font-mono font-bold text-primary" 
+                    value={formData.password} 
+                  />
+                </div>
+                <div className="p-4 bg-white rounded-xl border border-primary/10 flex items-start gap-3">
+                  <div className="p-1.5 rounded-full bg-primary/10 text-primary">
+                    <Shield className="h-3 w-3" />
+                  </div>
+                  <p className="text-[10px] text-gray-500 leading-relaxed">
+                    Credentials will be sent automatically to the student's WhatsApp number upon successful registration.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Course & Batch Management Modal */}
+        {showCourseModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200">
+              <div className="flex justify-between items-center mb-8">
+                <div>
+                  <h3 className="text-2xl font-display font-bold text-gray-900">Manage Courses & Batches</h3>
+                  <p className="text-sm text-gray-500">Add or remove courses and their respective batches</p>
+                </div>
+                <button 
+                  onClick={() => setShowCourseModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="h-6 w-6 text-gray-400" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Course Section */}
+                <div className="space-y-6">
+                  <div className="flex items-center gap-2 text-primary">
+                    <BookOpen className="h-5 w-5" />
+                    <h4 className="font-bold uppercase tracking-wider text-xs">Courses</h4>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <input 
+                      type="text" 
+                      placeholder="Course Name (e.g. Spoken)"
+                      className="input-premium py-2"
+                      value={newCourseName}
+                      onChange={(e) => setNewCourseName(e.target.value)}
+                    />
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        placeholder="Duration (e.g. 3 Months)"
+                        className="input-premium py-2"
+                        value={newCourseDuration}
+                        onChange={(e) => setNewCourseDuration(e.target.value)}
+                      />
+                      <button 
+                        onClick={handleAddCourse}
+                        disabled={isAddingCourse}
+                        className="px-4 py-2 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
+                      >
+                        {isAddingCourse ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="max-h-60 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                    {courses.map(course => (
+                      <div key={course.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div>
+                          <p className="text-sm font-bold text-gray-700">{course.name}</p>
+                          <p className="text-[10px] text-gray-400">{course.duration || "No duration set"}</p>
+                        </div>
+                        <button 
+                          onClick={async () => {
+                            if (confirm("Are you sure? This will delete the course and all its batches.")) {
+                              await supabase.from('courses').delete().eq('id', course.id);
+                              fetchInitialData();
+                            }
+                          }}
+                          className="text-rose-500 hover:text-rose-600 p-1"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Batch Section */}
+                <div className="space-y-6">
+                  <div className="flex items-center gap-2 text-accent">
+                    <Users className="h-5 w-5" />
+                    <h4 className="font-bold uppercase tracking-wider text-xs">Batches</h4>
+                  </div>
+
+                  <div className="space-y-4">
+                    <select 
+                      className="input-premium py-2 appearance-none bg-white"
+                      value={formData.course_id}
+                      onChange={(e) => handleCourseChange(e.target.value)}
+                    >
+                      <option value="">Select Course first</option>
+                      {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        placeholder="New batch name..."
+                        className="input-premium py-2"
+                        value={newBatchName}
+                        onChange={(e) => setNewBatchName(e.target.value)}
+                      />
+                      <button 
+                        onClick={handleAddBatch}
+                        disabled={isAddingBatch || !formData.course_id}
+                        className="px-4 py-2 bg-accent text-white rounded-xl font-bold hover:bg-accent/90 transition-colors disabled:opacity-50"
+                      >
+                        {isAddingBatch ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="max-h-60 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                    {batches.map(batch => (
+                      <div key={batch.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <span className="text-sm font-medium text-gray-700">{batch.name}</span>
+                        <button 
+                          onClick={async () => {
+                            if (confirm("Are you sure?")) {
+                              await supabase.from('batches').delete().eq('id', batch.id);
+                              handleCourseChange(formData.course_id);
+                            }
+                          }}
+                          className="text-rose-500 hover:text-rose-600 p-1"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                    {formData.course_id && batches.length === 0 && (
+                      <p className="text-center py-4 text-xs text-gray-400">No batches for this course</p>
+                    )}
+                    {!formData.course_id && (
+                      <p className="text-center py-4 text-xs text-gray-400">Select a course to see batches</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </form>
     </div>
   );
