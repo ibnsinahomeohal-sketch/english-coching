@@ -14,7 +14,7 @@ const studentNavigation = [
   {
     label: "LEARNING",
     items: [
-      { name: "Dashboard", href: "/student-portal", icon: LayoutDashboard, color: "var(--color-dashboard)" },
+      { name: "Dashboard", href: "/student", icon: LayoutDashboard, color: "var(--color-dashboard)" },
       { name: "Class Schedule", href: "/schedule", icon: Clock, color: "var(--color-schedule)" },
       { name: "Homework", href: "/homework", icon: BookOpen, color: "var(--color-homework)" },
       { name: "Course Notes", href: "/notes", icon: FileText, color: "var(--color-learning)" },
@@ -38,7 +38,7 @@ const studentNavigation = [
   }
 ];
 
-export function StudentLayout() {
+export default function StudentLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isDark, setIsDark] = useState(localStorage.getItem("theme") === "dark");

@@ -51,7 +51,7 @@ export default function Login() {
         if (role === 'parent') {
           navigate("/parent-portal");
         } else {
-          navigate("/student-portal");
+          navigate("/student");
         }
         return;
       }

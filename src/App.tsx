@@ -8,7 +8,7 @@ import React, { useState, useEffect } from "react";
 import { Toaster } from "sonner";
 import { supabase } from "./lib/supabaseClient";
 import { Layout } from "./components/Layout";
-import { StudentLayout } from "./components/StudentLayout";
+import StudentLayout from "./components/StudentLayout";
 import Dashboard from "./pages/Dashboard";
 import Admission from "./pages/Admission";
 import Operations from "./pages/Operations";
@@ -58,7 +58,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }, []);
 
   if (loading) return null;
-  if (!session) return <Navigate to="/login" />;
+  
+  const studentSession = localStorage.getItem('studentSession');
+  if (!session && !studentSession) return <Navigate to="/login" />;
 
   return <>{children}</>;
 }
