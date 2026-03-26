@@ -1,15 +1,46 @@
 import React, { useState, useEffect } from "react";
-import { BookOpen, FileText, Calendar, CheckCircle } from "lucide-react";
+import { BookOpen, FileText, Calendar } from "lucide-react";
 import { PageHero } from "../components/PageHero";
-
-// This would typically come from a backend/database
-const initialHomework: any[] = [
-  { id: 1, title: "Vocabulary Practice Set 4", course: "Spoken English", batch: "Morning-A", dueDate: "2026-03-28", status: "Active" },
-  { id: 2, title: "Grammar: Tenses Overview", course: "Spoken English", batch: "Morning-A", dueDate: "2026-03-30", status: "Active" },
-];
+import { supabase } from "../lib/supabaseClient";
+import { toast } from "sonner";
 
 export default function StudentHomework() {
-  const [assignments, setAssignments] = useState(initialHomework);
+  const [assignments, setAssignments] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchHomework = async () => {
+      const sessionStr = localStorage.getItem('studentSession');
+      if (!sessionStr) return;
+      
+      const session = JSON.parse(sessionStr);
+      const studentId = session.studentId;
+
+      // Fetch student details
+      const { data: studentData } = await supabase
+        .from("students")
+        .select("course_id, batch_id")
+        .eq("student_id", studentId)
+        .single();
+
+      if (studentData) {
+        // Fetch homework for this student's course and batch
+        const { data, error } = await supabase
+          .from("homework")
+          .select("*")
+          .eq("course_id", studentData.course_id)
+          .eq("batch_id", studentData.batch_id);
+
+        if (error) {
+          console.error("Error fetching homework:", error);
+          toast.error("Could not load homework.");
+        } else {
+          setAssignments(data || []);
+        }
+      }
+    };
+
+    fetchHomework();
+  }, []);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'rgba(26, 12, 0, 0.06)' }}>
@@ -58,6 +89,9 @@ export default function StudentHomework() {
               </div>
             </div>
           ))}
+          {assignments.length === 0 && (
+            <p className="text-gray-500 text-center col-span-2">No homework assigned yet.</p>
+          )}
         </div>
       </div>
     </div>

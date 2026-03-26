@@ -17,6 +17,8 @@ const studentNavigation = [
       { name: "Dashboard", href: "/student", icon: LayoutDashboard, color: "var(--color-dashboard)" },
       { name: "Class Schedule", href: "/student/schedule", icon: Clock, color: "var(--color-schedule)" },
       { name: "Homework", href: "/student/homework", icon: BookOpen, color: "var(--color-homework)" },
+      { name: "Chat", href: "/student/chat", icon: MessageSquare, color: "var(--color-dashboard)" },
+      { name: "Leaderboard", href: "/student/leaderboard", icon: Award, color: "var(--color-exams)" },
       { name: "Course Notes", href: "/student/notes", icon: FileText, color: "var(--color-learning)" },
       { name: "My Exams", href: "/student/my-exams", icon: Award, color: "var(--color-exams)" },
     ]
@@ -33,7 +35,6 @@ const studentNavigation = [
     label: "ACCOUNT",
     items: [
       { name: "Student Profile", href: "/student/profile", icon: UserCircle, color: "var(--color-dashboard)" },
-      { name: "Settings", href: "/student/settings", icon: SettingsIcon, color: "var(--color-dashboard)" },
     ]
   }
 ];

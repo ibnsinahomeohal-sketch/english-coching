@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, ChangeEvent } from "react";
-import { Camera, Save, User, Mail, Phone, BookOpen, Trophy, Star, Target, IdCard, Download, X, Upload } from "lucide-react";
+import { Camera, Save, User, Mail, Phone, BookOpen, Trophy, Star, Target, IdCard, Download, X, Upload, Clock } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { QRCodeSVG } from "qrcode.react";
@@ -27,21 +27,31 @@ export default function StudentProfile() {
     dob: "",
     bloodGroup: "",
     batchNo: "",
+    batchTime: "",
+    session: "",
     points: 0,
     rank: 0,
-    examsTaken: 0
+    examsTaken: 0,
+    photo_url: ""
   });
 
   // Load student data from Supabase
   useEffect(() => {
     const fetchStudentData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const sessionStr = localStorage.getItem('studentSession');
+      if (!sessionStr) return;
+      
+      const session = JSON.parse(sessionStr);
+      const studentId = session.studentId;
 
       const { data, error } = await supabase
         .from("students")
-        .select("*")
-        .eq("email", user.email)
+        .select(`
+          *,
+          courses (name),
+          batches (name, batch_time)
+        `)
+        .eq("student_id", studentId)
         .single();
 
       if (error) {
@@ -51,17 +61,21 @@ export default function StudentProfile() {
         setStudentData({
           name: data.name || "",
           id: data.student_id || "",
-          course: data.course || "",
-          phone: data.phone || "",
+          course: data.courses?.name || "",
+          phone: data.phone || data.mobile || "",
           email: data.email || "",
           address: data.address || "",
           dob: data.dob || "",
           bloodGroup: data.blood_group || "",
-          batchNo: data.batch || "",
+          batchNo: data.batches?.name || "",
+          batchTime: data.batches?.batch_time || "",
+          session: data.session || "",
           points: data.points || 0,
           rank: data.rank || 0,
-          examsTaken: data.exams_taken || 0
+          examsTaken: data.exams_taken || 0,
+          photo_url: data.photo_url || ""
         });
+        if (data.photo_url) setPhoto(data.photo_url);
       }
     };
 
@@ -215,10 +229,9 @@ export default function StudentProfile() {
                 </div>
                 <input 
                   type="text" 
-                  disabled={!isEditing}
+                  disabled={true}
                   value={studentData.name}
-                  onChange={(e) => setStudentData({...studentData, name: e.target.value})}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none disabled:bg-gray-50 disabled:text-gray-500" 
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 outline-none" 
                 />
               </div>
             </div>
@@ -231,10 +244,9 @@ export default function StudentProfile() {
                 </div>
                 <input 
                   type="text" 
-                  disabled={!isEditing}
+                  disabled={true}
                   value={studentData.phone}
-                  onChange={(e) => setStudentData({...studentData, phone: e.target.value})}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none disabled:bg-gray-50 disabled:text-gray-500" 
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 outline-none" 
                 />
               </div>
             </div>
@@ -247,10 +259,9 @@ export default function StudentProfile() {
                 </div>
                 <input 
                   type="email" 
-                  disabled={!isEditing}
+                  disabled={true}
                   value={studentData.email}
-                  onChange={(e) => setStudentData({...studentData, email: e.target.value})}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none disabled:bg-gray-50 disabled:text-gray-500" 
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 outline-none" 
                 />
               </div>
             </div>
@@ -263,8 +274,38 @@ export default function StudentProfile() {
                 </div>
                 <input 
                   type="text" 
-                  disabled={true} // Course usually can't be changed by student
+                  disabled={true}
                   value={studentData.course}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 outline-none" 
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Batch Name</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <BookOpen className="h-4 w-4 text-gray-400" />
+                </div>
+                <input 
+                  type="text" 
+                  disabled={true}
+                  value={studentData.batchNo}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 outline-none" 
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Batch Time</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Clock className="h-4 w-4 text-gray-400" />
+                </div>
+                <input 
+                  type="text" 
+                  disabled={true}
+                  value={studentData.batchTime}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 outline-none" 
                 />
               </div>
@@ -311,7 +352,7 @@ export default function StudentProfile() {
                 )}
 
                 {/* Photo - Aligned to the circular frame */}
-                <div className="absolute top-[10.6%] left-1/2 -translate-x-1/2 w-[146px] h-[146px] rounded-full overflow-hidden z-10 flex items-center justify-center bg-gray-50">
+                <div className="absolute top-[12%] left-1/2 -translate-x-1/2 w-[140px] h-[140px] rounded-full overflow-hidden z-10 flex items-center justify-center bg-gray-50 border-2 border-white shadow-sm">
                   {photo ? (
                     <img src={photo} alt="Student" className="w-full h-full object-cover" crossOrigin="anonymous" />
                   ) : (
@@ -324,20 +365,20 @@ export default function StudentProfile() {
                   className="absolute w-full text-center z-10"
                   style={{ top: `${layout.name.top}px`, left: `${layout.name.left}px` }}
                 >
-                  <h2 className="text-[26px] font-black text-[#0a2540] uppercase tracking-wider select-none" style={{ fontFamily: 'Arial, sans-serif' }}>
+                  <h2 className="text-[24px] font-black text-[#0a2540] uppercase tracking-wider select-none px-4" style={{ fontFamily: 'Arial, sans-serif' }}>
                     {studentData.name}
                   </h2>
                 </div>
 
                 {/* Details - Aligned exactly next to the labels in the template */}
-                <div className="absolute top-[50%] left-[43%] w-[55%] flex flex-col gap-[12.5px] z-10">
-                  <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{studentData.id}</p>
-                  <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{studentData.course}</p>
-                  <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{studentData.dob}</p>
-                  <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{studentData.phone}</p>
-                  <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide truncate pr-2" style={{ fontFamily: 'Arial, sans-serif' }}>{studentData.address}</p>
-                  <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{studentData.bloodGroup}</p>
-                  <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{studentData.batchNo}</p>
+                <div className="absolute top-[52%] left-[45%] w-[50%] flex flex-col gap-[14px] z-10">
+                  <p className="text-[13px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{studentData.id}</p>
+                  <p className="text-[13px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{studentData.course}</p>
+                  <p className="text-[13px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{studentData.dob}</p>
+                  <p className="text-[13px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{studentData.phone}</p>
+                  <p className="text-[13px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide truncate pr-2" style={{ fontFamily: 'Arial, sans-serif' }}>{studentData.address}</p>
+                  <p className="text-[13px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{studentData.bloodGroup}</p>
+                  <p className="text-[13px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{studentData.batchNo}</p>
                 </div>
 
                 {/* QR Code Container - Absolute positioned based on layout */}

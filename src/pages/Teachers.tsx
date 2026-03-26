@@ -76,7 +76,35 @@ export default function Teachers() {
           </svg>
         }
       />
-      <div className="max-w-6xl mx-auto pb-8 pt-6">
+      <div className="max-w-6xl mx-auto pb-8 pt-6 px-4">
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 bg-[#BA7517]/10 rounded-2xl flex items-center justify-center">
+              <Users className="h-6 w-6 text-[#BA7517]" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-gray-900">Active Teachers</h2>
+              <p className="text-sm text-gray-500">Manage your faculty members</p>
+            </div>
+          </div>
+          
+          {!showAddForm ? (
+            <button 
+              onClick={() => setShowAddForm(true)}
+              className="flex items-center gap-2 bg-[#BA7517] text-white px-6 py-3 rounded-[16px] font-bold hover:opacity-90 transition-all shadow-lg shadow-[#BA7517]/20"
+            >
+              <UserPlus className="h-5 w-5" />
+              Add New Teacher
+            </button>
+          ) : (
+            <button 
+              onClick={() => setShowAddForm(false)}
+              className="flex items-center gap-2 bg-white border border-gray-200 text-gray-600 px-6 py-3 rounded-[16px] font-bold hover:bg-gray-50 transition-all shadow-sm"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
 
         {showAddForm ? (
           <div className="bg-white p-8 rounded-[24px] border border-[#BA7517]/20 shadow-lg max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4">

@@ -6,6 +6,8 @@ import { PageHero } from "../components/PageHero";
 import { SectionBanner } from "../components/SectionBanner";
 
 export default function Admission() {
+  const [courses, setCourses] = useState<any[]>([]);
+  const [batches, setBatches] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     studentId: "",
@@ -22,9 +24,8 @@ export default function Admission() {
     occupation: "",
     email: "",
     password: "",
-    course: "Spoken English",
-    batch: "",
-    batchTime: "",
+    course_id: "",
+    batch_id: "",
     session: "",
     board: "",
     roll: "",
@@ -32,7 +33,25 @@ export default function Admission() {
     fee: "",
     discount: "",
     paidAmount: "",
+    address: "",
   });
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      const { data: coursesData } = await supabase.from('courses').select('*');
+      if (coursesData) setCourses(coursesData);
+    };
+    fetchInitialData();
+  }, []);
+
+  const handleCourseChange = async (courseId: string) => {
+    setFormData(prev => ({ ...prev, course_id: courseId, batch_id: "" }));
+    const { data: batchesData } = await supabase
+      .from('batches')
+      .select('*')
+      .eq('course_id', courseId);
+    if (batchesData) setBatches(batchesData);
+  };
 
   const generateStudentId = () => {
     const year = new Date().getFullYear();
@@ -89,9 +108,8 @@ export default function Admission() {
           occupation: formData.occupation,
           email: formData.email,
           password: formData.password,
-          course: formData.course,
-          batch: formData.batch,
-          batch_time: formData.batchTime,
+          course_id: formData.course_id,
+          batch_id: formData.batch_id,
           session: formData.session,
           board: formData.board,
           roll: formData.roll,
@@ -100,6 +118,7 @@ export default function Admission() {
           discount: discount,
           paid_amount: paid,
           due_amount: due,
+          address: formData.address,
         }])
         .select();
 
@@ -272,17 +291,32 @@ export default function Admission() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Course</label>
-                <select value={formData.course} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none bg-white" onChange={(e) => setFormData({...formData, course: e.target.value})}>
-                  <option>Spoken English</option><option>Writing</option><option>Kids English</option><option>SSC/HSC English</option>
+                <select 
+                  required
+                  value={formData.course_id} 
+                  className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none bg-white" 
+                  onChange={(e) => handleCourseChange(e.target.value)}
+                >
+                  <option value="">Select Course</option>
+                  {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Batch Name</label>
-                <input type="text" value={formData.batch} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, batch: e.target.value})} />
+                <select 
+                  required
+                  disabled={!formData.course_id}
+                  value={formData.batch_id} 
+                  className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none bg-white disabled:bg-gray-50" 
+                  onChange={(e) => setFormData({...formData, batch_id: e.target.value})}
+                >
+                  <option value="">Select Batch</option>
+                  {batches.map(b => <option key={b.id} value={b.id}>{b.name} ({b.batch_time})</option>)}
+                </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Batch Time</label>
-                <input type="text" value={formData.batchTime} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, batchTime: e.target.value})} />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <input type="text" value={formData.address} className="w-full px-4 py-2 border border-[#B5D4F4] rounded-lg focus:ring-2 focus:ring-[#378ADD] outline-none" onChange={(e) => setFormData({...formData, address: e.target.value})} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Session</label>

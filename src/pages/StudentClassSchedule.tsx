@@ -1,13 +1,45 @@
 import React, { useState, useEffect } from "react";
 import { Clock, Calendar } from "lucide-react";
 import { PageHero } from "../components/PageHero";
+import { supabase } from "../lib/supabaseClient";
+import { toast } from "sonner";
 
 export default function StudentClassSchedule() {
-  const [schedules, setSchedules] = useState<{id: number, course: string, batch: string, time: string}[]>([]);
+  const [schedules, setSchedules] = useState<any[]>([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem("classSchedules");
-    if (saved) setSchedules(JSON.parse(saved));
+    const fetchSchedule = async () => {
+      const sessionStr = localStorage.getItem('studentSession');
+      if (!sessionStr) return;
+      
+      const session = JSON.parse(sessionStr);
+      const studentId = session.studentId;
+
+      // Fetch student details
+      const { data: studentData } = await supabase
+        .from("students")
+        .select("course_id, batch_id")
+        .eq("student_id", studentId)
+        .single();
+
+      if (studentData) {
+        // Fetch schedule for this student's course and batch
+        const { data, error } = await supabase
+          .from("class_schedule")
+          .select("*")
+          .eq("course_id", studentData.course_id)
+          .eq("batch_id", studentData.batch_id);
+
+        if (error) {
+          console.error("Error fetching schedule:", error);
+          toast.error("Could not load schedule.");
+        } else {
+          setSchedules(data || []);
+        }
+      }
+    };
+
+    fetchSchedule();
   }, []);
 
   return (

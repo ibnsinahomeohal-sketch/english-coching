@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Mic, Square, Upload } from "lucide-react";
 import { PageHero } from "../components/PageHero";
+import { toast } from "sonner";
 
 export default function SpeakingPractice() {
   const [isRecording, setIsRecording] = useState(false);
@@ -10,6 +11,9 @@ export default function SpeakingPractice() {
 
   const startRecording = async () => {
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Microphone access is not supported by your browser.");
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
       chunksRef.current = [];
@@ -24,9 +28,15 @@ export default function SpeakingPractice() {
       
       mediaRecorderRef.current.start();
       setIsRecording(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error accessing microphone:", error);
-      alert("Could not access your microphone. Please ensure you have granted permission.");
+      let errorMessage = "Could not access your microphone.";
+      if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        errorMessage = "Microphone device not found. Please ensure a microphone is connected.";
+      } else if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        errorMessage = "Microphone access denied. Please grant permission in your browser settings.";
+      }
+      toast.error(errorMessage);
     }
   };
 

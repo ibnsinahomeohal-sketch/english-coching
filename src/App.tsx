@@ -33,6 +33,8 @@ import Fees from "./pages/Fees";
 import Expenses from "./pages/Expenses";
 import Homework from "./pages/Homework";
 import StudentHomework from "./pages/StudentHomework";
+import StudentChat from "./pages/StudentChat";
+import StudentLeaderboard from "./pages/StudentLeaderboard";
 import Certificates from "./pages/Certificates";
 import ParentPortal from "./pages/ParentPortal";
 import StudentDashboard from "./pages/StudentDashboard";
@@ -110,6 +112,8 @@ export default function App() {
           <Route index element={<StudentDashboard />} />
           <Route path="schedule" element={<StudentClassSchedule />} />
           <Route path="homework" element={<StudentHomework />} />
+          <Route path="chat" element={<StudentChat />} />
+          <Route path="leaderboard" element={<StudentLeaderboard />} />
           <Route path="notes" element={<StudentNotes />} />
           <Route path="my-exams" element={<StudentExams />} />
           <Route path="speaking" element={<SpeakingPractice />} />

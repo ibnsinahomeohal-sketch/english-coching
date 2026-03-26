@@ -1,41 +1,88 @@
-import React, { useState, FormEvent } from "react";
-import { Upload, FileText, Image as ImageIcon, Download, Search, BookOpen } from "lucide-react";
+import React, { useState, useEffect, FormEvent } from "react";
+import { Upload, FileText, Image as ImageIcon, Download, Search, BookOpen, Users } from "lucide-react";
 import { toast } from "sonner";
 import { PageHero } from "../components/PageHero";
-
-// Mock Data for Notes
-const initialNotes = [
-  { id: 1, title: "Spoken English - Class 1 Vocabulary", course: "Spoken English", type: "pdf", date: "10 Mar 2026", size: "2.4 MB" },
-  { id: 2, title: "Grammar Rules Cheat Sheet", course: "SSC/HSC English", type: "image", date: "12 Mar 2026", size: "1.1 MB" },
-  { id: 3, title: "Writing Task 1 Formats", course: "Writing", type: "pdf", date: "14 Mar 2026", size: "3.5 MB" },
-];
+import { supabase } from "../lib/supabaseClient";
 
 export default function Notes() {
-  const [notes, setNotes] = useState(initialNotes);
+  const [notes, setNotes] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [batches, setBatches] = useState<any[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadData, setUploadData] = useState({ title: "", course: "Spoken English", file: null as File | null });
+  const [uploadData, setUploadData] = useState({ 
+    title: "", 
+    course_id: "", 
+    batch_id: "", 
+    file: null as File | null 
+  });
 
-  const handleUpload = (e: FormEvent) => {
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
+
+  const fetchInitialData = async () => {
+    const { data: coursesData } = await supabase.from('courses').select('*');
+    if (coursesData) setCourses(coursesData);
+
+    const { data: notesData } = await supabase
+      .from('notes')
+      .select(`
+        *,
+        courses (name),
+        batches (name)
+      `)
+      .order('created_at', { ascending: false });
+    if (notesData) setNotes(notesData);
+  };
+
+  const handleCourseChange = async (courseId: string) => {
+    setUploadData({ ...uploadData, course_id: courseId, batch_id: "" });
+    const { data: batchesData } = await supabase
+      .from('batches')
+      .select('*')
+      .eq('course_id', courseId);
+    if (batchesData) setBatches(batchesData);
+  };
+
+  const handleUpload = async (e: FormEvent) => {
     e.preventDefault();
-    if (!uploadData.file || !uploadData.title) return;
+    if (!uploadData.file || !uploadData.title || !uploadData.course_id || !uploadData.batch_id) {
+      toast.error("Please fill in all fields and select a file");
+      return;
+    }
 
     setIsUploading(true);
     
-    setTimeout(() => {
-      const newNote = {
-        id: notes.length + 1,
-        title: uploadData.title,
-        course: uploadData.course,
-        type: uploadData.file?.type.includes('image') ? 'image' : 'pdf',
-        date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-        size: (uploadData.file!.size / (1024 * 1024)).toFixed(1) + " MB"
-      };
-      
-      setNotes([newNote, ...notes]);
-      setUploadData({ title: "", course: "Spoken English", file: null });
-      setIsUploading(false);
+    try {
+      // In a real app, you'd upload the file to Supabase Storage first
+      // For now, we'll just save the metadata and a mock URL
+      const { data, error } = await supabase
+        .from('notes')
+        .insert([{
+          title: uploadData.title,
+          course_id: uploadData.course_id,
+          batch_id: uploadData.batch_id,
+          type: uploadData.file?.type.includes('image') ? 'image' : 'pdf',
+          size: (uploadData.file!.size / (1024 * 1024)).toFixed(1) + " MB",
+          file_url: "https://example.com/mock-file.pdf" // Mock URL
+        }])
+        .select(`
+          *,
+          courses (name),
+          batches (name)
+        `)
+        .single();
+
+      if (error) throw error;
+
+      setNotes([data, ...notes]);
+      setUploadData({ title: "", course_id: "", batch_id: "", file: null });
       toast.success("Note uploaded successfully!");
-    }, 1000);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to upload note");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -77,16 +124,29 @@ export default function Notes() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Select Course</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Course</label>
                   <select 
-                    value={uploadData.course}
-                    onChange={(e) => setUploadData({...uploadData, course: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white"
+                    required 
+                    value={uploadData.course_id} 
+                    onChange={e => handleCourseChange(e.target.value)} 
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
                   >
-                    <option>Spoken English</option>
-                    <option>Writing</option>
-                    <option>Kids English</option>
-                    <option>SSC/HSC English</option>
+                    <option value="">Select Course</option>
+                    {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Batch</label>
+                  <select 
+                    required 
+                    disabled={!uploadData.course_id}
+                    value={uploadData.batch_id} 
+                    onChange={e => setUploadData({...uploadData, batch_id: e.target.value})} 
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white disabled:bg-gray-50"
+                  >
+                    <option value="">Select Batch</option>
+                    {batches.map(b => <option key={b.id} value={b.id}>{b.name} ({b.batch_time})</option>)}
                   </select>
                 </div>
 
@@ -132,16 +192,6 @@ export default function Notes() {
                   <BookOpen className="h-5 w-5 text-indigo-600" />
                   Available Notes
                 </h3>
-                <div className="relative w-64">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <input 
-                    type="text" 
-                    placeholder="Search notes..." 
-                    className="w-full pl-10 pr-4 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
-                  />
-                </div>
               </div>
               
               <div className="divide-y divide-gray-100">
@@ -154,8 +204,8 @@ export default function Notes() {
                       <div>
                         <h4 className="font-medium text-gray-900">{note.title}</h4>
                         <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                          <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-700 font-medium">{note.course}</span>
-                          <span>{note.date}</span>
+                          <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-700 font-medium">{note.courses?.name} • {note.batches?.name}</span>
+                          <span>{new Date(note.created_at).toLocaleDateString()}</span>
                           <span>{note.size}</span>
                         </div>
                       </div>

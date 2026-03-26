@@ -1,12 +1,16 @@
-import { useState } from "react";
-import { Plus, Save, Trophy, CheckCircle, XCircle, HelpCircle, FileQuestion } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Save, Trophy, CheckCircle, XCircle, HelpCircle, FileQuestion, BookOpen, Users, Clock } from "lucide-react";
 import { PageHero } from "../components/PageHero";
-
-const COURSES = ["Spoken English", "Writing", "Kids English", "SSC/HSC English"];
+import { supabase } from "../lib/supabaseClient";
+import { toast } from "sonner";
 
 export default function Exams() {
   const [activeTab, setActiveTab] = useState<"create" | "leaderboard">("create");
-  const [selectedCourse, setSelectedCourse] = useState(COURSES[0]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [batches, setBatches] = useState<any[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState("");
+  const [selectedBatchId, setSelectedBatchId] = useState("");
+  const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   
   // Quiz Creation State
   const [quizTitle, setQuizTitle] = useState("");
@@ -14,8 +18,39 @@ export default function Exams() {
     { id: 1, text: "", options: ["", "", "", ""], correctOption: 0, explanation: "" }
   ]);
 
-  // Mock Leaderboard Data
-  const leaderboardData: any[] = [];
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      const { data: coursesData } = await supabase.from('courses').select('*');
+      if (coursesData) {
+        setCourses(coursesData);
+        if (coursesData.length > 0) {
+          setSelectedCourseId(coursesData[0].id);
+          fetchBatches(coursesData[0].id);
+        }
+      }
+    };
+    fetchInitialData();
+  }, []);
+
+  const fetchBatches = async (courseId: string) => {
+    const { data: batchesData } = await supabase
+      .from('batches')
+      .select('*')
+      .eq('course_id', courseId);
+    if (batchesData) {
+      setBatches(batchesData);
+      if (batchesData.length > 0) {
+        setSelectedBatchId(batchesData[0].id);
+      } else {
+        setSelectedBatchId("");
+      }
+    }
+  };
+
+  const handleCourseChange = (courseId: string) => {
+    setSelectedCourseId(courseId);
+    fetchBatches(courseId);
+  };
 
   const handleAddQuestion = () => {
     setQuestions([
@@ -24,17 +59,38 @@ export default function Exams() {
     ]);
   };
 
-  const handleSaveQuiz = () => {
-    alert(`Quiz "${quizTitle}" saved successfully for course: ${selectedCourse}!`);
-    setQuizTitle("");
-    setQuestions([{ id: 1, text: "", options: ["", "", "", ""], correctOption: 0, explanation: "" }]);
+  const handleSaveQuiz = async () => {
+    if (!quizTitle || !selectedCourseId || !selectedBatchId) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('exams')
+        .insert([{
+          title: quizTitle,
+          course_id: selectedCourseId,
+          batch_id: selectedBatchId,
+          questions: questions,
+          duration_minutes: 30
+        }]);
+
+      if (error) throw error;
+
+      toast.success(`Quiz "${quizTitle}" published successfully!`);
+      setQuizTitle("");
+      setQuestions([{ id: 1, text: "", options: ["", "", "", ""], correctOption: 0, explanation: "" }]);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save quiz");
+    }
   };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'rgba(26, 7, 20, 0.06)' }}>
       <PageHero 
         title="Exam & MCQ Management"
-        subtitle="Create quizzes and view student leaderboards by course"
+        subtitle="Create quizzes and view student leaderboards by course and batch"
         icon={FileQuestion}
         darkColor="#1a0714"
         badge="Exams"
@@ -65,16 +121,32 @@ export default function Exams() {
           </div>
         </div>
 
-        {/* Course Selector (Global for both tabs) */}
-        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6 flex items-center gap-4">
-          <label className="font-medium text-gray-700">Select Course:</label>
-          <select 
-            value={selectedCourse}
-            onChange={(e) => setSelectedCourse(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50"
-          >
-            {COURSES.map(course => <option key={course} value={course}>{course}</option>)}
-          </select>
+        {/* Course & Batch Selector */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+            <BookOpen className="h-5 w-5 text-indigo-500" />
+            <label className="font-medium text-gray-700 min-w-[100px]">Course:</label>
+            <select 
+              value={selectedCourseId}
+              onChange={(e) => handleCourseChange(e.target.value)}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50"
+            >
+              {courses.map(course => <option key={course.id} value={course.id}>{course.name}</option>)}
+            </select>
+          </div>
+          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+            <Users className="h-5 w-5 text-indigo-500" />
+            <label className="font-medium text-gray-700 min-w-[100px]">Batch:</label>
+            <select 
+              value={selectedBatchId}
+              onChange={(e) => setSelectedBatchId(e.target.value)}
+              disabled={!selectedCourseId}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50 disabled:opacity-50"
+            >
+              <option value="">Select Batch</option>
+              {batches.map(batch => <option key={batch.id} value={batch.id}>{batch.name} ({batch.batch_time})</option>)}
+            </select>
+          </div>
         </div>
 
         {activeTab === "create" && (
@@ -179,7 +251,7 @@ export default function Exams() {
             <div className="p-6 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <Trophy className="h-5 w-5 text-yellow-500" /> 
-                Leaderboard: {selectedCourse}
+                Leaderboard: {courses.find(c => c.id === selectedCourseId)?.name || "All Courses"}
               </h3>
               <select className="px-3 py-1.5 border border-gray-300 rounded-md text-sm outline-none">
                 <option value="">Select a quiz</option>

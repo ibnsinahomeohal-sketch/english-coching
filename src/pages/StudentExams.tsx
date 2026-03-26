@@ -1,18 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Trophy, CheckCircle, XCircle, FileQuestion } from "lucide-react";
 import { PageHero } from "../components/PageHero";
-
-// Mock Data
-const COURSES = ["Spoken English", "Writing", "Kids English", "SSC/HSC English"];
+import { supabase } from "../lib/supabaseClient";
+import { toast } from "sonner";
 
 export default function StudentExams() {
-  const [selectedCourse, setSelectedCourse] = useState(COURSES[0]);
+  const [exams, setExams] = useState<any[]>([]);
 
-  // Mock Data: This would come from a database
-  const exams = [
-    { id: 1, title: "Daily Vocabulary Test - Day 1", course: "Spoken English", score: 85, correct: 17, wrong: 3, status: "Completed" },
-    { id: 2, title: "Grammar Quiz - Tenses", course: "Spoken English", score: 90, correct: 18, wrong: 2, status: "Completed" },
-  ];
+  useEffect(() => {
+    const fetchExams = async () => {
+      const sessionStr = localStorage.getItem('studentSession');
+      if (!sessionStr) return;
+      
+      const session = JSON.parse(sessionStr);
+      const studentId = session.studentId;
+
+      // Fetch student details
+      const { data: studentData } = await supabase
+        .from("students")
+        .select("course_id, batch_id")
+        .eq("student_id", studentId)
+        .single();
+
+      if (studentData) {
+        // Fetch exams for this student's course and batch
+        const { data, error } = await supabase
+          .from("exams")
+          .select("*")
+          .eq("course_id", studentData.course_id)
+          .eq("batch_id", studentData.batch_id);
+
+        if (error) {
+          console.error("Error fetching exams:", error);
+          toast.error("Could not load exams.");
+        } else {
+          setExams(data || []);
+        }
+      }
+    };
+
+    fetchExams();
+  }, []);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'rgba(26, 7, 20, 0.06)' }}>
@@ -32,23 +60,11 @@ export default function StudentExams() {
         }
       />
       <div className="max-w-4xl mx-auto pb-8 pt-6">
-        {/* Course Selector */}
-        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6 flex items-center gap-4">
-          <label className="font-medium text-gray-700">Select Course:</label>
-          <select 
-            value={selectedCourse}
-            onChange={(e) => setSelectedCourse(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50"
-          >
-            {COURSES.map(course => <option key={course} value={course}>{course}</option>)}
-          </select>
-        </div>
-
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-gray-200 bg-gray-50">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <Trophy className="h-5 w-5 text-yellow-500" /> 
-              Exam Results: {selectedCourse}
+              Exam Results
             </h3>
           </div>
           <div className="overflow-x-auto">
@@ -63,7 +79,7 @@ export default function StudentExams() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {exams.filter(e => e.course === selectedCourse).map((exam) => (
+                {exams.map((exam) => (
                   <tr key={exam.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 font-medium text-gray-900">{exam.title}</td>
                     <td className="px-6 py-4 font-bold text-indigo-600">{exam.score}%</td>
@@ -80,6 +96,11 @@ export default function StudentExams() {
                     </td>
                   </tr>
                 ))}
+                {exams.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500">No exam results available.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

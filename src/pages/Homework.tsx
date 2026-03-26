@@ -1,28 +1,81 @@
-import React, { useState, FormEvent } from "react";
-import { BookOpen, Upload, CheckCircle, Plus, FileText, Calendar } from "lucide-react";
+import React, { useState, useEffect, FormEvent } from "react";
+import { BookOpen, Upload, CheckCircle, Plus, FileText, Calendar, Users } from "lucide-react";
 import { toast } from "sonner";
 import { PageHero } from "../components/PageHero";
-
-const initialHomework: any[] = [];
+import { supabase } from "../lib/supabaseClient";
 
 export default function Homework() {
-  const [assignments, setAssignments] = useState(initialHomework);
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [batches, setBatches] = useState<any[]>([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [newAssignment, setNewAssignment] = useState({ title: "", course: "Spoken English", batch: "", dueDate: "" });
+  const [newAssignment, setNewAssignment] = useState({ 
+    title: "", 
+    course_id: "", 
+    batch_id: "", 
+    dueDate: "" 
+  });
 
-  const handleAdd = (e: FormEvent) => {
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
+
+  const fetchInitialData = async () => {
+    const { data: coursesData } = await supabase.from('courses').select('*');
+    if (coursesData) setCourses(coursesData);
+
+    const { data: homeworkData } = await supabase
+      .from('homework')
+      .select(`
+        *,
+        courses (name),
+        batches (name)
+      `)
+      .order('created_at', { ascending: false });
+    if (homeworkData) setAssignments(homeworkData);
+  };
+
+  const handleCourseChange = async (courseId: string) => {
+    setNewAssignment({ ...newAssignment, course_id: courseId, batch_id: "" });
+    const { data: batchesData } = await supabase
+      .from('batches')
+      .select('*')
+      .eq('course_id', courseId);
+    if (batchesData) setBatches(batchesData);
+  };
+
+  const handleAdd = async (e: FormEvent) => {
     e.preventDefault();
-    if (!newAssignment.title || !newAssignment.dueDate) return;
+    if (!newAssignment.title || !newAssignment.dueDate || !newAssignment.course_id || !newAssignment.batch_id) {
+      toast.error("Please fill in all fields");
+      return;
+    }
 
-    setAssignments([{
-      id: Date.now(),
-      ...newAssignment,
-      status: "Active"
-    }, ...assignments]);
-    
-    setNewAssignment({ title: "", course: "Spoken English", batch: "", dueDate: "" });
-    setShowAdd(false);
-    toast.success("Assignment created and assigned successfully!");
+    try {
+      const { data, error } = await supabase
+        .from('homework')
+        .insert([{
+          title: newAssignment.title,
+          course_id: newAssignment.course_id,
+          batch_id: newAssignment.batch_id,
+          due_date: newAssignment.dueDate,
+        }])
+        .select(`
+          *,
+          courses (name),
+          batches (name)
+        `)
+        .single();
+
+      if (error) throw error;
+
+      setAssignments([data, ...assignments]);
+      setNewAssignment({ title: "", course_id: "", batch_id: "", dueDate: "" });
+      setShowAdd(false);
+      toast.success("Assignment created and assigned successfully!");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create assignment");
+    }
   };
 
   return (
@@ -63,24 +116,27 @@ export default function Homework() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Course</label>
-                <select value={newAssignment.course} onChange={e => setNewAssignment({...newAssignment, course: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-                  <option>Spoken English</option>
-                  <option>SSC/HSC English</option>
-                  <option>Writing</option>
-                  <option>Kids English</option>
+                <select required value={newAssignment.course_id} onChange={e => handleCourseChange(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                  <option value="">Select Course</option>
+                  {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Batch Name</label>
-                <input type="text" required value={newAssignment.batch} onChange={e => setNewAssignment({...newAssignment, batch: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. Morning-A" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Batch</label>
+                <select 
+                  required 
+                  disabled={!newAssignment.course_id}
+                  value={newAssignment.batch_id} 
+                  onChange={e => setNewAssignment({...newAssignment, batch_id: e.target.value})} 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white disabled:bg-gray-50"
+                >
+                  <option value="">Select Batch</option>
+                  {batches.map(b => <option key={b.id} value={b.id}>{b.name} ({b.batch_time})</option>)}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
                 <input type="date" required value={newAssignment.dueDate} onChange={e => setNewAssignment({...newAssignment, dueDate: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Attachment (Optional)</label>
-                <input type="file" className="w-full px-4 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
               </div>
               <div className="md:col-span-2 flex justify-end mt-2">
                 <button type="submit" className="bg-gray-900 text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors">
@@ -101,21 +157,14 @@ export default function Homework() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">{assignment.title}</h3>
-                    <p className="text-xs text-gray-500">{assignment.course} • {assignment.batch}</p>
+                    <p className="text-xs text-gray-500">{assignment.courses?.name} • {assignment.batches?.name}</p>
                   </div>
                 </div>
-                <span className="bg-emerald-100 text-emerald-700 text-xs font-medium px-2.5 py-1 rounded-full">
-                  {assignment.status}
-                </span>
               </div>
               <div className="flex items-center gap-4 text-sm text-gray-600 border-t pt-4">
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-4 w-4 text-gray-400" />
-                  Due: {assignment.dueDate}
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <FileText className="h-4 w-4 text-gray-400" />
-                  0/15 Submitted
+                  Due: {new Date(assignment.due_date).toLocaleDateString()}
                 </div>
               </div>
             </div>
