@@ -14,7 +14,6 @@ import {
   AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
-import StudentLayout from "../components/StudentLayout";
 
 export default function StudentPortal() {
   const [student, setStudent] = useState<any>(null);
@@ -99,7 +98,6 @@ export default function StudentPortal() {
   }
 
   return (
-    <StudentLayout>
       <div className="min-h-screen bg-slate-50 pb-12">
         {/* Header removed as it's now in StudentLayout */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
@@ -255,6 +253,5 @@ export default function StudentPortal() {
           </div>
         </main>
       </div>
-    </StudentLayout>
   );
 }
