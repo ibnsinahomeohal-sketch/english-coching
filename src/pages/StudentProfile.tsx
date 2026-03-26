@@ -3,6 +3,8 @@ import { Camera, Save, User, Mail, Phone, BookOpen, Trophy, Star, Target, IdCard
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { QRCodeSVG } from "qrcode.react";
+import { supabase } from "../lib/supabaseClient";
+import { toast } from "sonner";
 
 export default function StudentProfile() {
   const [isEditing, setIsEditing] = useState(false);
@@ -29,6 +31,42 @@ export default function StudentProfile() {
     rank: 0,
     examsTaken: 0
   });
+
+  // Load student data from Supabase
+  useEffect(() => {
+    const fetchStudentData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("students")
+        .select("*")
+        .eq("email", user.email)
+        .single();
+
+      if (error) {
+        console.error("Error fetching student:", error);
+        toast.error("Could not load student profile.");
+      } else if (data) {
+        setStudentData({
+          name: data.name || "",
+          id: data.student_id || "",
+          course: data.course || "",
+          phone: data.phone || "",
+          email: data.email || "",
+          address: data.address || "",
+          dob: data.dob || "",
+          bloodGroup: data.blood_group || "",
+          batchNo: data.batch || "",
+          points: data.points || 0,
+          rank: data.rank || 0,
+          examsTaken: data.exams_taken || 0
+        });
+      }
+    };
+
+    fetchStudentData();
+  }, []);
 
   // Load saved template and layout on mount
   useEffect(() => {

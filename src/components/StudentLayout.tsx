@@ -15,25 +15,25 @@ const studentNavigation = [
     label: "LEARNING",
     items: [
       { name: "Dashboard", href: "/student", icon: LayoutDashboard, color: "var(--color-dashboard)" },
-      { name: "Class Schedule", href: "/schedule", icon: Clock, color: "var(--color-schedule)" },
-      { name: "Homework", href: "/homework", icon: BookOpen, color: "var(--color-homework)" },
-      { name: "Course Notes", href: "/notes", icon: FileText, color: "var(--color-learning)" },
-      { name: "My Exams", href: "/my-exams", icon: Award, color: "var(--color-exams)" },
+      { name: "Class Schedule", href: "/student/schedule", icon: Clock, color: "var(--color-schedule)" },
+      { name: "Homework", href: "/student/homework", icon: BookOpen, color: "var(--color-homework)" },
+      { name: "Course Notes", href: "/student/notes", icon: FileText, color: "var(--color-learning)" },
+      { name: "My Exams", href: "/student/my-exams", icon: Award, color: "var(--color-exams)" },
     ]
   },
   {
     label: "PRACTICE",
     items: [
-      { name: "Speaking Practice", href: "/speaking", icon: Mic, color: "var(--color-learning)" },
-      { name: "Community", href: "/community", icon: Users, color: "var(--color-dashboard)" },
-      { name: "AI & Support", href: "/ai-support", icon: Bot, color: "var(--color-dashboard)" },
+      { name: "Speaking Practice", href: "/student/speaking", icon: Mic, color: "var(--color-learning)" },
+      { name: "Community", href: "/student/community", icon: Users, color: "var(--color-dashboard)" },
+      { name: "AI & Support", href: "/student/ai-support", icon: Bot, color: "var(--color-dashboard)" },
     ]
   },
   {
     label: "ACCOUNT",
     items: [
-      { name: "Student Profile", href: "/profile", icon: UserCircle, color: "var(--color-dashboard)" },
-      { name: "Settings", href: "/settings", icon: SettingsIcon, color: "var(--color-dashboard)" },
+      { name: "Student Profile", href: "/student/profile", icon: UserCircle, color: "var(--color-dashboard)" },
+      { name: "Settings", href: "/student/settings", icon: SettingsIcon, color: "var(--color-dashboard)" },
     ]
   }
 ];

@@ -15,8 +15,10 @@ import Operations from "./pages/Operations";
 import Attendance from "./pages/Attendance";
 import Chat from "./pages/Chat";
 import Notes from "./pages/Notes";
+import StudentNotes from "./pages/StudentNotes";
 import Settings from "./pages/Settings";
 import ClassSchedule from "./pages/ClassSchedule";
+import StudentClassSchedule from "./pages/StudentClassSchedule";
 import EdTech from "./pages/EdTech";
 import Resources from "./pages/Resources";
 import AISupport from "./pages/AISupport";
@@ -30,9 +32,10 @@ import Teachers from "./pages/Teachers";
 import Fees from "./pages/Fees";
 import Expenses from "./pages/Expenses";
 import Homework from "./pages/Homework";
+import StudentHomework from "./pages/StudentHomework";
 import Certificates from "./pages/Certificates";
 import ParentPortal from "./pages/ParentPortal";
-import StudentDashboard from "./pages/StudentPortal";
+import StudentDashboard from "./pages/StudentDashboard";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
 import AuthCallback from "./pages/AuthCallback";
@@ -105,9 +108,9 @@ export default function App() {
 
         <Route path="/student" element={<ProtectedRoute><StudentLayout /></ProtectedRoute>}>
           <Route index element={<StudentDashboard />} />
-          <Route path="schedule" element={<ClassSchedule />} />
-          <Route path="homework" element={<Homework />} />
-          <Route path="notes" element={<Notes />} />
+          <Route path="schedule" element={<StudentClassSchedule />} />
+          <Route path="homework" element={<StudentHomework />} />
+          <Route path="notes" element={<StudentNotes />} />
           <Route path="my-exams" element={<StudentExams />} />
           <Route path="speaking" element={<SpeakingPractice />} />
           <Route path="community" element={<Community />} />
