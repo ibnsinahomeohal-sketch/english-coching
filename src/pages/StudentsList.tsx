@@ -27,17 +27,23 @@ export default function StudentsList() {
       const { data, error } = await supabase
         .from('students')
         .select('*');
-        // Removed explicit order by created_at to prevent crash if column is missing
 
       if (error) {
         console.error("Supabase Fetch Error:", error);
         throw error;
       }
       
-      console.log("Fetched Data:", data);
-      setStudents(data || []);
+      const mappedData = (data || []).map(s => ({
+        ...s,
+        course: s.course || "N/A",
+        batch: s.batch || "N/A",
+        batch_time: s.batch_time || "N/A"
+      }));
+
+      console.log("Fetched Data:", mappedData);
+      setStudents(mappedData);
       
-      if (data && data.length === 0) {
+      if (mappedData.length === 0) {
         console.warn("No students found in the 'students' table.");
       }
     } catch (error: any) {
@@ -109,13 +115,13 @@ export default function StudentsList() {
             guardian_mobile: editingStudent.guardian_mobile,
             occupation: editingStudent.occupation,
             email: editingStudent.email,
-            course: editingStudent.course,
-            batch: editingStudent.batch,
-            batch_time: editingStudent.batch_time,
             session: editingStudent.session,
             board: editingStudent.board,
             roll: editingStudent.roll,
             gpa: editingStudent.gpa,
+            course: editingStudent.course,
+            batch: editingStudent.batch,
+            batch_time: editingStudent.batch_time,
             fee: parseFloat(editingStudent.fee) || 0,
             discount: parseFloat(editingStudent.discount) || 0,
             paid_amount: parseFloat(editingStudent.paid_amount) || 0,

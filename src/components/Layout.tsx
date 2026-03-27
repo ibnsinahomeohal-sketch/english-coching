@@ -21,6 +21,7 @@ const navigationGroups = [
       { name: "Classes", href: "/schedule", icon: Clock },
       { name: "Payments", href: "/fees", icon: CreditCard },
       { name: "Exams", href: "/exams", icon: FileQuestion },
+      { name: "Student Chat", href: "/chat", icon: MessageSquare },
     ]
   },
   {
@@ -29,6 +30,7 @@ const navigationGroups = [
       { name: "Admission", href: "/admission", icon: UserPlus },
       { name: "Attendance", href: "/attendance", icon: CalendarCheck },
       { name: "Homework", href: "/homework", icon: BookOpen },
+      { name: "Course Notes", href: "/notes", icon: FileText },
       { name: "Certificates", href: "/certificates", icon: Award },
     ]
   },
@@ -37,12 +39,15 @@ const navigationGroups = [
     items: [
       { name: "Learning", href: "/learning", icon: BookOpen },
       { name: "Speaking", href: "/speaking", icon: Mic },
+      { name: "EdTech", href: "/edtech", icon: Bot },
+      { name: "Resources", href: "/resources", icon: Library },
       { name: "Community", href: "/community", icon: Users },
     ]
   },
   {
     label: "SYSTEM",
     items: [
+      { name: "Operations", href: "/operations", icon: IdCard },
       { name: "Settings", href: "/settings", icon: SettingsIcon },
       { name: "Finance", href: "/finance", icon: Wallet },
     ]

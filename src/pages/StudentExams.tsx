@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Trophy, CheckCircle, XCircle, FileQuestion } from "lucide-react";
+import { Trophy, CheckCircle, XCircle, FileQuestion, Calendar, ArrowRight, Award } from "lucide-react";
 import { PageHero } from "../components/PageHero";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
@@ -23,12 +23,12 @@ export default function StudentExams() {
         .single();
 
       if (studentData) {
-        // Fetch exams for this student's course and batch
+        // Fetch exams for this student's course and batch (or all batches)
         const { data, error } = await supabase
           .from("exams")
           .select("*")
           .eq("course_id", studentData.course_id)
-          .eq("batch_id", studentData.batch_id);
+          .or(`batch_id.eq.${studentData.batch_id},batch_id.is.null`);
 
         if (error) {
           console.error("Error fetching exams:", error);
@@ -42,68 +42,93 @@ export default function StudentExams() {
     fetchExams();
   }, []);
 
+  const getScoreColor = (score: number) => {
+    if (score >= 90) return 'text-emerald-600 bg-emerald-50';
+    if (score >= 70) return 'text-blue-600 bg-blue-50';
+    if (score >= 50) return 'text-amber-600 bg-amber-50';
+    return 'text-rose-600 bg-rose-50';
+  };
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'rgba(26, 7, 20, 0.06)' }}>
+    <div className="min-h-screen bg-slate-50 pb-12">
       <PageHero 
         title="My Exams & Quizzes"
         subtitle="View your exam results and performance"
         icon={FileQuestion}
-        darkColor="#1a0714"
+        darkColor="#831843"
         badge="Exams"
         pattern={
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
             <pattern id="circles" width="20" height="20" patternUnits="userSpaceOnUse">
-              <circle cx="10" cy="10" r="3" fill="#db2777" fillOpacity="0.3" />
+              <circle cx="10" cy="10" r="3" fill="#fbcfe8" fillOpacity="0.2" />
             </pattern>
             <rect width="100%" height="100%" fill="url(#circles)" />
           </svg>
         }
       />
-      <div className="max-w-4xl mx-auto pb-8 pt-6">
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-gray-200 bg-gray-50">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-yellow-500" /> 
-              Exam Results
-            </h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-white border-b border-gray-200">
-                  <th className="px-6 py-4 text-sm font-semibold text-gray-600">Exam Title</th>
-                  <th className="px-6 py-4 text-sm font-semibold text-gray-600">Score</th>
-                  <th className="px-6 py-4 text-sm font-semibold text-gray-600">Correct</th>
-                  <th className="px-6 py-4 text-sm font-semibold text-gray-600">Wrong</th>
-                  <th className="px-6 py-4 text-sm font-semibold text-gray-600">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {exams.map((exam) => (
-                  <tr key={exam.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-gray-900">{exam.title}</td>
-                    <td className="px-6 py-4 font-bold text-indigo-600">{exam.score}%</td>
-                    <td className="px-6 py-4 text-emerald-600 flex items-center gap-1">
-                      <CheckCircle className="h-4 w-4" /> {exam.correct}
-                    </td>
-                    <td className="px-6 py-4 text-rose-600 flex items-center gap-1">
-                      <XCircle className="h-4 w-4" /> {exam.wrong}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="bg-emerald-100 text-emerald-700 text-xs font-medium px-2.5 py-1 rounded-full">
-                        {exam.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                {exams.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500">No exam results available.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+      
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {exams.map((exam) => (
+            <div key={exam.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all group overflow-hidden flex flex-col">
+              <div className="p-6 flex-1">
+                <div className="flex justify-between items-start mb-6">
+                  <div className="h-12 w-12 bg-pink-50 text-pink-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shrink-0">
+                    <FileQuestion className="h-6 w-6" />
+                  </div>
+                  <span className="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
+                    {exam.status || 'Completed'}
+                  </span>
+                </div>
+                
+                <h3 className="font-bold text-slate-900 text-xl leading-tight mb-2">{exam.title}</h3>
+                
+                <div className="flex items-center gap-2 text-sm text-slate-500 font-medium mb-6">
+                  <Calendar className="h-4 w-4" />
+                  {exam.date || 'Recent'}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-50 rounded-2xl p-4 text-center">
+                    <div className="flex items-center justify-center gap-1 text-emerald-600 font-bold mb-1">
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="text-xl">{exam.correct || 0}</span>
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Correct</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-2xl p-4 text-center">
+                    <div className="flex items-center justify-center gap-1 text-rose-600 font-bold mb-1">
+                      <XCircle className="h-4 w-4" />
+                      <span className="text-xl">{exam.wrong || 0}</span>
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Wrong</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-100 p-6 bg-slate-50/50 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Final Score</p>
+                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl font-black text-lg ${getScoreColor(exam.score || 0)}`}>
+                    {exam.score || 0}%
+                  </div>
+                </div>
+                <button className="h-10 w-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-pink-600 hover:border-pink-200 hover:bg-pink-50 transition-colors shadow-sm">
+                  <ArrowRight className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {exams.length === 0 && (
+            <div className="col-span-full bg-white rounded-3xl border border-slate-200 p-12 text-center">
+              <div className="h-20 w-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Award className="h-10 w-10 text-slate-300" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">No Exams Taken Yet</h3>
+              <p className="text-slate-500 max-w-md mx-auto">Your exam results will appear here once you complete them. Keep studying!</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, FormEvent } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { QrCode, Download, UserCheck, CheckCircle, Upload, Edit2, Save, X, Move, Search, Loader2, MessageSquare, Settings } from "lucide-react";
+import { QrCode, Download, UserCheck, CheckCircle, Upload, Edit2, Save, X, Move, Search, Loader2, MessageSquare, Settings, Star } from "lucide-react";
 import html2canvas from "html2canvas";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
@@ -24,12 +24,13 @@ export default function Operations() {
   const [layout, setLayout] = useState({
     name: { top: 225, left: 0, scale: 1 },
     qr: { top: 448, left: 252, size: 70 },
-    photo: { top: 65, left: 97, size: 146 }
+    photo: { top: 65, left: 97, size: 146 },
+    details: { top: 267, left: 146 }
   });
   const dragState = useRef({ 
     isDragging: false, 
     isResizing: false,
-    element: null as "name" | "qr" | "photo" | null, 
+    element: null as "name" | "qr" | "photo" | "details" | null, 
     offsetX: 0, 
     offsetY: 0,
     initialSize: 0
@@ -63,13 +64,14 @@ export default function Operations() {
       const mappedStudents = (data || []).map(s => ({
         id: s.student_id,
         name: s.name,
-        course: s.course,
+        course: s.course || "N/A",
         photo: s.photo_url || "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&h=400&fit=crop",
         dob: s.dob || "N/A",
         phone: s.mobile || "N/A",
         bloodGroup: s.blood_group || "N/A",
         fatherName: s.father_name || "N/A",
         batchNo: s.batch || "N/A",
+        duration: s.duration || "N/A",
         address: s.address || "N/A",
         password: s.password
       }));
@@ -112,9 +114,9 @@ export default function Operations() {
 
         setLayout(prev => ({
           ...prev,
-          [element as "name" | "qr" | "photo"]: { ...prev[element as "name" | "qr" | "photo"], top: newTop, left: newLeft }
+          [element as "name" | "qr" | "photo" | "details"]: { ...prev[element as "name" | "qr" | "photo" | "details"], top: newTop, left: newLeft }
         }));
-      } else if (isResizing && element !== "name") {
+      } else if (isResizing && (element === "qr" || element === "photo")) {
         const deltaX = e.clientX - (cardRect.left + offsetX);
         const newSize = Math.max(20, initialSize + deltaX);
         
@@ -142,7 +144,7 @@ export default function Operations() {
     };
   }, [isLayoutMode]);
 
-  const handleMouseDown = (e: React.MouseEvent, element: "name" | "qr" | "photo", isResize = false) => {
+  const handleMouseDown = (e: React.MouseEvent, element: "name" | "qr" | "photo" | "details", isResize = false) => {
     if (!isLayoutMode) return;
     e.preventDefault();
     e.stopPropagation();
@@ -154,7 +156,7 @@ export default function Operations() {
       element,
       offsetX: e.clientX - rect.left,
       offsetY: e.clientY - rect.top,
-      initialSize: element !== "name" ? layout[element].size : 0
+      initialSize: (element === "qr" || element === "photo") ? layout[element].size : 0
     };
   };
 
@@ -224,6 +226,7 @@ export default function Operations() {
           blood_group: editData.bloodGroup,
           father_name: editData.fatherName,
           batch: editData.batchNo,
+          duration: editData.duration,
           address: editData.address
         })
         .eq('student_id', editData.id);
@@ -241,7 +244,7 @@ export default function Operations() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'rgba(17, 17, 17, 0.06)' }}>
+    <div className="min-h-screen pb-12" style={{ backgroundColor: 'rgba(17, 17, 17, 0.06)' }}>
       <PageHero 
         title="Operations"
         subtitle="Manage student ID cards and templates"
@@ -257,7 +260,36 @@ export default function Operations() {
           </svg>
         }
       />
-      <div className="max-w-7xl mx-auto pb-8 pt-6">
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-10">
+        {/* Official Government Header */}
+        <div className="mb-8 overflow-hidden rounded-2xl border border-emerald-200 shadow-lg bg-white">
+          <div className="bg-[#006a4e] p-4 text-white flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 bg-white rounded-full p-1 flex items-center justify-center shrink-0">
+                <img 
+                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Government_Seal_of_Bangladesh.svg/1200px-Government_Seal_of_Bangladesh.svg.png" 
+                  alt="Govt Seal" 
+                  className="h-14 w-14 object-contain"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <div className="text-center md:text-left">
+                <h2 className="text-lg md:text-xl font-bold leading-tight">গণপ্রজাতন্ত্রী বাংলাদেশ সরকার অনুমোদিত</h2>
+                <p className="text-xs md:text-sm font-medium opacity-90">Government Approved Student Management System</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-center md:items-end gap-1 text-xs md:text-sm font-bold">
+              <div className="px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
+                Govt. Reg. No: RE-2024-882
+              </div>
+              <div className="px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
+                Institute Code: 50423
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
           {/* Left Column: Settings & List */}
@@ -458,6 +490,10 @@ export default function Operations() {
                       <input type="text" value={editData.batchNo} onChange={(e) => setEditData({...editData, batchNo: e.target.value})} className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-indigo-500 outline-none" />
                     </div>
                     <div className="col-span-2">
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Duration</label>
+                      <input type="text" value={editData.duration} onChange={(e) => setEditData({...editData, duration: e.target.value})} className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-indigo-500 outline-none" />
+                    </div>
+                    <div className="col-span-2">
                       <label className="block text-xs font-medium text-gray-700 mb-1">Update Photo</label>
                       <input 
                         type="file" 
@@ -486,7 +522,7 @@ export default function Operations() {
                   <div 
                     ref={idCardRef}
                     // Using standard ID card aspect ratio (approx 2.13 x 3.38 inches)
-                    className="w-[340px] h-[540px] relative bg-white shadow-sm"
+                    className="w-[340px] h-[540px] relative bg-[#ffffff] shadow-sm"
                     style={{
                       backgroundImage: templateBg ? `url(${templateBg})` : 'none',
                       backgroundSize: '100% 100%',
@@ -495,7 +531,7 @@ export default function Operations() {
                     }}
                   >
                     {!templateBg && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 text-gray-400 text-center p-6 border-2 border-dashed border-gray-200 m-4 rounded-xl">
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#f9fafb] text-[#9ca3af] text-center p-6 border-2 border-dashed border-[#e5e7eb] m-4 rounded-xl">
                         <Upload className="h-10 w-10 mb-2 opacity-50" />
                         <p className="text-sm">Upload your blank template from the left panel.</p>
                         <p className="text-xs mt-2">The text will align perfectly with your design!</p>
@@ -504,7 +540,7 @@ export default function Operations() {
 
                     {/* Photo - Draggable & Resizable */}
                       <div 
-                        className={`absolute z-10 rounded-full overflow-hidden border-[6px] border-white shadow-md ${isLayoutMode ? 'cursor-move outline-dashed outline-2 outline-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/20' : ''}`}
+                        className={`absolute z-10 rounded-full overflow-hidden border-[6px] border-[#ffffff] shadow-md ${isLayoutMode ? 'cursor-move outline-dashed outline-2 outline-[#4f46e5] bg-[#4f46e5]/10 hover:bg-[#4f46e5]/20' : ''}`}
                         style={{ 
                           top: `${layout.photo.top}px`, 
                           left: `${layout.photo.left}px`,
@@ -516,8 +552,8 @@ export default function Operations() {
                         {selectedStudent.photo ? (
                           <img src={selectedStudent.photo} alt="Student" className="w-full h-full object-cover" crossOrigin="anonymous" />
                         ) : (
-                          <div className="w-full h-full bg-indigo-100 flex items-center justify-center">
-                            <UserCheck className="h-1/2 w-1/2 text-indigo-300" />
+                          <div className="w-full h-full bg-[#eef2ff] flex items-center justify-center">
+                            <UserCheck className="h-1/2 w-1/2 text-[#a5b4fc]" />
                           </div>
                         )}
                         {isLayoutMode && (
@@ -530,7 +566,7 @@ export default function Operations() {
 
                     {/* Name - Draggable */}
                     <div 
-                      className={`absolute w-full text-center z-10 ${isLayoutMode ? 'cursor-move outline-dashed outline-2 outline-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/20' : ''}`}
+                      className={`absolute w-full text-center z-10 ${isLayoutMode ? 'cursor-move outline-dashed outline-2 outline-[#4f46e5] bg-[#4f46e5]/10 hover:bg-[#4f46e5]/20' : ''}`}
                       style={{ top: `${layout.name.top}px`, left: `${layout.name.left}px` }}
                       onMouseDown={(e) => handleMouseDown(e, 'name')}
                     >
@@ -540,19 +576,24 @@ export default function Operations() {
                     </div>
 
                     {/* Details - Aligned exactly next to the labels in your template */}
-                    <div className="absolute top-[50%] left-[43%] w-[55%] flex flex-col gap-[12.5px] z-10">
-                      <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{selectedStudent.id}</p>
-                      <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{selectedStudent.course}</p>
-                      <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{selectedStudent.dob}</p>
-                      <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{selectedStudent.phone}</p>
-                      <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide truncate pr-2" style={{ fontFamily: 'Arial, sans-serif' }}>{selectedStudent.address}</p>
-                      <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{selectedStudent.bloodGroup}</p>
-                      <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>{selectedStudent.batchNo}</p>
+                    <div 
+                      className={`absolute w-[55%] flex flex-col gap-[12.5px] z-10 ${isLayoutMode ? 'cursor-move outline-dashed outline-2 outline-[#4f46e5] bg-[#4f46e5]/10 hover:bg-[#4f46e5]/20 p-1 rounded' : ''}`}
+                      style={{ top: `${layout.details.top}px`, left: `${layout.details.left}px` }}
+                      onMouseDown={(e) => handleMouseDown(e, 'details')}
+                    >
+                      <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>: {selectedStudent.id}</p>
+                      <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>: {selectedStudent.course}</p>
+                      <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>: {selectedStudent.dob}</p>
+                      <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>: {selectedStudent.phone}</p>
+                      <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide truncate pr-2" style={{ fontFamily: 'Arial, sans-serif' }}>: {selectedStudent.address}</p>
+                      <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>: {selectedStudent.bloodGroup}</p>
+                      <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>: {selectedStudent.batchNo}</p>
+                      <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>: {selectedStudent.duration}</p>
                     </div>
 
                     {/* QR Code Container - Draggable & Resizable */}
                     <div 
-                      className={`absolute z-10 flex items-center justify-center overflow-hidden ${isLayoutMode ? 'cursor-move outline-dashed outline-2 outline-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/20' : ''}`}
+                      className={`absolute z-10 flex items-center justify-center overflow-hidden bg-white rounded-lg p-1 ${isLayoutMode ? 'cursor-move outline-dashed outline-2 outline-[#4f46e5] bg-[#4f46e5]/10 hover:bg-[#4f46e5]/20' : ''}`}
                       style={{ 
                         top: `${layout.qr.top}px`, 
                         left: `${layout.qr.left}px`, 
@@ -563,18 +604,18 @@ export default function Operations() {
                     >
                       <QRCodeSVG 
                         value={selectedStudent.id} 
-                        style={{ margin: 0, width: '90%', height: '90%', objectFit: 'contain', pointerEvents: 'none' }} 
+                        style={{ margin: 0, width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} 
                       />
                       {isLayoutMode && (
                         <div 
-                          className="absolute bottom-0 right-0 w-4 h-4 bg-indigo-600 cursor-nwse-resize"
+                          className="absolute bottom-0 right-0 w-4 h-4 bg-[#4f46e5] cursor-nwse-resize"
                           onMouseDown={(e) => handleMouseDown(e, 'qr', true)}
                         />
                       )}
                     </div>
                   </div>
                 ) : (
-                  <div className="w-[340px] h-[540px] flex items-center justify-center bg-gray-50 text-gray-400 text-center p-6 border-2 border-dashed border-gray-200 rounded-xl">
+                  <div className="w-[340px] h-[540px] flex items-center justify-center bg-[#f9fafb] text-[#9ca3af] text-center p-6 border-2 border-dashed border-[#e5e7eb] rounded-xl">
                     <p className="text-sm">Select a student from the list to preview their ID card.</p>
                   </div>
                 )}

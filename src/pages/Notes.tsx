@@ -61,7 +61,7 @@ export default function Notes() {
         .insert([{
           title: uploadData.title,
           course_id: uploadData.course_id,
-          batch_id: uploadData.batch_id,
+          batch_id: uploadData.batch_id === "all" ? null : uploadData.batch_id,
           type: uploadData.file?.type.includes('image') ? 'image' : 'pdf',
           size: (uploadData.file!.size / (1024 * 1024)).toFixed(1) + " MB",
           file_url: "https://example.com/mock-file.pdf" // Mock URL
@@ -146,6 +146,7 @@ export default function Notes() {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white disabled:bg-gray-50"
                   >
                     <option value="">Select Batch</option>
+                    <option value="all">All Batches</option>
                     {batches.map(b => <option key={b.id} value={b.id}>{b.name} ({b.batch_time})</option>)}
                   </select>
                 </div>
@@ -204,7 +205,9 @@ export default function Notes() {
                       <div>
                         <h4 className="font-medium text-gray-900">{note.title}</h4>
                         <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                          <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-700 font-medium">{note.courses?.name} • {note.batches?.name}</span>
+                          <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-700 font-medium">
+                            {note.courses?.name} • {note.batches?.name || "All Batches"}
+                          </span>
                           <span>{new Date(note.created_at).toLocaleDateString()}</span>
                           <span>{note.size}</span>
                         </div>

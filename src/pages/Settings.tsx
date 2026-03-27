@@ -7,14 +7,17 @@ export default function Settings() {
     logo: "",
     profilePhoto: "",
     phone: "",
-    email: ""
+    email: "",
+    instituteName: "BASIC ENGLISH THERAPY",
+    address: "ChakBazar, Lakshmipur Sadar-3700, Lakshmipur."
   });
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("appSettings");
     if (saved) {
-      setSettings(JSON.parse(saved));
+      const parsed = JSON.parse(saved);
+      setSettings(prev => ({ ...prev, ...parsed }));
     }
   }, []);
 
@@ -97,6 +100,28 @@ export default function Settings() {
                 <p>Upload your profile photo.</p>
               </div>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Institute Name</label>
+            <input 
+              type="text" 
+              value={settings.instituteName}
+              onChange={(e) => setSettings({...settings, instituteName: e.target.value})}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" 
+              placeholder="e.g. BASIC ENGLISH THERAPY" 
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Institute Address</label>
+            <input 
+              type="text" 
+              value={settings.address}
+              onChange={(e) => setSettings({...settings, address: e.target.value})}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" 
+              placeholder="e.g. ChakBazar, Lakshmipur Sadar-3700" 
+            />
           </div>
         </div>
 

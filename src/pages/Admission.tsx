@@ -31,6 +31,7 @@ export default function Admission() {
     password: "",
     course_id: "",
     batch_id: "",
+    duration: "",
     session: "",
     board: "",
     roll: "",
@@ -49,6 +50,31 @@ export default function Admission() {
   useEffect(() => {
     fetchInitialData();
   }, []);
+
+  const handleSeedCourses = async () => {
+    setIsAddingCourse(true);
+    try {
+      const defaultCourses = [
+        { name: "Spoken English", duration: "3 Months" },
+        { name: "IELTS Preparation", duration: "3 Months" },
+        { name: "Grammar Foundation", duration: "2 Months" },
+        { name: "Phonetics & Pronunciation", duration: "1 Month" },
+        { name: "Academic English (HSC)", duration: "6 Months" }
+      ];
+      
+      const { error } = await supabase
+        .from('courses')
+        .insert(defaultCourses);
+      
+      if (error) throw error;
+      toast.success("Default courses seeded successfully!");
+      fetchInitialData();
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsAddingCourse(false);
+    }
+  };
 
   const handleAddCourse = async () => {
     if (!newCourseName.trim()) return;
@@ -101,7 +127,14 @@ export default function Admission() {
   };
 
   const handleCourseChange = async (courseId: string) => {
-    setFormData(prev => ({ ...prev, course_id: courseId, batch_id: "" }));
+    const selectedCourse = courses.find(c => c.id === courseId);
+    setFormData(prev => ({ 
+      ...prev, 
+      course_id: courseId, 
+      batch_id: "",
+      duration: selectedCourse?.duration || ""
+    }));
+    
     const { data: batchesData } = await supabase
       .from('batches')
       .select('*')
@@ -166,6 +199,7 @@ export default function Admission() {
           password: formData.password,
           course_id: formData.course_id,
           batch_id: formData.batch_id,
+          duration: formData.duration,
           session: formData.session,
           board: formData.board,
           roll: formData.roll,
@@ -203,7 +237,40 @@ export default function Admission() {
   };
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
+      {/* Official Government Header */}
+      <div className="mb-8 overflow-hidden rounded-2xl border border-emerald-200 shadow-sm">
+        <div className="bg-[#006a4e] p-4 text-white flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="h-16 w-16 bg-white rounded-full p-1 flex items-center justify-center shrink-0">
+              <img 
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Government_Seal_of_Bangladesh.svg/1200px-Government_Seal_of_Bangladesh.svg.png" 
+                alt="Govt Seal" 
+                className="h-14 w-14 object-contain"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <div className="text-center md:text-left">
+              <h2 className="text-lg md:text-xl font-bold leading-tight">গণপ্রজাতন্ত্রী বাংলাদেশ সরকার অনুমোদিত</h2>
+              <p className="text-xs md:text-sm font-medium opacity-90">Government Approved Coaching Center Admission System</p>
+            </div>
+          </div>
+          <div className="flex flex-col items-center md:items-end gap-1 text-xs md:text-sm font-bold">
+            <div className="px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
+              Govt. Reg. No: 1385461729
+            </div>
+            <div className="px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
+              Institute Code: 54617
+            </div>
+          </div>
+        </div>
+        <div className="bg-white px-6 py-3 border-t border-emerald-100 flex items-center justify-center gap-2 text-[#006a4e] font-bold text-sm">
+          <Star className="h-4 w-4 fill-current" />
+          শিক্ষা নিয়ে গড়ব দেশ, শেখ হাসিনার বাংলাদেশ
+          <Star className="h-4 w-4 fill-current" />
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-10">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -456,8 +523,22 @@ export default function Admission() {
                       onChange={(e) => handleCourseChange(e.target.value)}
                     >
                       <option value="">Select Course</option>
-                      {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      {courses.length > 0 ? (
+                        courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)
+                      ) : (
+                        <option disabled>No courses available.</option>
+                      )}
                     </select>
+                    {courses.length === 0 && (
+                      <button 
+                        type="button"
+                        onClick={handleSeedCourses}
+                        className="mt-2 text-[10px] font-bold text-emerald-600 hover:underline flex items-center gap-1"
+                      >
+                        <Star className="h-3 w-3 fill-current" />
+                        Seed Default Courses
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -484,20 +565,25 @@ export default function Admission() {
                       onChange={(e) => setFormData({...formData, batch_id: e.target.value})}
                     >
                       <option value="">Select Batch</option>
-                      {batches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                      {batches.length > 0 ? (
+                        batches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)
+                      ) : (
+                        formData.course_id && <option disabled>No batches for this course. Add one.</option>
+                      )}
                     </select>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Address</label>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Duration</label>
                   <div className="relative">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input 
                       type="text" 
-                      className="input-premium pl-11" 
-                      value={formData.address}
-                      onChange={(e) => setFormData({...formData, address: e.target.value})} 
+                      placeholder="e.g. 3 Months"
+                      className="input-premium pl-11 bg-gray-50" 
+                      value={formData.duration}
+                      readOnly
                     />
                   </div>
                 </div>

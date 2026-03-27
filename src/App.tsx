@@ -44,6 +44,7 @@ import AuthCallback from "./pages/AuthCallback";
 import LearningModule from "./pages/LearningModule";
 import SpeakingPractice from "./pages/SpeakingPractice";
 import Community from "./pages/Community";
+import DailyQuiz from "./pages/DailyQuiz";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<any>(null);
@@ -110,6 +111,7 @@ export default function App() {
 
         <Route path="/student" element={<ProtectedRoute><StudentLayout /></ProtectedRoute>}>
           <Route index element={<StudentDashboard />} />
+          <Route path="daily-quiz" element={<DailyQuiz />} />
           <Route path="schedule" element={<StudentClassSchedule />} />
           <Route path="homework" element={<StudentHomework />} />
           <Route path="chat" element={<StudentChat />} />

@@ -46,11 +46,7 @@ export default function StudentProfile() {
 
       const { data, error } = await supabase
         .from("students")
-        .select(`
-          *,
-          courses (name),
-          batches (name, batch_time)
-        `)
+        .select('*')
         .eq("student_id", studentId)
         .single();
 
@@ -61,14 +57,14 @@ export default function StudentProfile() {
         setStudentData({
           name: data.name || "",
           id: data.student_id || "",
-          course: data.courses?.name || "",
+          course: data.course || "",
           phone: data.phone || data.mobile || "",
           email: data.email || "",
           address: data.address || "",
           dob: data.dob || "",
           bloodGroup: data.blood_group || "",
-          batchNo: data.batches?.name || "",
-          batchTime: data.batches?.batch_time || "",
+          batchNo: data.batch || "",
+          batchTime: data.batch_time || "",
           session: data.session || "",
           points: data.points || 0,
           rank: data.rank || 0,

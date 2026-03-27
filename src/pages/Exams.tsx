@@ -79,12 +79,21 @@ export default function Exams() {
   };
 
   const fetchExams = async (courseId: string, batchId: string) => {
-    if (!courseId || !batchId) return;
-    const { data: examsData } = await supabase
+    if (!courseId) return;
+    let query = supabase
       .from('exams')
       .select('*')
-      .eq('course_id', courseId)
-      .eq('batch_id', batchId);
+      .eq('course_id', courseId);
+    
+    if (batchId === "all") {
+      query = query.is('batch_id', null);
+    } else if (batchId) {
+      query = query.eq('batch_id', batchId);
+    } else {
+      return;
+    }
+
+    const { data: examsData } = await query;
     if (examsData) {
       setExams(examsData);
       if (examsData.length > 0) {
@@ -175,7 +184,7 @@ export default function Exams() {
         .insert([{
           title: quizTitle,
           course_id: selectedCourseId,
-          batch_id: selectedBatchId,
+          batch_id: selectedBatchId === "all" ? null : selectedBatchId,
           questions: questions,
           duration_minutes: duration,
           total_marks: totalMarks,
@@ -255,6 +264,7 @@ export default function Exams() {
               className="w-full bg-white/50 border border-gray-100 rounded-xl px-4 py-3 font-display font-bold text-gray-900 text-lg outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white hover:border-secondary/30 transition-all shadow-sm"
             >
               <option value="">Choose Batch</option>
+              {selectedCourseId && <option value="all">All Batches</option>}
               {batches.length > 0 ? (
                 batches.map(batch => <option key={batch.id} value={batch.id}>{batch.name} ({batch.batch_time})</option>)
               ) : (

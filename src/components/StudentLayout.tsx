@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { 
   LayoutDashboard, BookOpen, Clock, MessageSquare, FileText, 
   UserCircle, Settings as SettingsIcon, Mic, Users, Award, 
-  LogOut, Bell, Sun, Moon, Menu, Bot
+  LogOut, Bell, Sun, Moon, Menu, Bot, BrainCircuit
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { supabase } from "../lib/supabaseClient";
@@ -15,6 +15,7 @@ const studentNavigation = [
     label: "LEARNING",
     items: [
       { name: "Dashboard", href: "/student", icon: LayoutDashboard, color: "var(--color-dashboard)" },
+      { name: "Daily Quiz", href: "/student/daily-quiz", icon: BrainCircuit, color: "#ec4899" },
       { name: "Class Schedule", href: "/student/schedule", icon: Clock, color: "var(--color-schedule)" },
       { name: "Homework", href: "/student/homework", icon: BookOpen, color: "var(--color-homework)" },
       { name: "Chat", href: "/student/chat", icon: MessageSquare, color: "var(--color-dashboard)" },

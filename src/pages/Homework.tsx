@@ -1,20 +1,28 @@
 import React, { useState, useEffect, FormEvent } from "react";
-import { BookOpen, Upload, CheckCircle, Plus, FileText, Calendar, Users } from "lucide-react";
+import { BookOpen, Trophy, Upload, CheckCircle, MessageSquare, Award, X, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { PageHero } from "../components/PageHero";
 import { supabase } from "../lib/supabaseClient";
 
 export default function Homework() {
-  const [assignments, setAssignments] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [batches, setBatches] = useState<any[]>([]);
-  const [showAdd, setShowAdd] = useState(false);
-  const [newAssignment, setNewAssignment] = useState({ 
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadData, setUploadData] = useState({ 
     title: "", 
     course_id: "", 
     batch_id: "", 
-    dueDate: "" 
+    dueDate: "",
+    file: null as File | null 
   });
+
+  // Tracking state
+  const [selectedAssignment, setSelectedAssignment] = useState<string>("");
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [gradingStudent, setGradingStudent] = useState<any>(null);
+  const [marks, setMarks] = useState("");
+  const [assignments, setAssignments] = useState<any[]>([]);
 
   useEffect(() => {
     fetchInitialData();
@@ -26,17 +34,19 @@ export default function Homework() {
 
     const { data: homeworkData } = await supabase
       .from('homework')
-      .select(`
-        *,
-        courses (name),
-        batches (name)
-      `)
+      .select(`*, courses (name), batches (name)`)
       .order('created_at', { ascending: false });
-    if (homeworkData) setAssignments(homeworkData);
+      
+    if (homeworkData) {
+        setAssignments(homeworkData);
+        if (homeworkData.length > 0) {
+            setSelectedAssignment(homeworkData[0].id);
+        }
+    }
   };
 
   const handleCourseChange = async (courseId: string) => {
-    setNewAssignment({ ...newAssignment, course_id: courseId, batch_id: "" });
+    setUploadData({ ...uploadData, course_id: courseId, batch_id: "" });
     const { data: batchesData } = await supabase
       .from('batches')
       .select('*')
@@ -44,38 +54,63 @@ export default function Homework() {
     if (batchesData) setBatches(batchesData);
   };
 
-  const handleAdd = async (e: FormEvent) => {
+  const handleUpload = async (e: FormEvent) => {
     e.preventDefault();
-    if (!newAssignment.title || !newAssignment.dueDate || !newAssignment.course_id || !newAssignment.batch_id) {
-      toast.error("Please fill in all fields");
+    if (!uploadData.title || !uploadData.course_id || !uploadData.batch_id || !uploadData.dueDate) {
+      toast.error("Please fill in all required fields");
       return;
     }
 
+    setIsUploading(true);
+    
     try {
       const { data, error } = await supabase
         .from('homework')
         .insert([{
-          title: newAssignment.title,
-          course_id: newAssignment.course_id,
-          batch_id: newAssignment.batch_id,
-          due_date: newAssignment.dueDate,
+          title: uploadData.title,
+          course_id: uploadData.course_id,
+          batch_id: uploadData.batch_id === "all" ? null : uploadData.batch_id,
+          due_date: uploadData.dueDate,
         }])
-        .select(`
-          *,
-          courses (name),
-          batches (name)
-        `)
+        .select(`*, courses (name), batches (name)`)
         .single();
 
       if (error) throw error;
 
       setAssignments([data, ...assignments]);
-      setNewAssignment({ title: "", course_id: "", batch_id: "", dueDate: "" });
-      setShowAdd(false);
-      toast.success("Assignment created and assigned successfully!");
+      setUploadData({ title: "", course_id: "", batch_id: "", dueDate: "", file: null });
+      toast.success("Homework assigned successfully!");
     } catch (error: any) {
-      toast.error(error.message || "Failed to create assignment");
+      toast.error(error.message || "Failed to assign homework");
+    } finally {
+      setIsUploading(false);
     }
+  };
+
+  const handleSendWhatsApp = (phone: string, name: string) => {
+    const message = `Hello ${name}, you have not submitted your recent homework. Please submit it as soon as possible.`;
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    toast.success(`WhatsApp message opened for ${name}`);
+  };
+
+  const handleGradeSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!marks) return;
+
+    // Update local state
+    setSubmissions(submissions.map(sub => 
+      sub.id === gradingStudent.id ? { ...sub, marks: parseInt(marks) } : sub
+    ));
+
+    // Send WhatsApp notification
+    const message = `Hello ${gradingStudent.studentName}, your homework has been graded. You received ${marks} marks. Great job!`;
+    const whatsappUrl = `https://wa.me/${gradingStudent.phone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+
+    toast.success(`Marks saved and notification sent to ${gradingStudent.studentName}`);
+    setGradingStudent(null);
+    setMarks("");
   };
 
   return (
@@ -95,28 +130,67 @@ export default function Homework() {
           </svg>
         }
       />
-      <div className="max-w-5xl mx-auto pb-8 pt-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <button
-            onClick={() => setShowAdd(!showAdd)}
-            className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            {showAdd ? "Cancel" : "Create Assignment"}
-          </button>
+      
+      <div className="max-w-5xl mx-auto pb-8 pt-6 space-y-6">
+        {/* Leaderboard */}
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">Today's Homework Leaderboard</h3>
+            <Trophy className="h-5 w-5 text-amber-500" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {leaderboard.length > 0 ? leaderboard.map((student) => (
+              <div key={student.rank} className={`p-4 rounded-xl border flex flex-col items-center text-center ${
+                student.rank === 1 ? 'bg-amber-50 border-amber-200' :
+                student.rank === 2 ? 'bg-gray-50 border-gray-200' :
+                'bg-orange-50 border-orange-200'
+              }`}>
+                <div className={`h-12 w-12 rounded-full flex items-center justify-center font-bold text-xl mb-3 ${
+                  student.rank === 1 ? 'bg-amber-100 text-amber-700' :
+                  student.rank === 2 ? 'bg-gray-200 text-gray-700' :
+                  'bg-orange-100 text-orange-700'
+                }`}>
+                  #{student.rank}
+                </div>
+                <h4 className="font-bold text-gray-900 mb-1">{student.name}</h4>
+                <div className="flex items-center gap-1 text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+                  <Award className="h-4 w-4" />
+                  {student.score} Marks
+                </div>
+              </div>
+            )) : (
+              <div className="col-span-3 text-center py-8 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                No leaderboard data available yet.
+              </div>
+            )}
+          </div>
         </div>
 
-        {showAdd && (
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-8 animate-in fade-in slide-in-from-top-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">New Assignment</h3>
-            <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Homework System */}
+          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm lg:col-span-1">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Assign Homework</h3>
+            <form onSubmit={handleUpload} className="space-y-4">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Assignment Title</label>
-                <input type="text" required value={newAssignment.title} onChange={e => setNewAssignment({...newAssignment, title: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. Read Chapter 4 and summarize" />
+                <input 
+                  type="text" 
+                  required 
+                  value={uploadData.title} 
+                  onChange={e => setUploadData({...uploadData, title: e.target.value})} 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                  placeholder="e.g. Read Chapter 4" 
+                />
               </div>
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Course</label>
-                <select required value={newAssignment.course_id} onChange={e => handleCourseChange(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <select 
+                  required 
+                  value={uploadData.course_id} 
+                  onChange={e => handleCourseChange(e.target.value)} 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                >
                   <option value="">Select Course</option>
                   {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
@@ -125,52 +199,181 @@ export default function Homework() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Batch</label>
                 <select 
                   required 
-                  disabled={!newAssignment.course_id}
-                  value={newAssignment.batch_id} 
-                  onChange={e => setNewAssignment({...newAssignment, batch_id: e.target.value})} 
+                  disabled={!uploadData.course_id}
+                  value={uploadData.batch_id} 
+                  onChange={e => setUploadData({...uploadData, batch_id: e.target.value})} 
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white disabled:bg-gray-50"
                 >
                   <option value="">Select Batch</option>
+                  <option value="all">All Batches</option>
                   {batches.map(b => <option key={b.id} value={b.id}>{b.name} ({b.batch_time})</option>)}
                 </select>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-                <input type="date" required value={newAssignment.dueDate} onChange={e => setNewAssignment({...newAssignment, dueDate: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+                <input 
+                  type="date" 
+                  required 
+                  value={uploadData.dueDate} 
+                  onChange={e => setUploadData({...uploadData, dueDate: e.target.value})} 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                />
               </div>
-              <div className="md:col-span-2 flex justify-end mt-2">
-                <button type="submit" className="bg-gray-900 text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors">
-                  Assign to Students
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Assignment File (Optional)</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 transition-colors cursor-pointer relative">
+                  <input 
+                    type="file" 
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={e => setUploadData({...uploadData, file: e.target.files?.[0] || null})}
+                  />
+                  <div className="h-10 w-10 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <Upload className="h-5 w-5 text-indigo-600" />
+                  </div>
+                  <h4 className="font-medium text-gray-900 text-sm">
+                    {uploadData.file ? uploadData.file.name : "Upload Assignment File"}
+                  </h4>
+                  <p className="text-xs text-gray-500 mt-1">PDF, DOCX, or Image</p>
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={isUploading}
+                className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50"
+              >
+                {isUploading ? "Assigning..." : "Assign Homework"}
+              </button>
+            </form>
+          </div>
+
+          {/* Homework Tracking */}
+          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm lg:col-span-2 flex flex-col h-[600px]">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">Homework Tracking</h3>
+              <select 
+                value={selectedAssignment}
+                onChange={(e) => setSelectedAssignment(e.target.value)}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white max-w-[250px] truncate"
+              >
+                <option value="">Select Assignment</option>
+                {assignments.map(a => (
+                    <option key={a.id} value={a.id}>{a.title} ({a.batches?.name || "All Batches"})</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-3">
+              {submissions.length > 0 ? submissions.map((sub) => (
+                <div key={sub.id} className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-indigo-200 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-700">
+                      {sub.studentName.charAt(0)}
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">{sub.studentName}</h4>
+                      <p className="text-xs text-gray-500">{sub.studentId}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    {sub.status === 'submitted' ? (
+                      <div className="flex items-center gap-3">
+                        {sub.marks !== null ? (
+                          <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
+                            {sub.marks} Marks
+                          </span>
+                        ) : (
+                          <button 
+                            onClick={() => setGradingStudent(sub)}
+                            className="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-md text-sm font-medium transition-colors"
+                          >
+                            Grade Now
+                          </button>
+                        )}
+                        <a href={sub.fileUrl || '#'} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="View Submission">
+                          <BookOpen className="h-4 w-4" />
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-xs font-medium">
+                          Not Submitted
+                        </span>
+                        <button 
+                          onClick={() => handleSendWhatsApp(sub.phone, sub.studentName)}
+                          className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
+                          title="Send WhatsApp Reminder"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )) : (
+                <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                  <BookOpen className="h-8 w-8 mx-auto mb-3 text-gray-400" />
+                  <p>No submissions found for this assignment.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Grading Modal */}
+      {gradingStudent && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <h3 className="font-semibold text-gray-900">Grade Homework</h3>
+              <button 
+                onClick={() => setGradingStudent(null)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleGradeSubmit} className="p-6 space-y-4">
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Student</p>
+                <p className="font-medium text-gray-900">{gradingStudent.studentName} ({gradingStudent.studentId})</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Marks (out of 100)</label>
+                <input 
+                  type="number" 
+                  required 
+                  min="0"
+                  max="100"
+                  value={marks} 
+                  onChange={e => setMarks(e.target.value)} 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                  placeholder="e.g. 85" 
+                />
+              </div>
+
+              <div className="pt-2">
+                <button 
+                  type="submit" 
+                  className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Save Marks & Notify Student
                 </button>
+                <p className="text-xs text-center text-gray-500 mt-3">
+                  This will automatically open WhatsApp to send a notification.
+                </p>
               </div>
             </form>
           </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {assignments.map(assignment => (
-            <div key={assignment.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
-                    <BookOpen className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{assignment.title}</h3>
-                    <p className="text-xs text-gray-500">{assignment.courses?.name} • {assignment.batches?.name}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 text-sm text-gray-600 border-t pt-4">
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4 text-gray-400" />
-                  Due: {new Date(assignment.due_date).toLocaleDateString()}
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
-      </div>
+      )}
     </div>
   );
 }
