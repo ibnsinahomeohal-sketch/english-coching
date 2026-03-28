@@ -39,9 +39,10 @@ export default function Portfolio() {
       heroTitle: "Unlock Your Potential with English Mastery",
       heroSubtitle: "Join the most trusted English coaching center in the region. We provide quality education with modern techniques.",
       heroImage: "https://images.unsplash.com/photo-1523240715639-9a6710541190?auto=format&fit=crop&q=80&w=1920",
+      heroBackgroundSize: "cover",
       aboutTitle: "Why Choose Us?",
       aboutText: "We believe in practical learning. Our courses are designed to help you speak English fluently and confidently in real-world situations.",
-      aboutImage: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=800",
+      aboutImages: [] as string[],
       stats: {
         students: "1000+",
         teachers: "20+",
@@ -87,7 +88,15 @@ export default function Portfolio() {
     const saved = localStorage.getItem("appSettings");
     if (saved) {
       const parsed = JSON.parse(saved);
-      setSettings(prev => ({ ...prev, ...parsed }));
+      setSettings(prev => ({
+        ...prev,
+        ...parsed,
+        portfolioContent: {
+          ...prev.portfolioContent,
+          ...parsed.portfolioContent,
+          aboutImages: parsed.portfolioContent?.aboutImages || prev.portfolioContent.aboutImages || []
+        }
+      }));
     }
 
     const fetchInitialData = async () => {
@@ -223,7 +232,7 @@ export default function Portfolio() {
       </div>
 
       {/* Hero Section */}
-      <section id="home" className="hero-pattern pt-[70px] pb-[80px] px-6 text-center" style={{ backgroundImage: settings.portfolioContent.heroImage ? `linear-gradient(rgba(15, 66, 35, 0.8), rgba(15, 66, 35, 0.8)), url(${settings.portfolioContent.heroImage})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <section id="home" className="hero-pattern pt-[70px] pb-[80px] px-6 text-center" style={{ backgroundImage: settings.portfolioContent.heroImage ? `linear-gradient(rgba(15, 66, 35, 0.8), rgba(15, 66, 35, 0.8)), url(${settings.portfolioContent.heroImage})` : undefined, backgroundSize: settings.portfolioContent.heroBackgroundSize || 'cover', backgroundPosition: 'center' }}>
         <div className="max-w-7xl mx-auto relative z-10">
           <h1 className="font-rajdhani text-[clamp(2.5rem,8vw,4.5rem)] font-bold text-white leading-[1.1] mb-2 drop-shadow-[0_2px_20px_rgba(0,0,0,0.3)]">
             Basic English<br /><span className="text-[#f5a625]">Therapy</span>
@@ -305,11 +314,11 @@ export default function Portfolio() {
                   <p className="text-[0.9rem] font-bold leading-tight">সরকার অনুমোদিত সার্টিফিকেট প্রদান করা হবে</p>
                 </div>
               </div>
-              {settings.portfolioContent.aboutImage && (
-                <div className="rounded-3xl overflow-hidden shadow-xl">
-                  <img src={settings.portfolioContent.aboutImage} alt="About" className="w-full h-full object-cover" />
+              {settings.portfolioContent.aboutImages.map((img, idx) => (
+                <div key={idx} className="rounded-3xl overflow-hidden shadow-xl mb-4">
+                  <img src={img} alt={`About ${idx}`} className="w-full h-full object-cover" />
                 </div>
-              )}
+              ))}
             </div>
 
 

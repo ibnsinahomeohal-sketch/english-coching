@@ -15,9 +15,10 @@ export default function Settings() {
       heroTitle: "Unlock Your Potential with English Mastery",
       heroSubtitle: "Join the most trusted English coaching center in the region. We provide quality education with modern techniques.",
       heroImage: "https://images.unsplash.com/photo-1523240715639-9a6710541190?auto=format&fit=crop&q=80&w=1920",
+      heroBackgroundSize: "cover",
       aboutTitle: "Why Choose Us?",
       aboutText: "We believe in practical learning. Our courses are designed to help you speak English fluently and confidently in real-world situations.",
-      aboutImage: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=800",
+      aboutImages: [] as string[],
       stats: {
         students: "1000+",
         teachers: "20+",
@@ -37,7 +38,15 @@ export default function Settings() {
     const saved = localStorage.getItem("appSettings");
     if (saved) {
       const parsed = JSON.parse(saved);
-      setSettings(prev => ({ ...prev, ...parsed }));
+      setSettings(prev => ({
+        ...prev,
+        ...parsed,
+        portfolioContent: {
+          ...prev.portfolioContent,
+          ...parsed.portfolioContent,
+          aboutImages: parsed.portfolioContent?.aboutImages || prev.portfolioContent.aboutImages || []
+        }
+      }));
     }
   }, []);
 
@@ -65,18 +74,23 @@ export default function Settings() {
     }
   };
 
-  const handlePortfolioImageUpload = (e: React.ChangeEvent<HTMLInputElement>, field: "heroImage" | "aboutImage") => {
+  const handlePortfolioImageUpload = (e: React.ChangeEvent<HTMLInputElement>, field: "heroImage" | "aboutImages") => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setSettings(prevSettings => ({
-          ...prevSettings,
-          portfolioContent: {
-            ...prevSettings.portfolioContent,
-            [field]: event.target?.result as string
+        setSettings(prevSettings => {
+          const newPortfolioContent = { ...prevSettings.portfolioContent };
+          if (field === "heroImage") {
+            newPortfolioContent.heroImage = event.target?.result as string;
+          } else {
+            newPortfolioContent.aboutImages = [...newPortfolioContent.aboutImages, event.target?.result as string];
           }
-        }));
+          return {
+            ...prevSettings,
+            portfolioContent: newPortfolioContent
+          };
+        });
       };
       reader.readAsDataURL(file);
     }
@@ -300,7 +314,7 @@ export default function Settings() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Hero Background Image</label>
-                <div className="h-40 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden relative">
+                <div className="h-40 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden relative mb-2">
                   {settings.portfolioContent.heroImage ? (
                     <img src={settings.portfolioContent.heroImage} alt="Hero" className="w-full h-full object-cover" />
                   ) : (
@@ -308,16 +322,42 @@ export default function Settings() {
                   )}
                   <input type="file" accept="image/*" onChange={(e) => handlePortfolioImageUpload(e, "heroImage")} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                 </div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Background Size</label>
+                <select 
+                  value={settings.portfolioContent.heroBackgroundSize}
+                  onChange={(e) => setSettings({
+                    ...settings,
+                    portfolioContent: { ...settings.portfolioContent, heroBackgroundSize: e.target.value }
+                  })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                >
+                  <option value="cover">Cover</option>
+                  <option value="contain">Contain</option>
+                  <option value="auto">Auto</option>
+                </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">About Section Image</label>
-                <div className="h-40 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden relative">
-                  {settings.portfolioContent.aboutImage ? (
-                    <img src={settings.portfolioContent.aboutImage} alt="About" className="w-full h-full object-cover" />
-                  ) : (
-                    <Upload className="h-8 w-8 text-gray-400" />
-                  )}
-                  <input type="file" accept="image/*" onChange={(e) => handlePortfolioImageUpload(e, "aboutImage")} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                <label className="block text-sm font-medium text-gray-700 mb-2">About Section Images</label>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  {settings.portfolioContent.aboutImages.map((img, idx) => (
+                    <div key={idx} className="h-20 rounded-lg overflow-hidden relative">
+                      <img src={img} alt={`About ${idx}`} className="w-full h-full object-cover" />
+                      <button 
+                        onClick={() => setSettings({
+                          ...settings,
+                          portfolioContent: {
+                            ...settings.portfolioContent,
+                            aboutImages: settings.portfolioContent.aboutImages.filter((_, i) => i !== idx)
+                          }
+                        })}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 text-xs"
+                      >X</button>
+                    </div>
+                  ))}
+                </div>
+                <div className="h-20 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden relative">
+                  <Upload className="h-6 w-6 text-gray-400" />
+                  <input type="file" accept="image/*" onChange={(e) => handlePortfolioImageUpload(e, "aboutImages")} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                 </div>
               </div>
             </div>
