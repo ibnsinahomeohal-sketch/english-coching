@@ -64,7 +64,7 @@ export default function Notes() {
           batch_id: uploadData.batch_id === "all" ? null : uploadData.batch_id,
           type: uploadData.file?.type.includes('image') ? 'image' : 'pdf',
           size: (uploadData.file!.size / (1024 * 1024)).toFixed(1) + " MB",
-          file_url: "https://example.com/mock-file.pdf" // Mock URL
+          file_url: "" // Real URL should come from Supabase Storage
         }])
         .select(`
           *,

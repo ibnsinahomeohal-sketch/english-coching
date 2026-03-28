@@ -71,18 +71,29 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+import Portfolio from "./pages/Portfolio";
+
+import AdmissionsManagement from "./pages/AdmissionsManagement";
+import CourseManagement from "./pages/CourseManagement";
+
 export default function App() {
   return (
     <BrowserRouter>
       <Toaster position="top-right" richColors />
       <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Portfolio />} />
         <Route path="/login" element={<Login />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
-        <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-          <Route index element={<Dashboard />} />
+        {/* Admin Routes */}
+        <Route path="/admin" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
           <Route path="admission" element={<Admission />} />
+          <Route path="admissions-requests" element={<AdmissionsManagement />} />
+          <Route path="courses" element={<CourseManagement />} />
           <Route path="students" element={<StudentsList />} />
           <Route path="teachers" element={<Teachers />} />
           <Route path="operations" element={<Operations />} />
@@ -109,8 +120,10 @@ export default function App() {
           <Route path="community" element={<Community />} />
         </Route>
 
+        {/* Student Routes */}
         <Route path="/student" element={<ProtectedRoute><StudentLayout /></ProtectedRoute>}>
-          <Route index element={<StudentDashboard />} />
+          <Route index element={<Navigate to="/student/dashboard" replace />} />
+          <Route path="dashboard" element={<StudentDashboard />} />
           <Route path="daily-quiz" element={<DailyQuiz />} />
           <Route path="schedule" element={<StudentClassSchedule />} />
           <Route path="homework" element={<StudentHomework />} />
@@ -124,6 +137,9 @@ export default function App() {
           <Route path="profile" element={<StudentProfile />} />
           <Route path="settings" element={<Settings />} />
         </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

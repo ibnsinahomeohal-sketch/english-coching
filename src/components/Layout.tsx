@@ -15,41 +15,44 @@ const navigationGroups = [
   {
     label: "PLATFORM",
     items: [
-      { name: "Dashboard", href: "/", icon: LayoutDashboard },
-      { name: "Students", href: "/students", icon: Users },
-      { name: "Teachers", href: "/teachers", icon: GraduationCap },
-      { name: "Classes", href: "/schedule", icon: Clock },
-      { name: "Payments", href: "/fees", icon: CreditCard },
-      { name: "Exams", href: "/exams", icon: FileQuestion },
-      { name: "Student Chat", href: "/chat", icon: MessageSquare },
+      { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+      { name: "Courses & Batches", href: "/admin/courses", icon: BookOpen },
+      { name: "Students", href: "/admin/students", icon: Users },
+      { name: "Teachers", href: "/admin/teachers", icon: GraduationCap },
+      { name: "Classes", href: "/admin/schedule", icon: Clock },
+      { name: "Payments", href: "/admin/fees", icon: CreditCard },
+      { name: "Exams", href: "/admin/exams", icon: FileQuestion },
+      { name: "Student Chat", href: "/admin/chat", icon: MessageSquare },
+      { name: "Back to Portfolio", href: "/", icon: UserCircle },
     ]
   },
   {
     label: "ACADEMIC",
     items: [
-      { name: "Admission", href: "/admission", icon: UserPlus },
-      { name: "Attendance", href: "/attendance", icon: CalendarCheck },
-      { name: "Homework", href: "/homework", icon: BookOpen },
-      { name: "Course Notes", href: "/notes", icon: FileText },
-      { name: "Certificates", href: "/certificates", icon: Award },
+      { name: "Admission", href: "/admin/admission", icon: UserPlus },
+      { name: "Admission Requests", href: "/admin/admissions-requests", icon: MessageSquare },
+      { name: "Attendance", href: "/admin/attendance", icon: CalendarCheck },
+      { name: "Homework", href: "/admin/homework", icon: BookOpen },
+      { name: "Course Notes", href: "/admin/notes", icon: FileText },
+      { name: "Certificates", href: "/admin/certificates", icon: Award },
     ]
   },
   {
     label: "LEARNING",
     items: [
-      { name: "Learning", href: "/learning", icon: BookOpen },
-      { name: "Speaking", href: "/speaking", icon: Mic },
-      { name: "EdTech", href: "/edtech", icon: Bot },
-      { name: "Resources", href: "/resources", icon: Library },
-      { name: "Community", href: "/community", icon: Users },
+      { name: "Learning", href: "/admin/learning", icon: BookOpen },
+      { name: "Speaking", href: "/admin/speaking", icon: Mic },
+      { name: "EdTech", href: "/admin/edtech", icon: Bot },
+      { name: "Resources", href: "/admin/resources", icon: Library },
+      { name: "Community", href: "/admin/community", icon: Users },
     ]
   },
   {
     label: "SYSTEM",
     items: [
-      { name: "Operations", href: "/operations", icon: IdCard },
-      { name: "Settings", href: "/settings", icon: SettingsIcon },
-      { name: "Finance", href: "/finance", icon: Wallet },
+      { name: "Operations", href: "/admin/operations", icon: IdCard },
+      { name: "Settings", href: "/admin/settings", icon: SettingsIcon },
+      { name: "Finance", href: "/admin/finance", icon: Wallet },
     ]
   }
 ];
@@ -92,22 +95,22 @@ export function Layout() {
     <div className="flex h-screen bg-[var(--bg-main)] text-[var(--text-main)] overflow-hidden">
       {/* Sidebar */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 flex flex-col transition-transform duration-300 md:relative md:translate-x-0",
+        "fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-100 flex flex-col transition-transform duration-500 md:relative md:translate-x-0",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="h-20 flex items-center px-8">
-          <div className="w-8 h-8 bg-primary rounded-xl mr-3 flex items-center justify-center text-white shadow-lg shadow-primary/30">
-            <GraduationCap className="h-5 w-5" />
+        <div className="h-24 flex items-center px-10">
+          <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-2xl mr-4 flex items-center justify-center text-primary-dark shadow-xl shadow-primary/20 animate-float">
+            <GraduationCap className="h-6 w-6" />
           </div>
-          <h1 className="text-lg font-display font-bold tracking-tight text-gray-900">English Therapy</h1>
+          <h1 className="text-xl font-display font-black tracking-tight text-slate-900">English <span className="text-primary">Therapy</span></h1>
         </div>
-        <nav className="flex-1 px-4 py-4 space-y-8 overflow-y-auto">
+        <nav className="flex-1 px-6 py-6 space-y-10 overflow-y-auto">
           {navigationGroups.map((group) => (
             <div key={group.label}>
-              <h3 className="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">
+              <h3 className="px-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-[0.3em] mb-5">
                 {group.label}
               </h3>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {group.items.map((item) => {
                   const isActive = location.pathname === item.href;
                   return (
@@ -116,18 +119,18 @@ export function Layout() {
                       to={item.href}
                       onClick={() => setIsSidebarOpen(false)}
                       className={cn(
-                        "group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200",
+                        "group flex items-center px-5 py-3.5 text-sm font-bold rounded-2xl transition-all duration-300",
                         isActive 
-                          ? "bg-primary-light text-primary shadow-sm" 
-                          : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                          ? "bg-primary text-secondary shadow-lg shadow-primary/30 scale-[1.02]" 
+                          : "text-slate-500 hover:bg-primary/5 hover:text-primary"
                       )}
                     >
                       <item.icon className={cn(
-                        "h-5 w-5 mr-3 transition-colors",
-                        isActive ? "text-primary" : "text-gray-400 group-hover:text-gray-600"
+                        "h-5 w-5 mr-4 transition-all duration-300",
+                        isActive ? "text-secondary scale-110" : "text-slate-400 group-hover:text-primary group-hover:scale-110"
                       )} />
                       <span>{item.name}</span>
-                      {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(79,70,229,0.6)]" />}
+                      {isActive && <div className="ml-auto w-2 h-2 rounded-full bg-secondary shadow-[0_0_10px_rgba(255,193,7,0.8)]" />}
                     </Link>
                   );
                 })}
@@ -135,12 +138,12 @@ export function Layout() {
             </div>
           ))}
         </nav>
-        <div className="p-6 border-t border-gray-50">
+        <div className="p-8 border-t border-slate-50">
           <button 
             onClick={handleLogout}
-            className="flex items-center w-full px-4 py-3 text-sm font-semibold text-red-500 rounded-xl hover:bg-red-50 transition-all duration-200"
+            className="flex items-center w-full px-5 py-4 text-sm font-bold text-rose-500 rounded-2xl hover:bg-rose-50 transition-all duration-300 group"
           >
-            <LogOut className="mr-3 h-5 w-5" />
+            <LogOut className="mr-4 h-5 w-5 transition-transform group-hover:-translate-x-1" />
             Logout
           </button>
         </div>
@@ -148,32 +151,37 @@ export function Layout() {
 
       {/* Overlay */}
       {isSidebarOpen && (
-        <div className="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-40" onClick={() => setIsSidebarOpen(false)} />
+        <div className="md:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-md z-40 transition-all duration-500" onClick={() => setIsSidebarOpen(false)} />
       )}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-8 sticky top-0 z-10">
-          <button className="md:hidden p-2 text-gray-600" onClick={() => setIsSidebarOpen(true)}>
-            <Menu className="h-6 w-6" />
+        <header className="h-24 bg-white/70 backdrop-blur-xl border-b border-slate-100 flex items-center justify-between px-10 sticky top-0 z-10">
+          <button className="md:hidden p-3 text-slate-600 hover:bg-slate-100 rounded-2xl transition-colors" onClick={() => setIsSidebarOpen(true)}>
+            <Menu className="h-7 w-7" />
           </button>
           <div className="flex flex-col">
-            <h2 className="text-xl font-display font-bold text-gray-900">
+            <h2 className="text-2xl font-display font-black text-slate-900 tracking-tight">
               {navigationGroups.flatMap(g => g.items).find((n) => n.href === location.pathname)?.name || "Dashboard"}
             </h2>
-            <p className="text-xs text-gray-400 font-medium">Welcome back, {user?.email?.split('@')[0] || "Admin"}</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full border border-gray-100">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">System Online</span>
+            <div className="flex items-center gap-2 mt-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Welcome back, {user?.email?.split('@')[0] || "Admin"}</p>
             </div>
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-sm border border-primary/20 shadow-sm" title={user?.email}>
-              {user?.email?.[0].toUpperCase() || "A"}
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="hidden lg:flex items-center gap-3 px-4 py-2 bg-primary/5 rounded-2xl border border-primary/10">
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(0,77,64,0.6)]" />
+              <span className="text-[11px] font-black text-primary uppercase tracking-widest">Live System</span>
+            </div>
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-secondary p-[2px] shadow-lg shadow-primary/20 group cursor-pointer transition-transform hover:scale-105 active:scale-95">
+              <div className="h-full w-full bg-white rounded-[14px] flex items-center justify-center text-primary font-black text-lg group-hover:bg-primary group-hover:text-secondary transition-colors">
+                {user?.email?.[0].toUpperCase() || "A"}
+              </div>
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-8 pb-24 md:pb-8">
+        <main className="flex-1 overflow-y-auto p-10 pb-32 md:pb-10 bg-slate-50/30">
           <div className="max-w-7xl mx-auto">
             <Outlet />
           </div>

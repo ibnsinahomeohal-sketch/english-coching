@@ -1,40 +1,100 @@
-import React, { useState, FormEvent } from "react";
-import { TrendingDown, TrendingUp, DollarSign, Plus, Trash2 } from "lucide-react";
+import React, { useState, useEffect, FormEvent } from "react";
+import { TrendingDown, TrendingUp, DollarSign, Plus, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHero } from "../components/PageHero";
-
-const initialExpenses: any[] = [];
+import { supabase } from "../lib/supabaseClient";
 
 export default function Expenses() {
-  const [expenses, setExpenses] = useState(initialExpenses);
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [totalIncome, setTotalIncome] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
-  const [newExpense, setNewExpense] = useState({ date: "", category: "Utilities", amount: "", description: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newExpense, setNewExpense] = useState({ date: new Date().toISOString().split('T')[0], category: "Utilities", amount: "", description: "" });
 
-  // Mock total income from fees
-  const totalIncome = 45000; 
-  const totalExpense = expenses.reduce((acc, curr) => acc + curr.amount, 0);
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch Expenses
+      const { data: expensesData, error: expensesError } = await supabase
+        .from('expenses')
+        .select('*')
+        .order('date', { ascending: false });
+      
+      if (expensesError) throw expensesError;
+      setExpenses(expensesData || []);
+
+      // Fetch Total Income from Students
+      const { data: studentsData, error: studentsError } = await supabase
+        .from('students')
+        .select('paid_amount');
+      
+      if (studentsError) throw studentsError;
+      const income = (studentsData || []).reduce((acc, curr) => acc + (curr.paid_amount || 0), 0);
+      setTotalIncome(income);
+
+    } catch (error: any) {
+      console.error("Error fetching expense data:", error);
+      toast.error("Failed to load financial data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const totalExpense = expenses.reduce((acc, curr) => acc + (curr.amount || 0), 0);
   const netProfit = totalIncome - totalExpense;
 
-  const handleAdd = (e: FormEvent) => {
+  const handleAdd = async (e: FormEvent) => {
     e.preventDefault();
     if (!newExpense.date || !newExpense.amount) return;
 
-    setExpenses([...expenses, {
-      id: Date.now(),
-      date: newExpense.date,
-      category: newExpense.category,
-      amount: parseInt(newExpense.amount),
-      description: newExpense.description
-    }]);
-    
-    setNewExpense({ date: "", category: "Utilities", amount: "", description: "" });
-    setShowAdd(false);
-    toast.success("Expense recorded successfully!");
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await supabase
+        .from('expenses')
+        .insert([{
+          date: newExpense.date,
+          category: newExpense.category,
+          amount: parseFloat(newExpense.amount),
+          description: newExpense.description
+        }])
+        .select();
+
+      if (error) throw error;
+
+      setExpenses([data[0], ...expenses]);
+      setNewExpense({ date: new Date().toISOString().split('T')[0], category: "Utilities", amount: "", description: "" });
+      setShowAdd(false);
+      toast.success("Expense recorded successfully!");
+    } catch (error: any) {
+      console.error("Error adding expense:", error);
+      toast.error("Failed to record expense");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDelete = (id: number) => {
-    setExpenses(expenses.filter(e => e.id !== id));
-    toast.success("Expense deleted successfully");
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this expense record?")) return;
+
+    try {
+      const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setExpenses(expenses.filter(e => e.id !== id));
+      toast.success("Expense deleted successfully");
+    } catch (error: any) {
+      console.error("Error deleting expense:", error);
+      toast.error("Failed to delete expense");
+    }
   };
 
   return (
@@ -63,7 +123,9 @@ export default function Expenses() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Total Income (Fees)</p>
-              <h3 className="text-2xl font-bold text-gray-900">৳{totalIncome.toLocaleString()}</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : `৳${totalIncome.toLocaleString()}`}
+              </h3>
             </div>
           </div>
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
@@ -72,7 +134,9 @@ export default function Expenses() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Total Expenses</p>
-              <h3 className="text-2xl font-bold text-gray-900">৳{totalExpense.toLocaleString()}</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : `৳${totalExpense.toLocaleString()}`}
+              </h3>
             </div>
           </div>
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
@@ -82,7 +146,7 @@ export default function Expenses() {
             <div>
               <p className="text-sm font-medium text-gray-500">Net Profit/Loss</p>
               <h3 className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                ৳{netProfit.toLocaleString()}
+                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : `৳${netProfit.toLocaleString()}`}
               </h3>
             </div>
           </div>
@@ -117,7 +181,12 @@ export default function Expenses() {
                 <input type="text" value={newExpense.description} onChange={e => setNewExpense({...newExpense, description: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Brief details" />
               </div>
               <div className="md:col-span-4 flex justify-end mt-2">
-                <button type="submit" className="bg-gray-900 text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors">
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className="bg-gray-900 text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
                   Save Expense
                 </button>
               </div>
@@ -149,12 +218,21 @@ export default function Expenses() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {expenses.length === 0 ? (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+                        <p className="text-sm font-bold text-gray-500">Loading expenses...</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : expenses.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-8 text-center text-gray-500">No expenses recorded yet.</td>
                   </tr>
                 ) : (
-                  expenses.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((expense) => (
+                  expenses.map((expense) => (
                     <tr key={expense.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 text-sm text-gray-600">{expense.date}</td>
                       <td className="px-6 py-4">

@@ -1,17 +1,19 @@
 import { 
   Users, GraduationCap, CreditCard, CalendarCheck, 
   TrendingUp, ArrowUpRight, ArrowDownRight, 
-  Clock, BookOpen, FileQuestion, Trophy, Activity
+  Clock, BookOpen, FileQuestion, Trophy, Activity, MessageSquare
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { cn } from "../lib/utils";
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
     totalStudents: 0,
     recentAdmissions: 0,
-    totalRevenue: 12540,
-    attendanceRate: 94
+    pendingAdmissions: 0,
+    totalRevenue: 0,
+    attendanceRate: 0
   });
 
   useEffect(() => {
@@ -28,6 +30,13 @@ export default function Dashboard() {
         setStats(prev => ({ ...prev, totalStudents: count || 0 }));
       }
 
+      // Calculate Total Revenue from students paid_amount
+      const { data: studentsRevenue } = await supabase
+        .from('students')
+        .select('paid_amount');
+      
+      const revenue = (studentsRevenue || []).reduce((acc, curr) => acc + (curr.paid_amount || 0), 0);
+
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
@@ -36,7 +45,21 @@ export default function Dashboard() {
         .select('*', { count: 'exact', head: true })
         .gte('created_at', sevenDaysAgo.toISOString());
       
-      setStats(prev => ({ ...prev, recentAdmissions: recentCount || 0 }));
+      const { count: pendingCount } = await supabase
+        .from('pending_admissions')
+        .select('*', { count: 'exact', head: true });
+
+      const { count: activeClassesCount } = await supabase
+        .from('batches')
+        .select('*', { count: 'exact', head: true });
+      
+      setStats(prev => ({ 
+        ...prev, 
+        recentAdmissions: recentCount || 0,
+        pendingAdmissions: pendingCount || 0,
+        totalRevenue: revenue,
+        attendanceRate: activeClassesCount || 0 // Reusing attendanceRate state for active classes count for now or adding a new one
+      }));
     } catch (err) {
       console.error("Error fetching stats:", err);
     }
@@ -48,23 +71,31 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { label: "Total Students", value: stats.totalStudents, icon: Users, trend: `+${stats.recentAdmissions}`, color: "primary" },
-          { label: "Attendance Rate", value: `${stats.attendanceRate}%`, icon: Activity, trend: "+2.4%", color: "secondary" },
-          { label: "Total Revenue", value: `$${stats.totalRevenue.toLocaleString()}`, icon: CreditCard, trend: "+12.5%", color: "accent" },
-          { label: "Active Classes", value: "12", icon: Clock, trend: "Stable", color: "primary" },
+          { label: "Pending Requests", value: stats.pendingAdmissions, icon: MessageSquare, trend: "New", color: "secondary" },
+          { label: "Total Revenue", value: `৳${stats.totalRevenue.toLocaleString()}`, icon: CreditCard, trend: "Live", color: "accent" },
+          { label: "Active Batches", value: stats.attendanceRate, icon: Clock, trend: "Stable", color: "primary" },
         ].map((stat, i) => (
           <div key={i} className="card-premium p-6 group">
             <div className="flex items-start justify-between mb-4">
-              <div className={`p-3 rounded-xl bg-${stat.color}/10 text-${stat.color} group-hover:scale-110 transition-transform duration-300`}>
+              <div className={cn(
+                "p-3 rounded-xl group-hover:scale-110 transition-transform duration-300 shadow-sm",
+                stat.color === 'primary' ? "bg-[#004d40]/10 text-[#004d40]" :
+                stat.color === 'secondary' ? "bg-[#ffc107]/10 text-[#ffc107]" :
+                "bg-[#00695c]/10 text-[#00695c]"
+              )}>
                 <stat.icon className="h-6 w-6" />
               </div>
-              <div className={`flex items-center gap-1 text-xs font-bold ${stat.trend.startsWith('+') ? 'text-secondary' : 'text-gray-400'}`}>
+              <div className={cn(
+                "flex items-center gap-1 text-xs font-bold",
+                stat.trend.startsWith('+') ? 'text-[#004d40]' : 'text-slate-400'
+              )}>
                 {stat.trend.startsWith('+') && <ArrowUpRight className="h-3 w-3" />}
                 {stat.trend}
               </div>
             </div>
             <div className="space-y-1">
-              <h3 className="text-3xl font-display font-bold text-gray-900 tracking-tight">{stat.value}</h3>
-              <p className="text-sm text-gray-400 font-medium">{stat.label}</p>
+              <h3 className="text-3xl font-display font-bold text-slate-900 tracking-tight">{stat.value}</h3>
+              <p className="text-sm text-slate-400 font-medium">{stat.label}</p>
             </div>
           </div>
         ))}
@@ -79,23 +110,23 @@ export default function Dashboard() {
                 <h3 className="text-lg font-display font-bold text-gray-900">Student Growth</h3>
                 <p className="text-sm text-gray-400 font-medium">Monthly enrollment statistics</p>
               </div>
-              <select className="px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm font-semibold text-gray-600 outline-none focus:ring-2 focus:ring-primary/20">
+              <select className="px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm font-semibold text-gray-600 outline-none focus:ring-2 focus:ring-[#004d40]/20">
                 <option>Last 6 Months</option>
                 <option>Last Year</option>
               </select>
             </div>
             <div className="h-64 flex items-end justify-between gap-2">
-              {[45, 60, 55, 85, 70, 95].map((h, i) => (
+              {[0, 0, 0, 0, 0, 0].map((h, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center gap-3 group">
                   <div 
-                    className="w-full bg-primary/10 rounded-t-xl group-hover:bg-primary/20 transition-all duration-500 relative"
-                    style={{ height: `${h}%` }}
+                    className="w-full bg-[#004d40]/10 rounded-t-xl group-hover:bg-[#004d40]/30 transition-all duration-500 relative"
+                    style={{ height: `${h || 5}%` }}
                   >
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                       {h}%
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                     {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'][i]}
                   </span>
                 </div>
@@ -103,26 +134,26 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="card-premium p-6 flex items-center gap-6">
-              <div className="w-16 h-16 rounded-full border-4 border-primary/10 border-t-primary flex items-center justify-center">
-                <span className="text-sm font-bold text-gray-900">75%</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="card-premium p-6 flex items-center gap-6">
+                <div className="w-16 h-16 rounded-full border-4 border-[#004d40]/10 border-t-[#004d40] flex items-center justify-center">
+                  <span className="text-sm font-bold text-gray-900">0%</span>
+                </div>
+                <div>
+                  <h4 className="font-display font-bold text-gray-900">Daily Target</h4>
+                  <p className="text-xs text-gray-400 font-medium">0/0 classes completed</p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-display font-bold text-gray-900">Daily Target</h4>
-                <p className="text-xs text-gray-400 font-medium">15/20 classes completed</p>
+              <div className="card-premium p-6 flex items-center gap-6">
+                <div className="w-16 h-16 rounded-full border-4 border-[#ffc107]/10 border-t-[#ffc107] flex items-center justify-center">
+                  <span className="text-sm font-bold text-gray-900">0%</span>
+                </div>
+                <div>
+                  <h4 className="font-display font-bold text-gray-900">Student Satisfaction</h4>
+                  <p className="text-xs text-gray-400 font-medium">No recent feedback</p>
+                </div>
               </div>
             </div>
-            <div className="card-premium p-6 flex items-center gap-6">
-              <div className="w-16 h-16 rounded-full border-4 border-secondary/10 border-t-secondary flex items-center justify-center">
-                <span className="text-sm font-bold text-gray-900">82%</span>
-              </div>
-              <div>
-                <h4 className="font-display font-bold text-gray-900">Student Satisfaction</h4>
-                <p className="text-xs text-gray-400 font-medium">Based on recent feedback</p>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Sidebar Actions */}
@@ -136,7 +167,12 @@ export default function Dashboard() {
                 { name: "Assign Homework", icon: BookOpen, color: "accent" },
                 { name: "Create Exam", icon: FileQuestion, color: "primary" },
               ].map((action, i) => (
-                <button key={i} className={`flex items-center gap-4 p-4 rounded-2xl bg-${action.color}/5 text-${action.color} hover:bg-${action.color}/10 transition-all duration-200 group`}>
+                <button key={i} className={cn(
+                  "flex items-center gap-4 p-4 rounded-2xl transition-all duration-200 group",
+                  action.color === 'primary' ? "bg-[#004d40]/5 text-[#004d40] hover:bg-[#004d40]/10" :
+                  action.color === 'secondary' ? "bg-[#ffc107]/5 text-[#ffc107] hover:bg-[#ffc107]/10" :
+                  "bg-[#00695c]/5 text-[#00695c] hover:bg-[#00695c]/10"
+                )}>
                   <div className={`p-2 rounded-lg bg-white shadow-sm group-hover:scale-110 transition-transform`}>
                     <action.icon className="h-5 w-5" />
                   </div>

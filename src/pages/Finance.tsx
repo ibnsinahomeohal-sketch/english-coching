@@ -1,21 +1,92 @@
-import { Wallet, CreditCard, Receipt, ScanLine } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Wallet, CreditCard, Receipt, ScanLine, Loader2, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { supabase } from "../lib/supabaseClient";
+import { toast } from "sonner";
 
 export default function Finance() {
+  const [totalIncome, setTotalIncome] = useState(0);
+  const [totalExpense, setTotalExpense] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchFinancialData();
+  }, []);
+
+  const fetchFinancialData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch Income from Students
+      const { data: studentsData } = await supabase.from('students').select('paid_amount, name, created_at');
+      const income = (studentsData || []).reduce((acc, curr) => acc + (curr.paid_amount || 0), 0);
+      setTotalIncome(income);
+
+      // Fetch Expenses
+      const { data: expensesData } = await supabase.from('expenses').select('*').order('date', { ascending: false });
+      const expense = (expensesData || []).reduce((acc, curr) => acc + (curr.amount || 0), 0);
+      setTotalExpense(expense);
+
+      // Combine for recent transactions
+      const incomeTransactions = (studentsData || []).map(s => ({
+        date: s.created_at?.split('T')[0] || "N/A",
+        description: `Fee from ${s.name}`,
+        type: 'income',
+        amount: s.paid_amount || 0
+      }));
+
+      const expenseTransactions = (expensesData || []).map(e => ({
+        date: e.date,
+        description: e.description || e.category,
+        type: 'expense',
+        amount: e.amount
+      }));
+
+      const allTransactions = [...incomeTransactions, ...expenseTransactions]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 10);
+      
+      setRecentTransactions(allTransactions);
+
+    } catch (error: any) {
+      console.error("Error fetching financial data:", error);
+      toast.error("Failed to load financial data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const netBalance = totalIncome - totalExpense;
+
   return (
     <div className="space-y-6">
       {/* Top Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-6 rounded-xl text-white shadow-sm">
-          <p className="text-emerald-100 text-sm font-medium mb-1">Total Collection (This Month)</p>
-          <h3 className="text-3xl font-bold">৳ 0</h3>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-emerald-100 text-sm font-medium">Total Collection</p>
+            <TrendingUp className="h-5 w-5 text-emerald-200" />
+          </div>
+          <h3 className="text-3xl font-bold">
+            {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : `৳ ${totalIncome.toLocaleString()}`}
+          </h3>
         </div>
         <div className="bg-gradient-to-br from-rose-500 to-pink-600 p-6 rounded-xl text-white shadow-sm">
-          <p className="text-rose-100 text-sm font-medium mb-1">Total Expenses</p>
-          <h3 className="text-3xl font-bold">৳ 0</h3>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-rose-100 text-sm font-medium">Total Expenses</p>
+            <TrendingDown className="h-5 w-5 text-rose-200" />
+          </div>
+          <h3 className="text-3xl font-bold">
+            {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : `৳ ${totalExpense.toLocaleString()}`}
+          </h3>
         </div>
         <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-6 rounded-xl text-white shadow-sm">
-          <p className="text-indigo-100 text-sm font-medium mb-1">Net Balance</p>
-          <h3 className="text-3xl font-bold">৳ 0</h3>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-indigo-100 text-sm font-medium">Net Balance</p>
+            <DollarSign className="h-5 w-5 text-indigo-200" />
+          </div>
+          <h3 className="text-3xl font-bold">
+            {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : `৳ ${netBalance.toLocaleString()}`}
+          </h3>
         </div>
       </div>
 
@@ -106,10 +177,37 @@ export default function Finance() {
                   <th className="px-4 py-3 text-right rounded-r-lg">Amount</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-gray-500">No recent transactions recorded.</td>
-                </tr>
+              <tbody className="divide-y divide-gray-100">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-8 text-center">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto text-indigo-600" />
+                    </td>
+                  </tr>
+                ) : recentTransactions.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-8 text-center text-gray-500">No recent transactions recorded.</td>
+                  </tr>
+                ) : (
+                  recentTransactions.map((tx, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 text-gray-600 font-medium">{tx.date}</td>
+                      <td className="px-4 py-3 text-gray-900">{tx.description}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          tx.type === 'income' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                        }`}>
+                          {tx.type}
+                        </span>
+                      </td>
+                      <td className={`px-4 py-3 text-right font-bold ${
+                        tx.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
+                      }`}>
+                        {tx.type === 'income' ? '+' : '-'} ৳{tx.amount.toLocaleString()}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

@@ -178,18 +178,18 @@ export default function StudentsList() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto pb-8 min-h-screen" style={{ backgroundColor: 'rgba(7, 26, 19, 0.06)' }}>
+    <div className="max-w-7xl mx-auto pb-8 min-h-screen" style={{ backgroundColor: 'rgba(0, 77, 64, 0.03)' }}>
       <PageHero 
         title="All Students" 
         subtitle="Manage and view all registered students"
         icon={UserPlus}
-        darkColor="#071a13"
+        darkColor="#004d40"
         badge="Students"
         pattern={
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
             <defs>
               <pattern id="circles" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-                <circle cx="10" cy="10" r="3" fill="#1D9E75" />
+                <circle cx="10" cy="10" r="3" fill="#ffc107" fillOpacity="0.2" />
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#circles)" />
@@ -198,12 +198,12 @@ export default function StudentsList() {
       />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 px-4">
-        <div className="bg-white px-4 py-2 rounded-[14px] border border-[#B5D4F4] shadow-sm">
-          <span className="text-sm font-medium text-[#1D9E75]">Total Students: {students.length}</span>
+        <div className="bg-white px-4 py-2 rounded-[14px] border border-slate-100 shadow-sm">
+          <span className="text-sm font-bold text-[#004d40]">Total Students: {students.length}</span>
         </div>
         <button 
           onClick={fetchStudents}
-          className="flex items-center gap-2 bg-white border border-[#B5D4F4] px-4 py-2 rounded-[14px] text-sm font-medium text-[#1D9E75] hover:bg-emerald-50 transition-colors"
+          className="flex items-center gap-2 bg-white border border-slate-100 px-4 py-2 rounded-[14px] text-sm font-bold text-[#004d40] hover:bg-[#004d40]/5 transition-colors"
         >
           <Loader2 className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           Refresh
@@ -211,24 +211,24 @@ export default function StudentsList() {
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white p-4 rounded-[14px] border border-[#B5D4F4] shadow-sm mb-6 flex flex-col sm:flex-row gap-4 mx-4">
+      <div className="bg-white p-4 rounded-[14px] border border-slate-100 shadow-sm mb-6 flex flex-col sm:flex-row gap-4 mx-4">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-[#1D9E75]" />
+            <Search className="h-5 w-5 text-[#004d40]" />
           </div>
           <input
             type="text"
             placeholder="Search by Name, ID, or Phone Number..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none"
+            className="w-full pl-10 pr-4 py-2.5 border border-slate-100 rounded-[14px] focus:ring-2 focus:ring-[#004d40]/20 outline-none font-medium"
           />
         </div>
         <div className="sm:w-64">
           <select
             value={selectedCourse}
             onChange={(e) => setSelectedCourse(e.target.value)}
-            className="w-full px-4 py-2.5 border border-[#B5D4F4] rounded-[14px] focus:ring-2 focus:ring-[var(--color-students)] outline-none bg-white font-medium text-gray-700"
+            className="w-full px-4 py-2.5 border border-slate-100 rounded-[14px] focus:ring-2 focus:ring-[#004d40]/20 outline-none bg-white font-bold text-slate-600"
           >
             {COURSES.map(course => (
               <option key={course} value={course}>{course}</option>
@@ -246,25 +246,25 @@ export default function StudentsList() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-4">
           {filteredStudents.map((student, index) => (
-            <div key={student.student_id || student.id || index} className="bg-white rounded-[14px] border border-[#B5D4F4] shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col">
+            <div key={student.student_id || student.id || index} className="bg-white rounded-[14px] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-[#004d40]/5 transition-all duration-300 overflow-hidden flex flex-col group">
               <div className="p-5 flex-1">
                 <div className="flex justify-between items-start mb-4">
                   <div className="relative">
-                    <div className="h-16 w-16 rounded-full bg-[#1D9E75]/10 flex items-center justify-center border-2 border-white shadow-sm overflow-hidden">
+                    <div className="h-16 w-16 rounded-full bg-[#004d40]/5 flex items-center justify-center border-2 border-white shadow-sm overflow-hidden group-hover:scale-105 transition-transform">
                       {student.photo_url ? (
                         <img src={student.photo_url} alt={student.name} className="h-full w-full object-cover" />
                       ) : (
-                        <UserCircle className="h-10 w-10 text-[#1D9E75]" />
+                        <UserCircle className="h-10 w-10 text-[#004d40]" />
                       )}
                     </div>
-                    <span className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500`}></span>
+                    <span className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-[#004d40] animate-pulse`}></span>
                   </div>
                   
                   {/* 3-Dots Dropdown Menu */}
                   <div className="relative">
                     <button 
                       onClick={() => setActiveDropdown(activeDropdown === student.student_id ? null : student.student_id)}
-                      className="text-gray-400 hover:text-[#1D9E75] p-1 rounded-md hover:bg-emerald-50 transition-colors"
+                      className="text-slate-400 hover:text-[#004d40] p-1.5 rounded-xl hover:bg-[#004d40]/5 transition-colors"
                     >
                       <MoreVertical className="h-5 w-5" />
                     </button>
@@ -275,24 +275,25 @@ export default function StudentsList() {
                           className="fixed inset-0 z-10" 
                           onClick={() => setActiveDropdown(null)}
                         ></div>
-                        <div className="absolute right-0 mt-1 w-36 bg-white rounded-[14px] shadow-lg border border-[#B5D4F4] z-20 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                        <div className="absolute right-0 mt-1 w-44 bg-white rounded-[14px] shadow-2xl border border-slate-100 z-20 py-2 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                           <button 
                             onClick={() => sendWhatsAppCredentials(student)}
-                            className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 flex items-center gap-2"
+                            className="w-full text-left px-4 py-2.5 text-sm font-bold text-[#004d40] hover:bg-[#004d40]/5 flex items-center gap-2"
                           >
                             <MessageSquare className="h-4 w-4" /> Send WhatsApp
                           </button>
                           <button 
                             onClick={() => handleEdit(student)}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                            className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-2"
                           >
-                            <Edit className="h-4 w-4" /> Edit
+                            <Edit className="h-4 w-4" /> Edit Profile
                           </button>
+                          <div className="h-px bg-slate-50 my-1 mx-2" />
                           <button 
                             onClick={() => handleDelete(student.student_id)}
-                            className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-2"
+                            className="w-full text-left px-4 py-2.5 text-sm font-bold text-rose-500 hover:bg-rose-50 flex items-center gap-2"
                           >
-                            <Trash2 className="h-4 w-4" /> Delete
+                            <Trash2 className="h-4 w-4" /> Delete Student
                           </button>
                         </div>
                       </>
@@ -300,30 +301,35 @@ export default function StudentsList() {
                   </div>
                 </div>
                 
-                <h3 className="text-lg font-bold text-gray-900 truncate">{student.name}</h3>
-                <p className="text-sm text-gray-500 font-medium mb-4">ID: {student.student_id}</p>
+                <h3 className="text-lg font-display font-black text-slate-900 truncate tracking-tight">{student.name}</h3>
+                <p className="text-xs text-slate-400 font-black uppercase tracking-widest mb-4">ID: {student.student_id}</p>
                 
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <BookOpen className="h-4 w-4 text-[#1D9E75]" />
-                    <span className="truncate font-medium">{student.course}</span>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-sm text-slate-600 font-bold">
+                    <div className="p-1.5 rounded-lg bg-[#004d40]/5">
+                      <BookOpen className="h-4 w-4 text-[#004d40]" />
+                    </div>
+                    <span className="truncate">{student.course}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Phone className="h-4 w-4 text-[#1D9E75]" />
+                  <div className="flex items-center gap-3 text-sm text-slate-600 font-bold">
+                    <div className="p-1.5 rounded-lg bg-[#ffc107]/10">
+                      <Phone className="h-4 w-4 text-[#ffc107]" />
+                    </div>
                     <span>{student.mobile}</span>
                   </div>
                 </div>
               </div>
               
-              <div className="border-t border-[#B5D4F4] p-3 bg-emerald-50/50 flex justify-between items-center">
-                <span className="text-xs font-bold text-[#1D9E75] uppercase tracking-wider bg-white px-2 py-1 rounded-md border border-[#B5D4F4]">
+              <div className="border-t border-slate-50 p-4 bg-slate-50/30 flex justify-between items-center">
+                <span className="text-[10px] font-black text-[#004d40] uppercase tracking-[0.2em] bg-white px-3 py-1.5 rounded-xl border border-slate-100 shadow-sm">
                   {student.batch || "N/A"}
                 </span>
                 <button 
                   onClick={() => setViewingStudent(student)}
-                  className="text-sm font-semibold text-[#1D9E75] hover:text-emerald-800 flex items-center gap-1 transition-colors"
+                  className="text-xs font-black text-[#004d40] hover:text-[#004d40]/80 flex items-center gap-2 transition-all group/btn"
                 >
-                  <UserCircle className="h-4 w-4" /> View Profile
+                  <UserCircle className="h-4 w-4 group-hover/btn:scale-110 transition-transform" /> 
+                  VIEW PROFILE
                 </button>
               </div>
             </div>

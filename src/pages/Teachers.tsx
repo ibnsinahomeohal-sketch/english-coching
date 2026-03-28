@@ -1,62 +1,118 @@
 import React, { useState, useEffect, FormEvent } from "react";
-import { UserPlus, Users, MessageCircle, Shield, Trash2, User } from "lucide-react";
+import { UserPlus, Users, MessageCircle, Shield, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHero } from "../components/PageHero";
 import { SectionBanner } from "../components/SectionBanner";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Teachers() {
-  const [teachers, setTeachers] = useState<{id: number, name: string, phone: string, subject: string, addedAt: string}[]>([]);
+  const [teachers, setTeachers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTeacher, setNewTeacher] = useState({ name: "", phone: "", subject: "Spoken English" });
 
   useEffect(() => {
-    const saved = localStorage.getItem("teachersList");
-    if (saved) {
-      setTeachers(JSON.parse(saved));
-    } else {
-      // Mock initial data
-      setTeachers([
-        { id: 1, name: "Arifur Rahman", phone: "01711000000", subject: "Spoken English", addedAt: "10 Mar 2026" }
-      ]);
-    }
+    fetchTeachers();
   }, []);
 
-  const handleAddTeacher = (e: FormEvent) => {
+  const fetchTeachers = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('teachers')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        // If table doesn't exist, we'll handle it gracefully
+        if (error.code === 'PGRST116' || error.message.includes('does not exist')) {
+          console.warn("Teachers table might not exist yet.");
+          setTeachers([]);
+        } else {
+          throw error;
+        }
+      } else {
+        setTeachers(data || []);
+      }
+    } catch (error: any) {
+      console.error("Error fetching teachers:", error);
+      toast.error("Failed to load teachers");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddTeacher = async (e: FormEvent) => {
     e.preventDefault();
     if (!newTeacher.name || !newTeacher.phone) return;
 
-    // Generate a random 6-character password
-    const generatedPassword = Math.random().toString(36).slice(-6).toUpperCase();
-    const appUrl = window.location.origin;
+    setIsLoading(true);
+    try {
+      // Generate a random 6-character password
+      const generatedPassword = Math.random().toString(36).slice(-6).toUpperCase();
+      const appUrl = window.location.origin;
 
-    const newEntry = {
-      id: Date.now(),
-      name: newTeacher.name,
-      phone: newTeacher.phone,
-      subject: newTeacher.subject,
-      addedAt: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-    };
+      const { data, error } = await supabase
+        .from('teachers')
+        .insert([{
+          name: newTeacher.name,
+          phone: newTeacher.phone,
+          subject: newTeacher.subject,
+          password: generatedPassword,
+          created_at: new Date().toISOString()
+        }])
+        .select();
 
-    const updatedTeachers = [...teachers, newEntry];
-    setTeachers(updatedTeachers);
-    localStorage.setItem("teachersList", JSON.stringify(updatedTeachers));
+      if (error) throw error;
 
-    // Send WhatsApp Message with Credentials
-    const message = `Hello ${newTeacher.name} Sir/Madam,\n\nYou have been added as a Teacher at our Coaching Center.\n\n🌐 *App Link:* ${appUrl}\n👤 *Username:* ${newTeacher.phone}\n🔑 *Password:* ${generatedPassword}\n\nPlease log in and change your password from the Settings menu.`;
-    const whatsappUrl = `https://wa.me/${newTeacher.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
-    
-    window.open(whatsappUrl, '_blank');
+      if (data) {
+        setTeachers([data[0], ...teachers]);
+        
+        // Also update localStorage for portfolio backward compatibility if needed, 
+        // but portfolio should be updated to use Supabase too.
+        const updatedLocal = [data[0], ...teachers];
+        localStorage.setItem("teachersList", JSON.stringify(updatedLocal));
 
-    setNewTeacher({ name: "", phone: "", subject: "Spoken English" });
-    setShowAddForm(false);
-    toast.success(`Teacher ${newEntry.name} added and credentials sent!`);
+        // Send WhatsApp Message with Credentials
+        const message = `Hello ${newTeacher.name} Sir/Madam,\n\nYou have been added as a Teacher at our Coaching Center.\n\n🌐 *App Link:* ${appUrl}\n👤 *Username:* ${newTeacher.phone}\n🔑 *Password:* ${generatedPassword}\n\nPlease log in and change your password from the Settings menu.`;
+        const whatsappUrl = `https://wa.me/${newTeacher.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
+        
+        window.open(whatsappUrl, '_blank');
+
+        setNewTeacher({ name: "", phone: "", subject: "Spoken English" });
+        setShowAddForm(false);
+        toast.success(`Teacher ${newTeacher.name} added and credentials sent!`);
+      }
+    } catch (error: any) {
+      console.error("Error adding teacher:", error);
+      toast.error("Failed to add teacher. Make sure 'teachers' table exists.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDelete = (id: number) => {
-    const updated = teachers.filter(t => t.id !== id);
-    setTeachers(updated);
-    localStorage.setItem("teachersList", JSON.stringify(updated));
-    toast.success("Teacher removed successfully");
+  const handleDelete = async (id: any) => {
+    if (!confirm("Are you sure you want to remove this teacher?")) return;
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('teachers')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      const updated = teachers.filter(t => t.id !== id);
+      setTeachers(updated);
+      localStorage.setItem("teachersList", JSON.stringify(updated));
+      toast.success("Teacher removed successfully");
+    } catch (error: any) {
+      console.error("Error deleting teacher:", error);
+      toast.error("Failed to remove teacher");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -181,10 +237,22 @@ export default function Teachers() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#BA7517]/10">
-                  {teachers.length === 0 ? (
+                  {isLoading && teachers.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                        No teachers added yet.
+                      <td colSpan={5} className="px-6 py-12 text-center">
+                        <div className="flex flex-col items-center justify-center gap-3">
+                          <Loader2 className="h-8 w-8 text-[#BA7517] animate-spin" />
+                          <p className="text-sm font-bold text-gray-500">Loading teachers...</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : teachers.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center">
+                        <div className="flex flex-col items-center justify-center gap-3">
+                          <Users className="h-12 w-12 text-gray-200" />
+                          <p className="text-sm font-bold text-gray-400">No teachers added yet.</p>
+                        </div>
                       </td>
                     </tr>
                   ) : (
@@ -204,7 +272,9 @@ export default function Teachers() {
                             {teacher.subject}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">{teacher.addedAt}</td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {new Date(teacher.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </td>
                         <td className="px-6 py-4 text-right">
                           <button 
                             onClick={() => handleDelete(teacher.id)}

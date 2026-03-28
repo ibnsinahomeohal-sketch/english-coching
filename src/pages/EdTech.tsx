@@ -125,12 +125,10 @@ export default function EdTech() {
               <h3 className="font-medium">Daily Vocabulary</h3>
             </div>
             <div className="text-center py-4">
-              <h2 className="text-4xl font-bold mb-2">Ubiquitous</h2>
-              <p className="text-indigo-100 italic mb-4">[ yoo-bik-wi-tuhs ]</p>
+              <h2 className="text-4xl font-bold mb-2">Word of the Day</h2>
+              <p className="text-indigo-100 italic mb-4">Expand your vocabulary</p>
               <p className="text-sm bg-white/10 p-3 rounded-lg backdrop-blur-sm">
-                Present, appearing, or found everywhere.
-                <br />
-                <span className="opacity-70 mt-2 block">"His ubiquitous influence was felt by all."</span>
+                New words will appear here daily to help you improve your English skills.
               </p>
             </div>
           </div>
@@ -261,8 +259,7 @@ export default function EdTech() {
                 onChange={(e) => setSelectedAssignment(e.target.value)}
                 className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
               >
-                <option value="mock-1">Read Chapter 4 (Spoken English)</option>
-                <option value="mock-2">Grammar Exercise (SSC/HSC)</option>
+                <option value="">Select Assignment</option>
               </select>
             </div>
 

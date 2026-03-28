@@ -239,8 +239,8 @@ export default function Admission() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12">
       {/* Official Government Header */}
-      <div className="mb-8 overflow-hidden rounded-2xl border border-emerald-200 shadow-sm">
-        <div className="bg-[#006a4e] p-4 text-white flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="mb-8 overflow-hidden rounded-2xl border border-[#004d40]/20 shadow-sm">
+        <div className="bg-[#004d40] p-4 text-white flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="h-16 w-16 bg-white rounded-full p-1 flex items-center justify-center shrink-0">
               <img 
@@ -256,18 +256,18 @@ export default function Admission() {
             </div>
           </div>
           <div className="flex flex-col items-center md:items-end gap-1 text-xs md:text-sm font-bold">
-            <div className="px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
+            <div className="px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm text-[#ffc107]">
               Govt. Reg. No: 1385461729
             </div>
-            <div className="px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
+            <div className="px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm text-[#ffc107]">
               Institute Code: 54617
             </div>
           </div>
         </div>
-        <div className="bg-white px-6 py-3 border-t border-emerald-100 flex items-center justify-center gap-2 text-[#006a4e] font-bold text-sm">
-          <Star className="h-4 w-4 fill-current" />
+        <div className="bg-white px-6 py-3 border-t border-[#004d40]/10 flex items-center justify-center gap-2 text-[#004d40] font-bold text-sm">
+          <Star className="h-4 w-4 fill-[#ffc107] text-[#ffc107]" />
           শিক্ষা নিয়ে গড়ব দেশ, শেখ হাসিনার বাংলাদেশ
-          <Star className="h-4 w-4 fill-current" />
+          <Star className="h-4 w-4 fill-[#ffc107] text-[#ffc107]" />
         </div>
       </div>
 
@@ -289,7 +289,7 @@ export default function Admission() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 sm:flex-none btn-primary flex items-center justify-center gap-2 disabled:opacity-70"
+              className="flex-1 sm:flex-none px-8 py-2.5 bg-[#004d40] text-white font-bold rounded-xl hover:bg-[#004d40]/90 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
             >
               <Save className="h-4 w-4" />
               {isSubmitting ? "Saving..." : "Save Student"}
@@ -300,9 +300,9 @@ export default function Admission() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
             {/* Personal Info */}
-            <div className="card-premium p-8">
+            <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
               <div className="flex items-center gap-3 mb-8">
-                <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                <div className="p-2 rounded-lg bg-[#004d40]/10 text-[#004d40]">
                   <User className="h-5 w-5" />
                 </div>
                 <h3 className="text-lg font-display font-bold text-gray-900">Personal Information</h3>
@@ -317,7 +317,7 @@ export default function Admission() {
                       type="text" 
                       readOnly
                       placeholder="Auto-generated"
-                      className="input-premium pl-11 bg-gray-50 font-mono font-bold text-primary" 
+                      className="w-full bg-gray-50 border-2 border-slate-100 rounded-xl py-2.5 pl-11 pr-4 font-mono font-bold text-[#004d40]" 
                       value={formData.studentId}
                     />
                   </div>
@@ -331,7 +331,7 @@ export default function Admission() {
                       type="text" 
                       required 
                       placeholder="e.g. John Doe"
-                      className="input-premium pl-11" 
+                      className="w-full bg-white border-2 border-slate-100 rounded-xl py-2.5 pl-11 pr-4 focus:border-[#004d40] focus:ring-4 focus:ring-[#004d40]/10 transition-all outline-none" 
                       value={formData.fullName}
                       onChange={(e) => setFormData({...formData, fullName: e.target.value})} 
                     />
@@ -436,9 +436,9 @@ export default function Admission() {
             </div>
 
             {/* Guardian Info */}
-            <div className="card-premium p-8">
+            <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
               <div className="flex items-center gap-3 mb-8">
-                <div className="p-2 rounded-lg bg-secondary/10 text-secondary">
+                <div className="p-2 rounded-lg bg-[#ffc107]/10 text-[#ffc107]">
                   <Shield className="h-5 w-5" />
                 </div>
                 <h3 className="text-lg font-display font-bold text-gray-900">Guardian Information</h3>
@@ -494,9 +494,9 @@ export default function Admission() {
 
           <div className="space-y-8">
             {/* Academic & Course Info */}
-            <div className="card-premium p-8">
+            <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
               <div className="flex items-center gap-3 mb-8">
-                <div className="p-2 rounded-lg bg-accent/10 text-accent">
+                <div className="p-2 rounded-lg bg-[#00695c]/10 text-[#00695c]">
                   <GraduationCap className="h-5 w-5" />
                 </div>
                 <h3 className="text-lg font-display font-bold text-gray-900">Academic & Course Details</h3>
@@ -509,7 +509,7 @@ export default function Admission() {
                     <button 
                       type="button"
                       onClick={() => setShowCourseModal(true)}
-                      className="text-[10px] font-bold text-primary hover:underline"
+                      className="text-[10px] font-bold text-[#004d40] hover:underline"
                     >
                       + Add New
                     </button>
@@ -685,9 +685,9 @@ export default function Admission() {
             </div>
 
             {/* System Info */}
-            <div className="card-premium p-8 bg-primary/5 border-primary/10">
+            <div className="bg-white rounded-2xl p-8 border border-[#004d40]/10 bg-[#004d40]/5">
               <div className="flex items-center gap-3 mb-8">
-                <div className="p-2 rounded-lg bg-primary text-white">
+                <div className="p-2 rounded-lg bg-[#004d40] text-white">
                   <Hash className="h-5 w-5" />
                 </div>
                 <h3 className="text-lg font-display font-bold text-gray-900">System Credentials</h3>
@@ -699,12 +699,12 @@ export default function Admission() {
                   <input 
                     type="text" 
                     readOnly 
-                    className="input-premium bg-white/50 font-mono font-bold text-primary" 
+                    className="w-full bg-white/50 border-2 border-slate-100 rounded-xl py-2.5 px-4 font-mono font-bold text-[#004d40]" 
                     value={formData.password} 
                   />
                 </div>
-                <div className="p-4 bg-white rounded-xl border border-primary/10 flex items-start gap-3">
-                  <div className="p-1.5 rounded-full bg-primary/10 text-primary">
+                <div className="p-4 bg-white rounded-xl border border-[#004d40]/10 flex items-start gap-3">
+                  <div className="p-1.5 rounded-full bg-[#004d40]/10 text-[#004d40]">
                     <Shield className="h-3 w-3" />
                   </div>
                   <p className="text-[10px] text-gray-500 leading-relaxed">
