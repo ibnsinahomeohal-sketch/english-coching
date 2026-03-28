@@ -51,18 +51,32 @@ export default function Settings() {
     }, 1000);
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, field: "logo" | "profilePhoto" | "teacherPhoto") => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setSettings(prevSettings => ({
+          ...prevSettings,
+          [field]: event.target?.result as string
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handlePortfolioImageUpload = (e: React.ChangeEvent<HTMLInputElement>, field: "heroImage" | "aboutImage") => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setSettings({
-          ...settings,
+        setSettings(prevSettings => ({
+          ...prevSettings,
           portfolioContent: {
-            ...settings.portfolioContent,
+            ...prevSettings.portfolioContent,
             [field]: event.target?.result as string
           }
-        });
+        }));
       };
       reader.readAsDataURL(file);
     }
