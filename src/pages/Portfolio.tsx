@@ -23,6 +23,8 @@ import {
   MessageSquare,
   Clock
 } from "lucide-react";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
 
@@ -83,6 +85,8 @@ export default function Portfolio() {
   const [courses, setCourses] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
   const [appId, setAppId] = useState("");
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -189,6 +193,7 @@ export default function Portfolio() {
         {/* Desktop Nav */}
         <ul className="hidden md:flex items-center gap-7 list-none">
           <li><a href="#about" className="text-white/85 text-[0.92rem] font-medium hover:text-[var(--secondary)] transition-colors">শিক্ষক পরিচিতি</a></li>
+          <li><a href="#gallery" className="text-white/85 text-[0.92rem] font-medium hover:text-[var(--secondary)] transition-colors">আমাদের কার্যক্রম</a></li>
           <li><a href="#courses" className="text-white/85 text-[0.92rem] font-medium hover:text-[var(--secondary)] transition-colors">কোর্সসমূহ</a></li>
           <li><a href="#batch" className="text-white/85 text-[0.92rem] font-medium hover:text-[var(--secondary)] transition-colors">ব্যাচ তথ্য</a></li>
           <li><a href="#admission" className="text-white/85 text-[0.92rem] font-medium hover:text-[var(--secondary)] transition-colors">ভর্তি ফর্ম</a></li>
@@ -217,6 +222,7 @@ export default function Portfolio() {
         {isMenuOpen && (
           <div className="fixed top-[62px] left-0 right-0 bg-[#0f4223] z-[998] py-4 shadow-[0_8px_24px_rgba(0,0,0,0.4)] animate-in slide-in-from-top duration-300 md:hidden">
             <a href="#about" onClick={() => setIsMenuOpen(false)} className="block px-7 py-3 text-white/85 font-medium border-b border-white/5 hover:bg-white/5 hover:text-[var(--secondary)]">👨‍🏫 শিক্ষক পরিচিতি</a>
+            <a href="#gallery" onClick={() => setIsMenuOpen(false)} className="block px-7 py-3 text-white/85 font-medium border-b border-white/5 hover:bg-white/5 hover:text-[var(--secondary)]">📸 আমাদের কার্যক্রম</a>
             <a href="#courses" onClick={() => setIsMenuOpen(false)} className="block px-7 py-3 text-white/85 font-medium border-b border-white/5 hover:bg-white/5 hover:text-[var(--secondary)]">📚 কোর্সসমূহ</a>
             <a href="#batch" onClick={() => setIsMenuOpen(false)} className="block px-7 py-3 text-white/85 font-medium border-b border-white/5 hover:bg-white/5 hover:text-[var(--secondary)]">📋 ব্যাচ তথ্য</a>
             <a href="#admission" onClick={() => setIsMenuOpen(false)} className="block px-7 py-3 text-white/85 font-medium border-b border-white/5 hover:bg-white/5 hover:text-[var(--secondary)]">📝 ভর্তি ফর্ম</a>
@@ -323,20 +329,6 @@ export default function Portfolio() {
                 </div>
               </div>
 
-            {/* Gallery Section */}
-            {settings.portfolioContent.aboutImages.length > 0 && (
-              <div className="mt-16">
-                <h3 className="text-[1.5rem] font-bold text-[#0f4223] mb-8 text-center">আমাদের কার্যক্রমের কিছু ছবি</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {settings.portfolioContent.aboutImages.map((img, idx) => (
-                    <div key={idx} className="rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 aspect-[3/4]">
-                      <img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Course Details Content */}
             <div className="promise-section-v2">
               <div className="promise-item-v2">
@@ -375,6 +367,41 @@ export default function Portfolio() {
           </div>
         </div>
       </section>
+
+      {/* Gallery Section */}
+      <section id="gallery" className="py-24 px-6 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-[2.2rem] font-bold text-[#0f4223] mb-4 flex items-center justify-center gap-3">
+              📸 আমাদের কার্যক্রমের কিছু ছবি
+            </h2>
+            <div className="w-24 h-1.5 bg-[#f5a625] mx-auto rounded-full"></div>
+          </div>
+          {settings.portfolioContent.aboutImages.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {settings.portfolioContent.aboutImages.map((img, idx) => (
+                <div 
+                  key={idx} 
+                  className="rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 aspect-[3/4] cursor-pointer"
+                  onClick={() => {
+                    setLightboxIndex(idx);
+                    setLightboxOpen(true);
+                  }}
+                >
+                  <img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <Lightbox
+        open={lightboxOpen}
+        close={() => setLightboxOpen(false)}
+        index={lightboxIndex}
+        slides={settings.portfolioContent.aboutImages.map((img) => ({ src: img }))}
+      />
 
       {/* Courses Section */}
       <section id="courses" className="py-20 px-6 bg-slate-50">
