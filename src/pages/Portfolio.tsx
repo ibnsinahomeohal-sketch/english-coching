@@ -85,19 +85,26 @@ export default function Portfolio() {
   const [appId, setAppId] = useState("");
 
   useEffect(() => {
-    const saved = localStorage.getItem("appSettings");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setSettings(prev => ({
-        ...prev,
-        ...parsed,
-        portfolioContent: {
-          ...prev.portfolioContent,
-          ...parsed.portfolioContent,
-          aboutImages: parsed.portfolioContent?.aboutImages || prev.portfolioContent.aboutImages || []
-        }
-      }));
-    }
+    const fetchSettings = async () => {
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('settings_data')
+        .eq('id', 1)
+        .single();
+      
+      if (data && data.settings_data) {
+        setSettings(prev => ({
+          ...prev,
+          ...data.settings_data,
+          portfolioContent: {
+            ...prev.portfolioContent,
+            ...data.settings_data.portfolioContent,
+            aboutImages: data.settings_data.portfolioContent?.aboutImages || prev.portfolioContent.aboutImages || []
+          }
+        }));
+      }
+    };
+    fetchSettings();
 
     const fetchInitialData = async () => {
       // Fetch Courses
@@ -313,14 +320,22 @@ export default function Portfolio() {
                   <div className="text-3xl">🏛️</div>
                   <p className="text-[0.9rem] font-bold leading-tight">সরকার অনুমোদিত সার্টিফিকেট প্রদান করা হবে</p>
                 </div>
-              </div>
-              {settings.portfolioContent.aboutImages.map((img, idx) => (
-                <div key={idx} className="rounded-3xl overflow-hidden shadow-xl mb-4">
-                  <img src={img} alt={`About ${idx}`} className="w-full h-full object-cover" />
                 </div>
-              ))}
-            </div>
+              </div>
 
+            {/* Gallery Section */}
+            {settings.portfolioContent.aboutImages.length > 0 && (
+              <div className="mt-16">
+                <h3 className="text-[1.5rem] font-bold text-[#0f4223] mb-8 text-center">আমাদের কার্যক্রমের কিছু ছবি</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {settings.portfolioContent.aboutImages.map((img, idx) => (
+                    <div key={idx} className="rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 aspect-[3/4]">
+                      <img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Course Details Content */}
             <div className="promise-section-v2">

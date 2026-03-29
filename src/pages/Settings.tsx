@@ -1,6 +1,7 @@
 import React, { useState, useEffect, FormEvent } from "react";
 import { Save, Upload, Phone, Mail, User } from "lucide-react";
 import ResetDemoDataButton from "../components/ResetDemoDataButton";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Settings() {
   const [settings, setSettings] = useState({
@@ -35,29 +36,43 @@ export default function Settings() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("appSettings");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setSettings(prev => ({
-        ...prev,
-        ...parsed,
-        portfolioContent: {
-          ...prev.portfolioContent,
-          ...parsed.portfolioContent,
-          aboutImages: parsed.portfolioContent?.aboutImages || prev.portfolioContent.aboutImages || []
-        }
-      }));
-    }
+    const fetchSettings = async () => {
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('settings_data')
+        .eq('id', 1)
+        .single();
+      
+      if (data && data.settings_data) {
+        setSettings(prev => ({
+          ...prev,
+          ...data.settings_data,
+          portfolioContent: {
+            ...prev.portfolioContent,
+            ...data.settings_data.portfolioContent,
+            aboutImages: data.settings_data.portfolioContent?.aboutImages || prev.portfolioContent.aboutImages || []
+          }
+        }));
+      }
+    };
+    fetchSettings();
   }, []);
 
-  const handleSave = (e: FormEvent) => {
+  const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    localStorage.setItem("appSettings", JSON.stringify(settings));
-    setTimeout(() => {
-      setIsSaving(false);
+    
+    const { error } = await supabase
+      .from('app_settings')
+      .upsert({ id: 1, settings_data: settings }, { onConflict: 'id' });
+
+    setIsSaving(false);
+    if (error) {
+      console.error("Error saving settings:", error);
+      alert("Failed to save settings.");
+    } else {
       alert("Settings saved successfully!");
-    }, 1000);
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, field: "logo" | "profilePhoto" | "teacherPhoto") => {
@@ -340,7 +355,7 @@ export default function Settings() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">About Section Images</label>
                 <div className="grid grid-cols-2 gap-2 mb-2">
                   {settings.portfolioContent.aboutImages.map((img, idx) => (
-                    <div key={idx} className="h-20 rounded-lg overflow-hidden relative">
+                    <div key={idx} className="h-20 rounded-lg overflow-hidden relative group">
                       <img src={img} alt={`About ${idx}`} className="w-full h-full object-cover" />
                       <button 
                         onClick={() => setSettings({
@@ -350,8 +365,10 @@ export default function Settings() {
                             aboutImages: settings.portfolioContent.aboutImages.filter((_, i) => i !== idx)
                           }
                         })}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 text-xs"
-                      >X</button>
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ✕
+                      </button>
                     </div>
                   ))}
                 </div>
