@@ -72,6 +72,8 @@ export default function Portfolio() {
     guardianMobile: "",
     occupation: "",
     education: "",
+    whatsapp: "",
+    email: "",
     session: "",
     board: "",
     roll: "",
@@ -162,21 +164,13 @@ export default function Portfolio() {
         }]);
 
       if (error) throw error;
-
-      // Send WhatsApp Notification
-      const waMsg = `*🎓 Basic English Therapy*\n*নতুন ভর্তির আবেদন!*\n\n🆔 আবেদন নং: ${id}\n👤 নাম: ${admissionForm.fullName}\n📱 মোবাইল: ${admissionForm.mobile}\n🎓 কোর্স: ${admissionForm.course}\n📍 ঠিকানা: ${admissionForm.address}\n📅 তারিখ: ${new Date().toLocaleDateString('bn-BD')}\n\n✅ Admin Panel খুলুন।`;
-      const waUrl = `https://wa.me/8801707581180?text=${encodeURIComponent(waMsg)}`;
       
       setIsSuccess(true);
       toast.success("Application submitted successfully!");
-      
-      setTimeout(() => {
-        window.open(waUrl, '_blank');
-      }, 1000);
 
     } catch (error: any) {
       console.error("Submission error:", error);
-      toast.error("Failed to submit application. Please try again.");
+      toast.error(`Failed to submit application: ${error.message || "Unknown error"}`);
     } finally {
       setIsSubmitting(false);
     }

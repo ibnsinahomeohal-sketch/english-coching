@@ -221,7 +221,7 @@ export default function Admission() {
         window.location.href = "/students";
       }, 2000);
     } catch (error: any) {
-      toast.error(`Failed to admit student: ${error.message || "Unknown error"}`);
+      toast.error(`Error: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }

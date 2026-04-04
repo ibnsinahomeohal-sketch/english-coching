@@ -38,6 +38,9 @@ export default function AdmissionsManagement() {
   const [selectedAdmission, setSelectedAdmission] = useState<any>(null);
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedBatch, setSelectedBatch] = useState("");
+  const [fee, setFee] = useState("");
+  const [discount, setDiscount] = useState("");
+  const [paidAmount, setPaidAmount] = useState("");
 
   const fetchInitialData = async () => {
     const { data: coursesData } = await supabase.from('courses').select('*').order('name');
@@ -126,6 +129,10 @@ export default function AdmissionsManagement() {
           address: selectedAdmission.address,
           course_id: selectedCourse,
           batch_id: selectedBatch,
+          fee: parseFloat(fee) || 0,
+          discount: parseFloat(discount) || 0,
+          paid_amount: parseFloat(paidAmount) || 0,
+          due_amount: (parseFloat(fee) || 0) - (parseFloat(discount) || 0) - (parseFloat(paidAmount) || 0),
           status: 'approved'
         }]);
 
@@ -141,13 +148,16 @@ export default function AdmissionsManagement() {
 
       toast.success(`${selectedAdmission.full_name} approved successfully!`);
       
-      // 4. Send WhatsApp
-      const coachingName = "English Therapy Coaching Center";
-      const loginUrl = window.location.origin + "/login";
-      const message = `🌟 *অভিনন্দন ${selectedAdmission.full_name}!* 🌟\n\nআপনার ভর্তির আবেদনটি অনুমোদিত হয়েছে।\n\nআপনার লগইন তথ্য:\n🏢 *প্রতিষ্ঠান:* ${coachingName}\n👤 *ইউজার আইডি:* ${studentId}\n🔑 *পাসওয়ার্ড:* ${password}\n\n🌐 *লগইন লিঙ্ক:* ${loginUrl}`;
-      const cleanedMobile = selectedAdmission.mobile.replace(/[^\d+]/g, "");
-      const waLink = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(message)}`;
-      window.open(waLink, '_blank');
+      // Send Welcome Email
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: selectedAdmission.email,
+          subject: "ভর্তি নিশ্চিতকরণ - Basic English Therapy",
+          text: `অভিনন্দন ${selectedAdmission.full_name}! আপনার ভর্তি নিশ্চিত হয়েছে। আপনার ইউজার আইডি: ${studentId} এবং পাসওয়ার্ড: ${password}`
+        })
+      });
 
       setShowApproveModal(false);
       fetchAdmissions();
@@ -383,6 +393,25 @@ export default function AdmissionsManagement() {
                   className="flex-1 px-6 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-all"
                 >
                   Cancel
+                </button>
+                <button 
+                  onClick={() => {
+                    const year = new Date().getFullYear();
+                    const random = Math.floor(1000 + Math.random() * 9000);
+                    const studentId = `${year}${random}`;
+                    const cleanName = (selectedAdmission.full_name || "").split(" ")[0].replace(/[^a-zA-Z]/g, "") || "Student";
+                    const last3 = studentId.slice(-3);
+                    const password = `ET@${cleanName}${last3}`;
+                    const coachingName = "English Therapy Coaching Center";
+                    const loginUrl = window.location.origin + "/login";
+                    const message = `🌟 *অভিনন্দন ${selectedAdmission.full_name}!* 🌟\n\nআপনার ভর্তির আবেদনটি অনুমোদিত হয়েছে।\n\nআপনার লগইন তথ্য:\n🏢 *প্রতিষ্ঠান:* ${coachingName}\n👤 *ইউজার আইডি:* ${studentId}\n🔑 *পাসওয়ার্ড:* ${password}\n\n🌐 *লগইন লিঙ্ক:* ${loginUrl}`;
+                    const cleanedMobile = selectedAdmission.mobile.replace(/[^\d+]/g, "");
+                    const waLink = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(message)}`;
+                    window.open(waLink, '_blank');
+                  }}
+                  className="px-4 py-3 bg-[#25D366] text-white font-bold rounded-xl hover:bg-[#25D366]/90 transition-all"
+                >
+                  WhatsApp
                 </button>
                 <button 
                   onClick={handleApprove}
