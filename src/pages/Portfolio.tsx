@@ -21,7 +21,10 @@ import {
   Send,
   Loader2,
   MessageSquare,
-  Clock
+  Clock,
+  Camera,
+  Upload,
+  ClipboardList
 } from "lucide-react";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
@@ -80,8 +83,28 @@ export default function Portfolio() {
     gpa: "",
     course: "",
     address: "",
-    message: ""
+    message: "",
+    photo_url: ""
   });
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("File size must be less than 2MB");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setPhotoPreview(base64);
+        setAdmissionForm(prev => ({ ...prev, photo_url: base64 }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [courses, setCourses] = useState<any[]>([]);
@@ -159,6 +182,7 @@ export default function Portfolio() {
           course_name: admissionForm.course,
           address: admissionForm.address,
           message: admissionForm.message,
+          photo_url: admissionForm.photo_url,
           status: 'pending',
           created_at: new Date().toISOString()
         }]);
@@ -758,6 +782,50 @@ export default function Portfolio() {
                       onChange={(e) => setAdmissionForm({...admissionForm, address: e.target.value})}
                     />
                   </div>
+                  <div className="space-y-4 md:col-span-2">
+                    <label className="block text-[0.9rem] font-bold text-slate-700">শিক্ষার্থীর ছবি / প্রয়োজনীয় ডকুমেন্ট (ঐচ্ছিক)</label>
+                    <div className="relative group">
+                      <div className={`w-full h-48 rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center overflow-hidden ${photoPreview ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50 hover:border-emerald-400'}`}>
+                        {photoPreview ? (
+                          photoPreview.startsWith('data:application/pdf') ? (
+                            <div className="flex flex-col items-center gap-2">
+                              <div className="p-4 bg-red-100 text-red-600 rounded-2xl">
+                                <ClipboardList className="h-12 w-12" />
+                              </div>
+                              <p className="text-sm font-bold text-slate-600">PDF Document Selected</p>
+                            </div>
+                          ) : (
+                            <img src={photoPreview} alt="Preview" className="w-full h-full object-contain" />
+                          )
+                        ) : (
+                          <div className="text-center p-6">
+                            <Upload className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+                            <p className="text-sm font-bold text-slate-500">ছবি বা ডকুমেন্ট আপলোড করতে ক্লিক করুন</p>
+                            <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">JPG, PNG or PDF (Max 2MB)</p>
+                          </div>
+                        )}
+                        <input 
+                          type="file" 
+                          accept="image/*,.pdf"
+                          onChange={handleFileChange}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                      </div>
+                      {photoPreview && (
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            setPhotoPreview(null);
+                            setAdmissionForm(prev => ({ ...prev, photo_url: "" }));
+                          }}
+                          className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-all"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="space-y-4 md:col-span-2">
                     <label className="block text-[0.9rem] font-bold text-slate-700">আপনার বার্তা (ঐচ্ছিক)</label>
                     <textarea 

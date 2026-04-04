@@ -18,7 +18,8 @@ import {
   Send,
   Loader2,
   Users,
-  MessageSquare
+  MessageSquare,
+  ClipboardList
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
@@ -34,8 +35,15 @@ export default function AdmissionsManagement() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   
   // Approval Modal State
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewAdmission, setViewAdmission] = useState<any>(null);
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [selectedAdmission, setSelectedAdmission] = useState<any>(null);
+
+  const handleViewClick = (admission: any) => {
+    setViewAdmission(admission);
+    setShowViewModal(true);
+  };
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedBatch, setSelectedBatch] = useState("");
   const [fee, setFee] = useState("");
@@ -133,6 +141,7 @@ export default function AdmissionsManagement() {
           discount: parseFloat(discount) || 0,
           paid_amount: parseFloat(paidAmount) || 0,
           due_amount: (parseFloat(fee) || 0) - (parseFloat(discount) || 0) - (parseFloat(paidAmount) || 0),
+          photo_url: selectedAdmission.photo_url,
           status: 'approved'
         }]);
 
@@ -276,7 +285,7 @@ export default function AdmissionsManagement() {
                           {item.full_name?.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-bold text-slate-900">{item.full_name}</p>
+                          <p className="font-bold text-slate-900 cursor-pointer hover:text-[#004d40]" onClick={() => handleViewClick(item)}>{item.full_name}</p>
                           <p className="text-xs text-slate-500 flex items-center gap-1">
                             <MapPin className="h-3 w-3" />
                             {item.address?.substring(0, 30)}...
@@ -315,22 +324,22 @@ export default function AdmissionsManagement() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end gap-2">
                         <button 
                           onClick={() => handleApproveClick(item)}
                           disabled={processingId === item.id}
-                          className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
+                          className="px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg font-bold text-xs hover:bg-emerald-200 transition-colors flex items-center gap-1"
                           title="Approve"
                         >
-                          <Check className="h-4 w-4" />
+                          <Check className="h-3 w-3" /> Approve
                         </button>
                         <button 
                           onClick={() => handleReject(item)}
                           disabled={processingId === item.id}
-                          className="p-2 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors"
+                          className="px-3 py-1.5 bg-rose-100 text-rose-700 rounded-lg font-bold text-xs hover:bg-rose-200 transition-colors flex items-center gap-1"
                           title="Reject"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3 w-3" /> Reject
                         </button>
                       </div>
                     </td>
@@ -343,6 +352,88 @@ export default function AdmissionsManagement() {
       </div>
 
       {/* Approval Modal */}
+      {showViewModal && viewAdmission && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg p-8 space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-xl font-bold text-slate-900">Student Details</h3>
+              <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-slate-100 rounded-full">
+                <X className="h-5 w-5 text-slate-400" />
+              </button>
+            </div>
+            <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Full Name</p>
+                  <p className="font-bold text-slate-900">{viewAdmission.full_name}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Course Applied</p>
+                  <p className="font-bold text-[#004d40]">{viewAdmission.course_name}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Mobile / WhatsApp</p>
+                  <p className="font-bold text-slate-900">{viewAdmission.mobile}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Email Address</p>
+                  <p className="font-bold text-slate-900">{viewAdmission.email || "N/A"}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Date of Birth</p>
+                  <p className="font-bold text-slate-900">{viewAdmission.dob || "N/A"}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Gender</p>
+                  <p className="font-bold text-slate-900">{viewAdmission.gender || "N/A"}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Father's Name</p>
+                  <p className="font-bold text-slate-900">{viewAdmission.father_name || "N/A"}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Mother's Name</p>
+                  <p className="font-bold text-slate-900">{viewAdmission.mother_name || "N/A"}</p>
+                </div>
+              </div>
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Permanent Address</p>
+                <p className="font-medium text-slate-700 leading-relaxed">{viewAdmission.address || "N/A"}</p>
+              </div>
+
+              {viewAdmission.photo_url && (
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Student Photo / Document</p>
+                  {viewAdmission.photo_url.startsWith('data:application/pdf') ? (
+                    <a 
+                      href={viewAdmission.photo_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-200 hover:border-emerald-500 transition-colors group"
+                    >
+                      <div className="p-2 bg-red-50 text-red-600 rounded-lg group-hover:bg-red-100 transition-colors">
+                        <ClipboardList className="h-6 w-6" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-bold text-slate-900">View PDF Document</p>
+                        <p className="text-[10px] text-slate-400 uppercase tracking-wider">Click to open in new tab</p>
+                      </div>
+                    </a>
+                  ) : (
+                    <div className="rounded-xl overflow-hidden border border-slate-200 bg-white">
+                      <img 
+                        src={viewAdmission.photo_url} 
+                        alt="Student" 
+                        className="w-full h-auto max-h-64 object-contain"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {showApproveModal && selectedAdmission && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
@@ -360,11 +451,28 @@ export default function AdmissionsManagement() {
                 <p className="text-sm text-slate-500">{selectedAdmission.course_name}</p>
               </div>
 
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Total Course Fee</label>
+                  <input type="number" className="input-premium" placeholder="0.00" value={fee} onChange={(e) => setFee(e.target.value)} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Discount</label>
+                    <input type="number" className="input-premium" placeholder="0.00" value={discount} onChange={(e) => setDiscount(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Paid Amount</label>
+                    <input type="number" className="input-premium" placeholder="0.00" value={paidAmount} onChange={(e) => setPaidAmount(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Assign Course</label>
                   <select 
-                    className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-[#004d40] transition-all"
+                    className="input-premium appearance-none bg-white"
                     value={selectedCourse}
                     onChange={(e) => handleCourseChange(e.target.value)}
                   >
@@ -376,7 +484,7 @@ export default function AdmissionsManagement() {
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Assign Batch</label>
                   <select 
-                    className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-[#004d40] transition-all disabled:opacity-50"
+                    className="input-premium appearance-none bg-white disabled:bg-slate-50"
                     value={selectedBatch}
                     disabled={!selectedCourse}
                     onChange={(e) => setSelectedBatch(e.target.value)}

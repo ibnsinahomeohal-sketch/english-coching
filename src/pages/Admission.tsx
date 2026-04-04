@@ -1,5 +1,5 @@
 import React, { useState, useEffect, FormEvent } from "react";
-import { Save, UserPlus, Send, ArrowRight, User, Phone, Mail, BookOpen, Hash, Calendar, Shield, MapPin, Briefcase, GraduationCap, Users, Droplet, Milestone, Clock, ClipboardList, Star, DollarSign, X, Loader2, Trash2 } from "lucide-react";
+import { Save, UserPlus, Send, ArrowRight, User, Phone, Mail, BookOpen, Hash, Calendar, Shield, MapPin, Briefcase, GraduationCap, Users, Droplet, Milestone, Clock, ClipboardList, Star, DollarSign, X, Loader2, Trash2, Camera, Upload } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
 
@@ -40,7 +40,29 @@ export default function Admission() {
     discount: "",
     paidAmount: "",
     address: "",
+    photo_url: "",
   });
+
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("File size must be less than 2MB");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setPhotoPreview(base64);
+        setFormData(prev => ({ ...prev, photo_url: base64 }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const fetchInitialData = async () => {
     const { data: coursesData } = await supabase.from('courses').select('*').order('name');
@@ -209,6 +231,7 @@ export default function Admission() {
           paid_amount: paid,
           due_amount: due,
           address: formData.address,
+          photo_url: formData.photo_url,
         }])
         .select();
 
@@ -298,6 +321,7 @@ export default function Admission() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Form Sections */}
           <div className="lg:col-span-2 space-y-8">
             {/* Personal Info */}
             <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
@@ -308,7 +332,7 @@ export default function Admission() {
                 <h3 className="text-lg font-display font-bold text-gray-900">Personal Information</h3>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Student ID</label>
                   <div className="relative">
@@ -317,7 +341,7 @@ export default function Admission() {
                       type="text" 
                       readOnly
                       placeholder="Auto-generated"
-                      className="w-full bg-gray-50 border-2 border-slate-100 rounded-xl py-2.5 pl-11 pr-4 font-mono font-bold text-[#004d40]" 
+                      className="input-premium pl-11 bg-gray-50 font-mono font-bold text-[#004d40]" 
                       value={formData.studentId}
                     />
                   </div>
@@ -331,7 +355,7 @@ export default function Admission() {
                       type="text" 
                       required 
                       placeholder="e.g. John Doe"
-                      className="w-full bg-white border-2 border-slate-100 rounded-xl py-2.5 pl-11 pr-4 focus:border-[#004d40] focus:ring-4 focus:ring-[#004d40]/10 transition-all outline-none" 
+                      className="input-premium pl-11" 
                       value={formData.fullName}
                       onChange={(e) => setFormData({...formData, fullName: e.target.value})} 
                     />
@@ -444,7 +468,7 @@ export default function Admission() {
                 <h3 className="text-lg font-display font-bold text-gray-900">Guardian Information</h3>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Father's Name</label>
                   <input 
@@ -502,7 +526,7 @@ export default function Admission() {
                 <h3 className="text-lg font-display font-bold text-gray-900">Academic & Course Details</h3>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center ml-1">
                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Course</label>
@@ -710,6 +734,62 @@ export default function Admission() {
                   <p className="text-[10px] text-gray-500 leading-relaxed">
                     Credentials will be sent automatically to the student's WhatsApp number upon successful registration.
                   </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Photo & Summary */}
+          <div className="space-y-8">
+            {/* Photo Upload Section */}
+            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-emerald-50 text-[#004d40] rounded-lg">
+                  <Camera className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900">Student Photo / Documents</h3>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="relative group">
+                  <div className={`w-full aspect-square rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center overflow-hidden ${photoPreview ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50 hover:border-emerald-400'}`}>
+                    {photoPreview ? (
+                      photoPreview.startsWith('data:application/pdf') ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="p-4 bg-red-100 text-red-600 rounded-2xl">
+                            <ClipboardList className="h-12 w-12" />
+                          </div>
+                          <p className="text-sm font-bold text-slate-600">PDF Document Selected</p>
+                        </div>
+                      ) : (
+                        <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                      )
+                    ) : (
+                      <div className="text-center p-6">
+                        <Upload className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+                        <p className="text-sm font-bold text-slate-500">Click or Drag to Upload</p>
+                        <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">JPG, PNG or PDF (Max 2MB)</p>
+                      </div>
+                    )}
+                    <input 
+                      type="file" 
+                      accept="image/*,.pdf"
+                      onChange={handleFileChange}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                  </div>
+                  {photoPreview && (
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setPhotoPreview(null);
+                        setFormData(prev => ({ ...prev, photo_url: "" }));
+                      }}
+                      className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-all"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
