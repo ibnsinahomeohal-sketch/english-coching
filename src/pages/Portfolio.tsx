@@ -201,9 +201,26 @@ export default function Portfolio() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] font-sans text-slate-900">
+    <div className="min-h-screen bg-[var(--bg-main)] font-sans text-slate-900 pt-[146px] md:pt-[130px]">
+      {/* Government Approval Banner */}
+      <div className="fixed top-0 left-0 right-0 bg-[#004d40] text-white py-3 px-4 text-center border-b-2 border-[#ffc107]/30 z-[60] shadow-xl">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-center gap-2 md:gap-8 text-[11px] md:text-[14px] font-extrabold tracking-wide">
+          <div className="flex items-center gap-3">
+            <span className="bg-red-600 text-white px-2 py-0.5 rounded shadow-sm text-[10px] animate-pulse uppercase">Govt. Approved</span>
+            <span className="text-white drop-shadow-sm">গণপ্রজাতন্ত্রী বাংলাদেশ সরকারের কারিগরি শিক্ষা বোর্ড কর্তৃক অনুমোদিত</span>
+          </div>
+          <div className="flex items-center gap-4 text-[#ffc107]">
+            <span className="bg-white/10 px-3 py-0.5 rounded-full">Reg. No: 165451</span>
+            <span className="bg-white/10 px-3 py-0.5 rounded-full">Institute Code: 76148</span>
+          </div>
+          <div className="hidden xl:block italic text-emerald-300 text-[12px] border-l border-white/20 pl-4">
+            "কারিগরি শিক্ষা নেব, বেকার মুক্ত বাংলাদেশ গড়ব"
+          </div>
+        </div>
+      </div>
+
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-[#0f4223] z-50 px-6 flex items-center justify-between h-[62px] shadow-[0_2px_20px_rgba(0,0,0,0.4)]">
+      <nav className="fixed top-[84px] md:top-[68px] left-0 right-0 bg-[#0f4223] z-50 px-6 flex items-center justify-between h-[62px] shadow-[0_4px_25px_rgba(0,0,0,0.5)] border-t border-white/5">
         <div className="font-rajdhani text-[1.3rem] font-bold text-[var(--secondary)] tracking-wider">
           Basic <span className="text-white">English Therapy</span>
         </div>
@@ -238,7 +255,7 @@ export default function Portfolio() {
 
         {/* Mobile Nav */}
         {isMenuOpen && (
-          <div className="fixed top-[62px] left-0 right-0 bg-[#0f4223] z-[998] py-4 shadow-[0_8px_24px_rgba(0,0,0,0.4)] animate-in slide-in-from-top duration-300 md:hidden">
+          <div className="fixed top-[146px] md:top-[130px] left-0 right-0 bg-[#0f4223] z-[998] py-4 shadow-[0_8px_24px_rgba(0,0,0,0.4)] animate-in slide-in-from-top duration-300 md:hidden">
             <a href="#about" onClick={() => setIsMenuOpen(false)} className="block px-7 py-3 text-white/85 font-medium border-b border-white/5 hover:bg-white/5 hover:text-[var(--secondary)]">👨‍🏫 শিক্ষক পরিচিতি</a>
             <a href="#gallery" onClick={() => setIsMenuOpen(false)} className="block px-7 py-3 text-white/85 font-medium border-b border-white/5 hover:bg-white/5 hover:text-[var(--secondary)]">📸 আমাদের কার্যক্রম</a>
             <a href="#courses" onClick={() => setIsMenuOpen(false)} className="block px-7 py-3 text-white/85 font-medium border-b border-white/5 hover:bg-white/5 hover:text-[var(--secondary)]">📚 কোর্সসমূহ</a>
@@ -342,7 +359,7 @@ export default function Portfolio() {
                 
                 <div className="bg-white/10 border border-white/20 rounded-2xl p-5 flex items-center gap-4 text-left">
                   <div className="text-3xl">🏛️</div>
-                  <p className="text-[0.9rem] font-bold leading-tight">সরকার অনুমোদিত সার্টিফিকেট প্রদান করা হবে</p>
+                  <p className="text-[0.9rem] font-bold leading-tight">কোর্স শেষে পরীক্ষার মাধ্যমে সরকারি সার্টিফিকেট প্রদান করা হবে</p>
                 </div>
                 </div>
               </div>

@@ -280,10 +280,10 @@ export default function Admission() {
           </div>
           <div className="flex flex-col items-center md:items-end gap-1 text-xs md:text-sm font-bold">
             <div className="px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm text-[#ffc107]">
-              Govt. Reg. No: 1385461729
+              Govt. Reg. No: 165451
             </div>
             <div className="px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm text-[#ffc107]">
-              Institute Code: 54617
+              Institute Code: 76148
             </div>
           </div>
         </div>
