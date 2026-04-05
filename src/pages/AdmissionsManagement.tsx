@@ -38,7 +38,9 @@ export default function AdmissionsManagement() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewAdmission, setViewAdmission] = useState<any>(null);
   const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedAdmission, setSelectedAdmission] = useState<any>(null);
+  const [selectedAdmissionForReject, setSelectedAdmissionForReject] = useState<any>(null);
 
   const handleViewClick = (admission: any) => {
     setViewAdmission(admission);
@@ -177,19 +179,25 @@ export default function AdmissionsManagement() {
     }
   };
 
-  const handleReject = async (admission: any) => {
-    if (!confirm(`Are you sure you want to reject ${admission.full_name}'s application?`)) return;
+  const handleRejectClick = (admission: any) => {
+    setSelectedAdmissionForReject(admission);
+    setShowRejectModal(true);
+  };
+
+  const handleReject = async () => {
+    if (!selectedAdmissionForReject) return;
     
-    setProcessingId(admission.id);
+    setProcessingId(selectedAdmissionForReject.id);
     try {
       const { error } = await supabase
         .from('pending_admissions')
         .delete()
-        .eq('id', admission.id);
+        .eq('id', selectedAdmissionForReject.id);
 
       if (error) throw error;
 
       toast.success("Application rejected.");
+      setShowRejectModal(false);
       fetchAdmissions();
     } catch (error: any) {
       toast.error("Rejection failed: " + error.message);
@@ -334,7 +342,7 @@ export default function AdmissionsManagement() {
                           <Check className="h-3 w-3" /> Approve
                         </button>
                         <button 
-                          onClick={() => handleReject(item)}
+                          onClick={() => handleRejectClick(item)}
                           disabled={processingId === item.id}
                           className="px-3 py-1.5 bg-rose-100 text-rose-700 rounded-lg font-bold text-xs hover:bg-rose-200 transition-colors flex items-center gap-1"
                           title="Reject"
@@ -528,6 +536,50 @@ export default function AdmissionsManagement() {
                 >
                   {processingId === selectedAdmission.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
                   Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRejectModal && selectedAdmissionForReject && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-slate-900">Reject Application</h3>
+              <button onClick={() => setShowRejectModal(false)} className="p-2 hover:bg-slate-100 rounded-full">
+                <X className="h-5 w-5 text-slate-400" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100">
+                <p className="text-xs font-bold text-rose-600 uppercase tracking-wider mb-1">Student</p>
+                <p className="font-bold text-slate-900">{selectedAdmissionForReject.full_name}</p>
+                <p className="text-sm text-slate-500">{selectedAdmissionForReject.course_name}</p>
+              </div>
+
+              <p className="text-slate-600 text-center">Are you sure you want to reject this application? This action cannot be undone.</p>
+
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setShowRejectModal(false)}
+                  className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleReject}
+                  disabled={processingId !== null}
+                  className="flex-1 py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-900/20 flex items-center justify-center gap-2"
+                >
+                  {processingId !== null ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <XCircle className="h-5 w-5" />
+                  )}
+                  Reject
                 </button>
               </div>
             </div>
