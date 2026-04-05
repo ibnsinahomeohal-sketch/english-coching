@@ -996,7 +996,7 @@ export default function Portfolio() {
           <div className="pt-8 border-t border-white/5 text-center text-white/40 text-[0.85rem]">
             <p className="mb-2">© ২০২৩ Basic English Therapy — ডা. আবদুল মোমিন কর্তৃক পরিচালিত</p>
             <p>Govt. Reg. No: 165451 | TICTB/BTEB অনুমোদিত | Institute Code: 76148</p>
-            <p className="mt-4 opacity-50">Developed by <a href="#" className="hover:text-white transition-colors">AI Studio</a></p>
+            <p className="mt-4 opacity-50">Developed by <span className="text-white/60">Rony Talukder</span></p>
           </div>
         </div>
       </footer>
