@@ -165,7 +165,7 @@ export default function AdmissionsManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to: selectedAdmission.email,
-          subject: "ভর্তি নিশ্চিতকরণ - Basic English Therapy",
+          subject: "ভর্তি নিশ্চিতকরণ",
           text: `অভিনন্দন ${selectedAdmission.full_name}! আপনার ভর্তি নিশ্চিত হয়েছে। আপনার ইউজার আইডি: ${studentId} এবং পাসওয়ার্ড: ${password}`
         })
       });
@@ -173,7 +173,11 @@ export default function AdmissionsManagement() {
       setShowApproveModal(false);
       fetchAdmissions();
     } catch (error: any) {
-      toast.error("Approval failed: " + error.message);
+      if (error.message === 'Failed to fetch') {
+        toast.error("Database connection failed. Please check your Supabase configuration in Secrets.");
+      } else {
+        toast.error("Approval failed: " + error.message);
+      }
     } finally {
       setProcessingId(null);
     }
@@ -200,7 +204,11 @@ export default function AdmissionsManagement() {
       setShowRejectModal(false);
       fetchAdmissions();
     } catch (error: any) {
-      toast.error("Rejection failed: " + error.message);
+      if (error.message === 'Failed to fetch') {
+        toast.error("Database connection failed. Please check your Supabase configuration in Secrets.");
+      } else {
+        toast.error("Rejection failed: " + error.message);
+      }
     } finally {
       setProcessingId(null);
     }
@@ -518,7 +526,7 @@ export default function AdmissionsManagement() {
                     const cleanName = (selectedAdmission.full_name || "").split(" ")[0].replace(/[^a-zA-Z]/g, "") || "Student";
                     const last3 = studentId.slice(-3);
                     const password = `ET@${cleanName}${last3}`;
-                    const coachingName = "English Therapy Coaching Center";
+                    const coachingName = "Coaching Center";
                     const loginUrl = window.location.origin + "/login";
                     const message = `🌟 *অভিনন্দন ${selectedAdmission.full_name}!* 🌟\n\nআপনার ভর্তির আবেদনটি অনুমোদিত হয়েছে।\n\nআপনার লগইন তথ্য:\n🏢 *প্রতিষ্ঠান:* ${coachingName}\n👤 *ইউজার আইডি:* ${studentId}\n🔑 *পাসওয়ার্ড:* ${password}\n\n🌐 *লগইন লিঙ্ক:* ${loginUrl}`;
                     const cleanedMobile = selectedAdmission.mobile.replace(/[^\d+]/g, "");

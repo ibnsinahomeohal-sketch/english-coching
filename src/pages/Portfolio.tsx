@@ -115,33 +115,43 @@ export default function Portfolio() {
 
   useEffect(() => {
     const fetchSettings = async () => {
-      const { data, error } = await supabase
-        .from('app_settings')
-        .select('settings_data')
-        .eq('id', 1)
-        .single();
-      
-      if (data && data.settings_data) {
-        setSettings(prev => ({
-          ...prev,
-          ...data.settings_data,
-          portfolioContent: {
-            ...prev.portfolioContent,
-            ...data.settings_data.portfolioContent,
-            aboutImages: data.settings_data.portfolioContent?.aboutImages || prev.portfolioContent.aboutImages || []
-          }
-        }));
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('settings_data')
+          .eq('id', 1)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data && data.settings_data) {
+          setSettings(prev => ({
+            ...prev,
+            ...data.settings_data,
+            portfolioContent: {
+              ...prev.portfolioContent,
+              ...data.settings_data.portfolioContent,
+              aboutImages: data.settings_data.portfolioContent?.aboutImages || prev.portfolioContent.aboutImages || []
+            }
+          }));
+        }
+      } catch (error: any) {
+        console.error("Error fetching settings:", error);
+        if (error.message === 'Failed to fetch') {
+          toast.error("Database connection lost. Please check your internet or Supabase configuration.");
+        }
       }
     };
     fetchSettings();
 
     const fetchInitialData = async () => {
-      // Fetch Courses
-      const { data: coursesData } = await supabase.from('courses').select('*').order('name');
-      if (coursesData) setCourses(coursesData);
-
-      // Fetch Teachers
       try {
+        // Fetch Courses
+        const { data: coursesData, error: coursesError } = await supabase.from('courses').select('*').order('name');
+        if (coursesError) throw coursesError;
+        if (coursesData) setCourses(coursesData);
+
+        // Fetch Teachers
         const { data: teachersData, error: teachersError } = await supabase
           .from('teachers')
           .select('*')
@@ -149,8 +159,8 @@ export default function Portfolio() {
         
         if (teachersError) throw teachersError;
         if (teachersData) setTeachers(teachersData);
-      } catch (error) {
-        console.error("Error fetching teachers for portfolio:", error);
+      } catch (error: any) {
+        console.error("Error fetching initial data:", error);
       }
     };
     
@@ -221,8 +231,13 @@ export default function Portfolio() {
 
       {/* Navigation */}
       <nav className="fixed top-[84px] md:top-[68px] left-0 right-0 bg-[#0f4223] z-50 px-6 flex items-center justify-between h-[62px] shadow-[0_4px_25px_rgba(0,0,0,0.5)] border-t border-white/5">
-        <div className="font-rajdhani text-[1.3rem] font-bold text-[var(--secondary)] tracking-wider">
-          Basic <span className="text-white">English Therapy</span>
+        <div className="flex items-center gap-3">
+          {settings.logo && (
+            <img src={settings.logo} alt="Logo" className="h-10 w-10 object-contain brightness-110" />
+          )}
+          <div className="font-rajdhani text-[1.1rem] md:text-[1.3rem] font-bold text-[var(--secondary)] tracking-wider uppercase">
+            {settings.instituteName || "Basic English Therapy"}
+          </div>
         </div>
 
         {/* Desktop Nav */}
@@ -282,8 +297,15 @@ export default function Portfolio() {
       {/* Hero Section */}
       <section id="home" className="hero-pattern pt-[70px] pb-[80px] px-6 text-center" style={{ backgroundImage: settings.portfolioContent.heroImage ? `linear-gradient(rgba(15, 66, 35, 0.8), rgba(15, 66, 35, 0.8)), url(${settings.portfolioContent.heroImage})` : undefined, backgroundSize: settings.portfolioContent.heroBackgroundSize || 'cover', backgroundPosition: 'center' }}>
         <div className="max-w-7xl mx-auto relative z-10">
-          <h1 className="font-rajdhani text-[clamp(2.5rem,8vw,4.5rem)] font-bold text-white leading-[1.1] mb-2 drop-shadow-[0_2px_20px_rgba(0,0,0,0.3)]">
-            Basic English<br /><span className="text-[#f5a625]">Therapy</span>
+          <h1 className="font-rajdhani text-[clamp(2.5rem,8vw,4.5rem)] font-bold text-white leading-[1.1] mb-2 drop-shadow-[0_2px_20px_rgba(0,0,0,0.3)] uppercase">
+            {settings.instituteName ? (
+              <>
+                {settings.instituteName.split(' ').slice(0, -1).join(' ')} <br />
+                <span className="text-[#f5a625]">{settings.instituteName.split(' ').slice(-1)}</span>
+              </>
+            ) : (
+              <>Basic English<br /><span className="text-[#f5a625]">Therapy</span></>
+            )}
           </h1>
           <p className="text-[1.2rem] text-white/90 mb-10">ইংলিশে দুর্বলদের জন্য — আমরা আপনাকে শেখাবোই ইনশাআল্লাহ</p>
           
@@ -353,7 +375,7 @@ export default function Portfolio() {
                   />
                 </div>
                 <h3 className="text-[2rem] font-bold mb-2">ডা. আবদুল মোমিন</h3>
-                <p className="text-white/90 text-[1.1rem] mb-2 font-medium">পরিচালক: বেসিক ইংলিশ থেরাপি</p>
+                <p className="text-white/90 text-[1.1rem] mb-2 font-medium">পরিচালক: {settings.instituteName || "বেসিক ইংলিশ থেরাপি"}</p>
                 <p className="text-white/90 text-[1rem] mb-4 font-medium">বি. এ, অনার্স, এম. এ (মাস্টার্স)<br />ইংরেজি বিভাগ</p>
                 <p className="text-white/70 text-[0.95rem] mb-10">সহকারী শিক্ষক<br />ছাতারপাইয়া আই-কে দাখিল মাদ্রাসা</p>
                 
@@ -902,8 +924,7 @@ export default function Portfolio() {
                 <Phone className="w-7 h-7" />
               </div>
               <h4 className="text-[1.1rem] font-bold mb-4">ফোন নম্বর</h4>
-              <p className="text-white/70 text-[1rem] font-bold mb-1">01707-581180</p>
-              <p className="text-white/70 text-[1rem] font-bold">01816-648831</p>
+              <p className="text-white/70 text-[1rem] font-bold mb-1">{settings.phone}</p>
             </div>
 
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-8 rounded-3xl text-center hover:bg-white/10 transition-all group">
@@ -911,7 +932,7 @@ export default function Portfolio() {
                 <MessageSquare className="w-7 h-7" />
               </div>
               <h4 className="text-[1.1rem] font-bold mb-4">WHATSAPP</h4>
-              <p className="text-white/70 text-[1rem] font-bold">01707-581180</p>
+              <p className="text-white/70 text-[1rem] font-bold">{settings.phone}</p>
             </div>
 
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-8 rounded-3xl text-center hover:bg-white/10 transition-all group">
@@ -931,8 +952,8 @@ export default function Portfolio() {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
             <div className="space-y-6">
-              <div className="font-rajdhani text-[1.5rem] font-bold text-[var(--secondary)] tracking-wider">
-                Basic <span className="text-white">English Therapy</span>
+              <div className="font-rajdhani text-[1.5rem] font-bold text-[var(--secondary)] tracking-wider uppercase">
+                {settings.instituteName || "Basic English Therapy"}
               </div>
               <p className="text-white/60 text-[0.92rem] leading-relaxed">
                 আমরা বিশ্বাস করি সঠিক দিকনির্দেশনা এবং কঠোর পরিশ্রমের মাধ্যমে যে কেউ ইংরেজিতে দক্ষ হয়ে উঠতে পারে। আমাদের লক্ষ্য প্রতিটি শিক্ষার্থীকে আত্মবিশ্বাসী করে তোলা।
@@ -969,11 +990,11 @@ export default function Portfolio() {
                 </li>
                 <li className="flex items-center gap-3">
                   <Phone className="w-5 h-5 text-[var(--secondary)] shrink-0" />
-                  <span>01707-581180, 01816-648831</span>
+                  <span>{settings.phone}</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-[var(--secondary)] shrink-0" />
-                  <span>basicenglishtherapy@gmail.com</span>
+                  <span>{settings.email}</span>
                 </li>
               </ul>
             </div>
@@ -994,7 +1015,7 @@ export default function Portfolio() {
           </div>
 
           <div className="pt-8 border-t border-white/5 text-center text-white/40 text-[0.85rem]">
-            <p className="mb-2">© ২০২৩ Basic English Therapy — ডা. আবদুল মোমিন কর্তৃক পরিচালিত</p>
+            <p className="mb-2">© {new Date().getFullYear()} {settings.instituteName || "Basic English Therapy"} — ডা. আবদুল মোমিন কর্তৃক পরিচালিত</p>
             <p>Govt. Reg. No: 165451 | TICTB/BTEB অনুমোদিত | Institute Code: 76148</p>
             <p className="mt-4 opacity-50">Developed by <span className="text-white/60">Rony Talukder</span></p>
           </div>
@@ -1003,7 +1024,7 @@ export default function Portfolio() {
 
       {/* Floating WhatsApp Button */}
       <a 
-        href={`https://wa.me/8801707581180?text=${encodeURIComponent("আসসালামু আলাইকুম, আমি আপনাদের কোর্স সম্পর্কে জানতে চাই।")}`}
+        href={`https://wa.me/88${(settings.phone || "01707581180").replace(/-/g, '')}?text=${encodeURIComponent("আসসালামু আলাইকুম, আমি আপনাদের কোর্স সম্পর্কে জানতে চাই।")}`}
         target="_blank" 
         rel="noopener noreferrer"
         className="wa-float"

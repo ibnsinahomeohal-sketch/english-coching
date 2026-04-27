@@ -244,7 +244,11 @@ export default function Admission() {
         window.location.href = "/students";
       }, 2000);
     } catch (error: any) {
-      toast.error(`Error: ${error.message}`);
+      if (error.message === 'Failed to fetch') {
+        toast.error("Database connection failed. Please ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set correctly in the Secrets panel.");
+      } else {
+        toast.error(`Error: ${error.message}`);
+      }
     } finally {
       setIsSubmitting(false);
     }

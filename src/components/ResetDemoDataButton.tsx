@@ -13,9 +13,13 @@ export default function ResetDemoDataButton() {
       
       alert("Demo data cleared successfully. Your app is ready for real students.");
       window.location.href = "/";
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert("Failed to reset demo data.");
+      if (error.message === 'Failed to fetch') {
+        alert("Server connection failed. The backend API might be down or starting up. Please try again in a moment.");
+      } else {
+        alert("Failed to reset demo data: " + error.message);
+      }
     } finally {
       setIsDeleting(false);
       setShowModal(false);

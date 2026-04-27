@@ -9,19 +9,32 @@ app.use(express.json());
 const PORT = 3000;
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceRoleKey) {
+  console.warn("Supabase secrets missing in server environment. Some server features may not work.");
+}
+
 const supabaseAdmin = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseServiceRoleKey || "placeholder-key"
 );
 
 app.post("/api/send-email", async (req, res) => {
-  const { to, subject, html } = req.body;
+  const { to, subject, html, text } = req.body;
+  
+  if (!to || !subject || (!html && !text)) {
+    return res.status(400).json({ error: "Missing required fields: to, subject, and either html or text." });
+  }
+
   try {
     const data = await resend.emails.send({
       from: "English Therapy <onboarding@resend.dev>",
       to,
       subject,
-      html,
+      html: html || text,
+      text: text || undefined,
     });
     res.json(data);
   } catch (error) {

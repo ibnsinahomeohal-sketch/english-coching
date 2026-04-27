@@ -5,7 +5,7 @@
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import React, { useState, useEffect } from "react";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import { supabase } from "./lib/supabaseClient";
 import { Layout } from "./components/Layout";
 import StudentLayout from "./components/StudentLayout";
@@ -77,6 +77,19 @@ import AdmissionsManagement from "./pages/AdmissionsManagement";
 import CourseManagement from "./pages/CourseManagement";
 
 export default function App() {
+  useEffect(() => {
+    // Check Supabase Config
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === 'https://placeholder.supabase.co') {
+      toast.error("Supabase Configuration Missing", {
+        description: "Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in the Secrets panel.",
+        duration: Infinity,
+      });
+    }
+  }, []);
+
   return (
     <BrowserRouter>
       <Toaster position="top-right" richColors />

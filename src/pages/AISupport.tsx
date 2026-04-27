@@ -42,9 +42,13 @@ export default function AISupport() {
       });
 
       setMessages(prev => [...prev, { role: 'model', text: response.text || "I couldn't process that." }]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("AI Error:", error);
-      setMessages(prev => [...prev, { role: 'model', text: "Sorry, I am having trouble connecting right now. Please try again later." }]);
+      if (error.message?.includes('fetch')) {
+        setMessages(prev => [...prev, { role: 'model', text: "Sorry, I am having trouble connecting to the AI service. Please check your internet or Gemini API key configuration." }]);
+      } else {
+        setMessages(prev => [...prev, { role: 'model', text: "Sorry, I am having trouble connecting right now. Please try again later." }]);
+      }
     } finally {
       setIsLoading(false);
     }
