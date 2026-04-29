@@ -146,9 +146,9 @@ export default function AdmissionsManagement() {
           discount: parseFloat(discount) || 0,
           paid_amount: parseFloat(paidAmount) || 0,
           due_amount: (parseFloat(fee) || 0) - (parseFloat(discount) || 0) - (parseFloat(paidAmount) || 0),
-          photo_url: selectedAdmission.photo_url,
-          status: 'approved'
-        }]);
+          photo_url: selectedAdmission.photo_url
+        }])
+        .select('id'); // Explicitly select only ID to avoid schema cache issues with missing columns like status
 
       if (insertError) throw insertError;
 

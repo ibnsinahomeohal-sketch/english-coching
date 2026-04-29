@@ -236,7 +236,7 @@ export default function Admission() {
           address: formData.address,
           photo_url: formData.photo_url,
         }])
-        .select();
+        .select('id');
 
       if (error) throw error;
 
