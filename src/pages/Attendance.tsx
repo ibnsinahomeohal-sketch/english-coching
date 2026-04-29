@@ -27,7 +27,7 @@ export default function Attendance() {
     try {
       const { data, error } = await supabase
         .from('students')
-        .select('*');
+        .select('student_id, name, course, batch, photo_url, guardian_mobile');
       if (error) throw error;
       setStudents(data || []);
     } catch (error: any) {

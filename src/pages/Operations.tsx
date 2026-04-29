@@ -21,12 +21,13 @@ export default function Operations() {
   
   // Layout State
   const [isLayoutMode, setIsLayoutMode] = useState(false);
-  const [layout, setLayout] = useState({
+  const defaultLayout = {
     name: { top: 225, left: 0, scale: 1 },
     qr: { top: 448, left: 252, size: 70 },
     photo: { top: 65, left: 97, size: 146 },
     details: { top: 267, left: 146 }
-  });
+  };
+  const [layout, setLayout] = useState(defaultLayout);
   const dragState = useRef({ 
     isDragging: false, 
     isResizing: false,
@@ -46,7 +47,16 @@ export default function Operations() {
       if (savedTemplate) setTemplateBg(savedTemplate);
       
       const savedLayout = localStorage.getItem("idCardLayout");
-      if (savedLayout) setLayout(JSON.parse(savedLayout));
+      if (savedLayout) {
+        const parsed = JSON.parse(savedLayout);
+        // Merge with default to ensure no missing keys
+        setLayout({
+          name: { ...defaultLayout.name, ...parsed.name },
+          qr: { ...defaultLayout.qr, ...parsed.qr },
+          photo: { ...defaultLayout.photo, ...parsed.photo },
+          details: { ...defaultLayout.details, ...parsed.details }
+        });
+      }
     } catch (e) {
       console.error("Could not load data from local storage");
     }
@@ -57,7 +67,7 @@ export default function Operations() {
     try {
       const { data, error } = await supabase
         .from('students')
-        .select('*');
+        .select('student_id, name, course, photo_url, dob, mobile, blood_group, father_name, batch, duration, address, password');
 
       if (error) throw error;
 
@@ -542,10 +552,10 @@ export default function Operations() {
                       <div 
                         className={`absolute z-10 rounded-full overflow-hidden border-[6px] border-[#ffffff] shadow-md ${isLayoutMode ? 'cursor-move outline-dashed outline-2 outline-[#4f46e5] bg-[#4f46e5]/10 hover:bg-[#4f46e5]/20' : ''}`}
                         style={{ 
-                          top: `${layout.photo.top}px`, 
-                          left: `${layout.photo.left}px`,
-                          width: `${layout.photo.size}px`,
-                          height: `${layout.photo.size}px`,
+                          top: `${layout?.photo?.top || 65}px`, 
+                          left: `${layout?.photo?.left || 97}px`,
+                          width: `${layout?.photo?.size || 146}px`,
+                          height: `${layout?.photo?.size || 146}px`,
                         }}
                         onMouseDown={(e) => handleMouseDown(e, 'photo')}
                       >
@@ -567,7 +577,7 @@ export default function Operations() {
                     {/* Name - Draggable */}
                     <div 
                       className={`absolute w-full text-center z-10 ${isLayoutMode ? 'cursor-move outline-dashed outline-2 outline-[#4f46e5] bg-[#4f46e5]/10 hover:bg-[#4f46e5]/20' : ''}`}
-                      style={{ top: `${layout.name.top}px`, left: `${layout.name.left}px` }}
+                      style={{ top: `${layout?.name?.top || 225}px`, left: `${layout?.name?.left || 0}px` }}
                       onMouseDown={(e) => handleMouseDown(e, 'name')}
                     >
                       <h2 className="text-[26px] font-black text-[#0a2540] uppercase tracking-wider select-none" style={{ fontFamily: 'Arial, sans-serif' }}>
@@ -578,7 +588,7 @@ export default function Operations() {
                     {/* Details - Aligned exactly next to the labels in your template */}
                     <div 
                       className={`absolute w-[55%] flex flex-col gap-[12.5px] z-10 ${isLayoutMode ? 'cursor-move outline-dashed outline-2 outline-[#4f46e5] bg-[#4f46e5]/10 hover:bg-[#4f46e5]/20 p-1 rounded' : ''}`}
-                      style={{ top: `${layout.details.top}px`, left: `${layout.details.left}px` }}
+                      style={{ top: `${layout?.details?.top || 267}px`, left: `${layout?.details?.left || 146}px` }}
                       onMouseDown={(e) => handleMouseDown(e, 'details')}
                     >
                       <p className="text-[14px] font-extrabold text-[#0a2540] leading-none uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>: {selectedStudent.id}</p>
@@ -595,10 +605,10 @@ export default function Operations() {
                     <div 
                       className={`absolute z-10 flex items-center justify-center overflow-hidden bg-white rounded-lg p-1 ${isLayoutMode ? 'cursor-move outline-dashed outline-2 outline-[#4f46e5] bg-[#4f46e5]/10 hover:bg-[#4f46e5]/20' : ''}`}
                       style={{ 
-                        top: `${layout.qr.top}px`, 
-                        left: `${layout.qr.left}px`, 
-                        width: `${layout.qr.size}px`, 
-                        height: `${layout.qr.size}px`,
+                        top: `${layout?.qr?.top || 448}px`, 
+                        left: `${layout?.qr?.left || 252}px`, 
+                        width: `${layout?.qr?.size || 70}px`, 
+                        height: `${layout?.qr?.size || 70}px`,
                       }}
                       onMouseDown={(e) => handleMouseDown(e, 'qr')}
                     >

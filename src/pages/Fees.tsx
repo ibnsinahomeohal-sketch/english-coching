@@ -22,7 +22,7 @@ export default function Fees() {
     try {
       const { data, error } = await supabase
         .from('students')
-        .select('*')
+        .select('student_id, name, course, mobile, fee, discount, paid_amount, due_amount')
         .order('name');
 
       if (error) throw error;

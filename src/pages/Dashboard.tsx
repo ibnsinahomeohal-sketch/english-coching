@@ -24,7 +24,7 @@ export default function Dashboard() {
     try {
       const { count, error } = await supabase
         .from('students')
-        .select('*', { count: 'exact', head: true });
+        .select('student_id', { count: 'exact', head: true });
       
       if (!error) {
         setStats(prev => ({ ...prev, totalStudents: count || 0 }));
@@ -42,7 +42,7 @@ export default function Dashboard() {
       
       const { count: recentCount } = await supabase
         .from('students')
-        .select('*', { count: 'exact', head: true })
+        .select('student_id', { count: 'exact', head: true })
         .gte('created_at', sevenDaysAgo.toISOString());
       
       const { count: pendingCount } = await supabase

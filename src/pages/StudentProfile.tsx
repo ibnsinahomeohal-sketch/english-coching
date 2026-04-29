@@ -14,10 +14,11 @@ export default function StudentProfile() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [templateBg, setTemplateBg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [layout, setLayout] = useState({
+  const defaultLayout = {
     name: { top: 225, left: 0 },
     qr: { top: 448, left: 252 }
-  });
+  };
+  const [layout, setLayout] = useState(defaultLayout);
 
   const [studentData, setStudentData] = useState({
     name: "",
@@ -92,7 +93,13 @@ export default function StudentProfile() {
       if (savedTemplate) setTemplateBg(savedTemplate);
       
       const savedLayout = localStorage.getItem("idCardLayout");
-      if (savedLayout) setLayout(JSON.parse(savedLayout));
+      if (savedLayout) {
+        const parsed = JSON.parse(savedLayout);
+        setLayout({
+          name: { ...defaultLayout.name, ...parsed.name },
+          qr: { ...defaultLayout.qr, ...parsed.qr }
+        });
+      }
     } catch (e) {
       console.error("Could not load data from local storage");
     }
@@ -532,7 +539,7 @@ export default function StudentProfile() {
 
                   <div 
                     className="absolute w-full text-center z-10"
-                    style={{ top: `${layout.name.top}px`, left: `${layout.name.left}px` }}
+                    style={{ top: `${layout?.name?.top || 225}px`, left: `${layout?.name?.left || 0}px` }}
                   >
                     <h2 className="text-[24px] font-black text-[#0a2540] uppercase tracking-wider select-none px-4 leading-tight" style={{ fontFamily: 'Arial, sans-serif' }}>
                       {studentData.name}
@@ -552,8 +559,8 @@ export default function StudentProfile() {
                   <div 
                     className="absolute z-10 flex items-center justify-center overflow-hidden"
                     style={{ 
-                      top: `${layout.qr.top}px`, 
-                      left: `${layout.qr.left}px`, 
+                      top: `${layout?.qr?.top || 448}px`, 
+                      left: `${layout?.qr?.left || 252}px`, 
                       width: '70px', 
                       height: '70px',
                     }}
