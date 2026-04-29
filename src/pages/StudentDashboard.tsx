@@ -30,34 +30,59 @@ export default function StudentDashboard() {
         .single();
 
       if (studentData) {
+        let currentCourseId = studentData.course_id;
+        let currentBatchId = studentData.batch_id;
+
+        // Fallback: If IDs are missing but names exist, look them up
+        if (!currentCourseId && studentData.course) {
+          const { data: cData } = await supabase.from('courses').select('id').eq('name', studentData.course).single();
+          if (cData) currentCourseId = cData.id;
+        }
+        if (!currentBatchId && studentData.batch) {
+          const { data: bData } = await supabase.from('batches').select('id').eq('name', studentData.batch).single();
+          if (bData) currentBatchId = bData.id;
+        }
+
         setStudent({
           ...studentData,
           courseName: studentData.course,
-          batchName: studentData.batch
+          batchName: studentData.batch,
+          course_id: currentCourseId,
+          batch_id: currentBatchId
         });
 
-        const { count: homeworkCount } = await supabase
-          .from("homework")
-          .select("*", { count: 'exact', head: true })
-          .eq("course_id", studentData.course_id)
-          .or(`batch_id.eq.${studentData.batch_id},batch_id.is.null`);
+        // Use resolved IDs for counts
+        let homeworkCount = 0;
+        let examCount = 0;
+        let notesCount = 0;
 
-        const { count: examCount } = await supabase
-          .from("exams")
-          .select("*", { count: 'exact', head: true })
-          .eq("course_id", studentData.course_id)
-          .or(`batch_id.eq.${studentData.batch_id},batch_id.is.null`);
+        if (currentCourseId) {
+          const { count: hCount } = await supabase
+            .from("homework")
+            .select("*", { count: 'exact', head: true })
+            .eq("course_id", currentCourseId)
+            .or(`batch_id.eq.${currentBatchId},batch_id.is.null`);
+          homeworkCount = hCount || 0;
 
-        const { count: notesCount } = await supabase
-          .from("notes")
-          .select("*", { count: 'exact', head: true })
-          .eq("course_id", studentData.course_id)
-          .or(`batch_id.eq.${studentData.batch_id},batch_id.is.null`);
+          const { count: eCount } = await supabase
+            .from("exams")
+            .select("*", { count: 'exact', head: true })
+            .eq("course_id", currentCourseId)
+            .or(`batch_id.eq.${currentBatchId},batch_id.is.null`);
+          examCount = eCount || 0;
+
+          const { count: nCount } = await supabase
+            .from("notes")
+            .select("*", { count: 'exact', head: true })
+            .eq("course_id", currentCourseId)
+            .or(`batch_id.eq.${currentBatchId},batch_id.is.null`);
+          notesCount = nCount || 0;
+        }
 
         setStats({
-          homework: homeworkCount || 0,
-          exams: examCount || 0,
-          notes: notesCount || 0
+          homework: homeworkCount,
+          exams: examCount,
+          notes: notesCount
         });
       }
     };

@@ -127,6 +127,9 @@ export default function AdmissionsManagement() {
       const last3 = studentId.slice(-3);
       const password = `ET@${cleanName}${last3}`;
 
+      const courseName = courses.find(c => c.id === selectedCourse)?.name;
+      const batchName = batches.find(b => b.id === selectedBatch)?.name;
+
       // 2. Insert into students table
       const { error: insertError } = await supabase
         .from('students')
@@ -137,8 +140,8 @@ export default function AdmissionsManagement() {
           email: selectedAdmission.email,
           password: password,
           address: selectedAdmission.address,
-          course_id: selectedCourse,
-          batch_id: selectedBatch,
+          course: courseName,
+          batch: batchName,
           fee: parseFloat(fee) || 0,
           discount: parseFloat(discount) || 0,
           paid_amount: parseFloat(paidAmount) || 0,

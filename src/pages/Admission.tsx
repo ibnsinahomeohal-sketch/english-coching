@@ -202,6 +202,9 @@ export default function Admission() {
       const paid = parseFloat(formData.paidAmount) || 0;
       const due = fee - discount - paid;
 
+      const selectedCourse = courses.find(c => c.id === formData.course_id);
+      const selectedBatchObj = batches.find(b => b.id === formData.batch_id);
+
       const { data, error } = await supabase
         .from('students')
         .insert([{ 
@@ -219,8 +222,8 @@ export default function Admission() {
           occupation: formData.occupation,
           email: formData.email,
           password: formData.password,
-          course_id: formData.course_id,
-          batch_id: formData.batch_id,
+          course: selectedCourse?.name,
+          batch: selectedBatchObj?.name,
           duration: formData.duration,
           session: formData.session,
           board: formData.board,
