@@ -202,9 +202,9 @@ export default function CourseManagement() {
                   </div>
                   <h3 className="text-lg font-bold text-gray-900 mb-1">{course.name}</h3>
                   <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span className="font-bold text-[#004d40]">৳{course.fee.toLocaleString()}</span>
+                    <span className="font-bold text-[#004d40]">৳{(course.fee || 0).toLocaleString()}</span>
                     <span>•</span>
-                    <span>{course.duration}</span>
+                    <span>{course.duration || "N/A"}</span>
                   </div>
                 </div>
               ))}

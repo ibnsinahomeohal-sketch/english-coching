@@ -26,7 +26,7 @@ export default function StudentsList() {
       console.log("Fetching students from Supabase...");
       const { data, error } = await supabase
         .from('students')
-        .select('student_id, name, nickname, gender, dob, blood_group, religion, mobile, father_name, mother_name, guardian_mobile, occupation, email, session, board, roll, gpa, course, batch, batch_time, fee, discount, paid_amount, due_amount, photo_url, created_at, password');
+        .select('student_id, name, nickname, gender, dob, blood_group, religion, mobile, father_name, mother_name, guardian_mobile, occupation, email, session, board, roll, gpa, course, batch, batch_time, fee, discount, paid_amount, due_amount, photo_url, password');
 
       if (error) {
         console.error("Supabase Fetch Error:", error);

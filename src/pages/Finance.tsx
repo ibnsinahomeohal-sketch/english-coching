@@ -17,7 +17,7 @@ export default function Finance() {
     setIsLoading(true);
     try {
       // Fetch Income from Students
-      const { data: studentsData } = await supabase.from('students').select('paid_amount, name, created_at');
+      const { data: studentsData } = await supabase.from('students').select('paid_amount, name');
       const income = (studentsData || []).reduce((acc, curr) => acc + (curr.paid_amount || 0), 0);
       setTotalIncome(income);
 
@@ -28,7 +28,7 @@ export default function Finance() {
 
       // Combine for recent transactions
       const incomeTransactions = (studentsData || []).map(s => ({
-        date: s.created_at?.split('T')[0] || "N/A",
+        date: "N/A", // Date not available without created_at column
         description: `Fee from ${s.name}`,
         type: 'income',
         amount: s.paid_amount || 0
