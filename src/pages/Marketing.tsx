@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { 
   Users, 
+  UserPlus,
   Upload, 
   MessageSquare, 
   Send, 
@@ -28,12 +29,69 @@ const Marketing = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [bulkInput, setBulkInput] = useState('');
+  const [singleLead, setSingleLead] = useState({ name: '', mobile: '' });
   const [marketingMessage, setMarketingMessage] = useState('');
+
+  const handleManualAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!singleLead.name || !singleLead.mobile) {
+      toast.error("Please fill name and mobile");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from('marketing_leads').insert([{
+        name: singleLead.name,
+        mobile: singleLead.mobile,
+        source: 'Manual Entry'
+      }]);
+
+      if (error) throw error;
+      toast.success("Lead added successfully!");
+      setSingleLead({ name: '', mobile: '' });
+      fetchLeads();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+  const [campaignPhoto, setCampaignPhoto] = useState<string | null>(null);
   const [showBulkModal, setShowBulkModal] = useState(false);
 
   useEffect(() => {
     fetchLeads();
+    // Load saved campaign
+    const savedMsg = localStorage.getItem('marketing_msg');
+    const savedPhoto = localStorage.getItem('marketing_photo');
+    if (savedMsg) setMarketingMessage(savedMsg);
+    if (savedPhoto) setCampaignPhoto(savedPhoto);
   }, []);
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Photo is too large. Please select a photo under 2MB.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setCampaignPhoto(base64);
+        localStorage.setItem('marketing_photo', base64);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removePhoto = () => {
+    setCampaignPhoto(null);
+    localStorage.removeItem('marketing_photo');
+  };
+
+  const saveMessage = (msg: string) => {
+    setMarketingMessage(msg);
+    localStorage.setItem('marketing_msg', msg);
+  };
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -147,24 +205,90 @@ const Marketing = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Campaign Section */}
           <div className="lg:col-span-1 space-y-6">
+            {/* Quick Add Section */}
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
-                  <MessageSquare className="h-6 w-6" />
+                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                  <UserPlus className="h-6 w-6" />
                 </div>
-                <h2 className="text-xl font-black text-slate-900">Campaign Message</h2>
+                <h2 className="text-xl font-black text-slate-900">Add Lead</h2>
               </div>
-              <textarea 
-                value={marketingMessage}
-                onChange={(e) => setMarketingMessage(e.target.value)}
-                placeholder="Write your marketing message here... (e.g. ভর্তি চলছে! নতুন ব্যাচে ৩০% ডিসকাউন্ট...)"
-                className="w-full h-48 px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 resize-none font-medium"
-              />
-              <div className="mt-4 p-4 bg-amber-50 rounded-2xl border border-amber-100">
+              <form onSubmit={handleManualAdd} className="space-y-3">
+                <input 
+                  type="text" 
+                  placeholder="Full Name"
+                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
+                  value={singleLead.name}
+                  onChange={e => setSingleLead({...singleLead, name: e.target.value})}
+                />
+                <input 
+                  type="text" 
+                  placeholder="Mobile Number"
+                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
+                  value={singleLead.mobile}
+                  onChange={e => setSingleLead({...singleLead, mobile: e.target.value})}
+                />
+                <button type="submit" className="w-full py-2.5 bg-emerald-600 text-white font-black rounded-xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-2">
+                  <CheckCircle className="h-4 w-4" /> Save Lead
+                </button>
+              </form>
+            </div>
+
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                    <MessageSquare className="h-6 w-6" />
+                  </div>
+                  <h2 className="text-xl font-black text-slate-900">Campaign Content</h2>
+                </div>
+              </div>
+
+              {/* Message Input */}
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-black text-slate-400 uppercase mb-2 block">Message Text</label>
+                  <textarea 
+                    value={marketingMessage}
+                    onChange={(e) => saveMessage(e.target.value)}
+                    placeholder="Write your marketing message here... (e.g. ভর্তি চলছে! নতুন ব্যাচে ৩০% ডিসকাউন্ট...)"
+                    className="w-full h-32 px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 resize-none font-medium"
+                  />
+                </div>
+
+                {/* Photo Upload */}
+                <div>
+                  <label className="text-xs font-black text-slate-400 uppercase mb-2 block">Campaign Photo</label>
+                  {campaignPhoto ? (
+                    <div className="relative group rounded-2xl overflow-hidden border-2 border-indigo-100">
+                      <img src={campaignPhoto} alt="Campaign" className="w-full h-40 object-cover" />
+                      <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button 
+                          onClick={removePhoto}
+                          className="p-2 bg-rose-500 text-white rounded-xl shadow-lg hover:scale-110 transition-transform"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-40 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-100 transition-colors">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="w-8 h-8 text-slate-400 mb-2" />
+                        <p className="text-sm text-slate-500 font-bold">Upload Coaching Photo</p>
+                        <p className="text-[10px] text-slate-400 font-medium mt-1">PNG, JPG up to 2MB</p>
+                      </div>
+                      <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
+                    </label>
+                  )}
+                </div>
+              </div>
+              
+              <div className="mt-6 p-4 bg-amber-50 rounded-2xl border border-amber-100">
                 <div className="flex gap-2">
                   <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
-                  <p className="text-xs text-amber-700 font-bold leading-relaxed">
-                    Note: To send bulk messages for FREE, use a WhatsApp Sender extension. Copy all numbers from here and paste them into the extension.
+                  <p className="text-[11px] text-amber-700 font-bold leading-relaxed">
+                    How it works for FREE: Copy numbers from here, paste into your WhatsApp Extension, then write this message and upload this photo directly in that Extension.
                   </p>
                 </div>
               </div>
