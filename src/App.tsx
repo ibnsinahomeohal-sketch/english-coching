@@ -31,6 +31,7 @@ import StudentsList from "./pages/StudentsList";
 import Teachers from "./pages/Teachers";
 import Fees from "./pages/Fees";
 import Expenses from "./pages/Expenses";
+import Marketing from "./pages/Marketing";
 import Homework from "./pages/Homework";
 import StudentHomework from "./pages/StudentHomework";
 import StudentChat from "./pages/StudentChat";
@@ -108,6 +109,7 @@ export default function App() {
           <Route path="admissions-requests" element={<AdmissionsManagement />} />
           <Route path="courses" element={<CourseManagement />} />
           <Route path="students" element={<StudentsList />} />
+          <Route path="marketing" element={<Marketing />} />
           <Route path="teachers" element={<Teachers />} />
           <Route path="operations" element={<Operations />} />
           <Route path="attendance" element={<Attendance />} />

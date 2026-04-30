@@ -4,7 +4,7 @@ import {
   LayoutDashboard, UserPlus, Users, IdCard, BookOpen, Library, Bot, Wallet, Mic,
   UserCircle, FileQuestion, GraduationCap, Trophy, LogOut, CalendarCheck,
   MessageSquare, FileText, Settings as SettingsIcon, Clock, CreditCard,
-  TrendingDown, Award, User, Sun, Moon, Menu
+  TrendingDown, Award, User, Sun, Moon, Menu, Megaphone
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { supabase } from "../lib/supabaseClient";
@@ -16,6 +16,7 @@ const navigationGroups = [
     label: "PLATFORM",
     items: [
       { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+      { name: "Marketing", href: "/admin/marketing", icon: Megaphone },
       { name: "Courses & Batches", href: "/admin/courses", icon: BookOpen },
       { name: "Students", href: "/admin/students", icon: Users },
       { name: "Teachers", href: "/admin/teachers", icon: GraduationCap },
