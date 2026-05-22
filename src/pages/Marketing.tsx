@@ -97,6 +97,19 @@ CREATE TABLE IF NOT EXISTS pdf_analytics (
   viewed_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- ৫. বিকাশ পেমেন্ট রিলিজ বা রিকোয়েস্ট ট্র্যাকিং টেবিল
+CREATE TABLE IF NOT EXISTS payment_requests (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  student_id TEXT NOT NULL,
+  student_name TEXT,
+  phone TEXT,
+  bkash_number TEXT NOT NULL,
+  trx_id TEXT NOT NULL UNIQUE,
+  amount NUMERIC NOT NULL,
+  status TEXT DEFAULT 'pending',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
 -- ইনিশিয়াল কনফিগ
 INSERT INTO pdf_config (id, file_url) 
 VALUES ('main_pdf', 'PASTE_YOUR_PDF_LINK_HERE')

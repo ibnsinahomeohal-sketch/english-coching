@@ -1,5 +1,5 @@
 import React, { useState, useEffect, FormEvent } from "react";
-import { CreditCard, MessageCircle, AlertCircle, Search, CheckCircle, X, Receipt, Loader2 } from "lucide-react";
+import { CreditCard, MessageCircle, AlertCircle, Search, CheckCircle, X, Receipt, Loader2, Smartphone, Check, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "../components/ui/Card";
 import { PageHero } from "../components/PageHero";
@@ -13,8 +13,14 @@ export default function Fees() {
   const [paymentAmount, setPaymentAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // bKash Personal payment system requests
+  const [bKashRequests, setbKashRequests] = useState<any[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
+
   useEffect(() => {
     fetchStudents();
+    fetchbKashRequests();
   }, []);
 
   const fetchStudents = async () => {
@@ -32,6 +38,98 @@ export default function Fees() {
       toast.error("Failed to load student fee records");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchbKashRequests = async () => {
+    setLoadingRequests(true);
+    try {
+      const { data, error } = await supabase
+        .from('payment_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error && data) {
+        setbKashRequests(data);
+      }
+    } catch (err) {
+      console.error("Error loading payment requests:", err);
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  const handleApproveRequest = async (request: any) => {
+    setProcessingRequestId(request.id);
+    try {
+      // 1. Get the current student info so we don't depend on loaded stale list
+      const { data: student, error: fetchErr } = await supabase
+        .from('students')
+        .select('*')
+        .eq('student_id', request.student_id)
+        .single();
+
+      if (fetchErr || !student) {
+        throw new Error("Student not found in records");
+      }
+
+      // 2. Add the approved amount to student's paid_amount
+      const newPaidAmount = (student.paid_amount || 0) + parseFloat(request.amount);
+      const newDueAmount = (student.fee || 0) - (student.discount || 0) - newPaidAmount;
+
+      const { error: updateErr } = await supabase
+        .from('students')
+        .update({
+          paid_amount: newPaidAmount,
+          due_amount: newDueAmount
+        })
+        .eq('student_id', request.student_id);
+
+      if (updateErr) throw updateErr;
+
+      // 3. Mark the payment request as 'approved'
+      const { error: requestErr } = await supabase
+        .from('payment_requests')
+        .update({ status: 'approved' })
+        .eq('id', request.id);
+
+      if (requestErr) throw requestErr;
+
+      toast.success(`৳${request.amount} bKash Approved successfully!`);
+      
+      // Send Invoice / confirmation on WhatsApp dynamically
+      const message = `*bKash Payment Completed 🥳*\n\nHello ${student.name},\nWe have successfully verified and approved your bKash payment of *৳${request.amount}*.\n\n📊 *Summary:*\nTotal Amount Received: ৳${request.amount}\nTrxID: ${request.trx_id}\nCurrent Due: ৳${newDueAmount}\n\nThank you for choosing English Therapy!`;
+      const cleanedPhone = request.phone.replace(/[^0-9]/g, "");
+      const waLink = `https://wa.me/${cleanedPhone}?text=${encodeURIComponent(message)}`;
+      window.open(waLink, '_blank');
+
+      // 4. Refresh data
+      fetchStudents();
+      fetchbKashRequests();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "পেমেন্ট অ্যাপ্রুভ করতে ব্যর্থ হয়েছে");
+    } finally {
+      setProcessingRequestId(null);
+    }
+  };
+
+  const handleRejectRequest = async (request: any) => {
+    if (!confirm("Are you sure you want to reject this payment request?")) return;
+    setProcessingRequestId(request.id);
+    try {
+      const { error } = await supabase
+        .from('payment_requests')
+        .update({ status: 'rejected' })
+        .eq('id', request.id);
+
+      if (error) throw error;
+      toast.success("Payment request marked as rejected.");
+      fetchbKashRequests();
+    } catch (err: any) {
+      console.error(err);
+      toast.error("ব্যর্থ হয়েছে");
+    } finally {
+      setProcessingRequestId(null);
     }
   };
 
@@ -253,7 +351,90 @@ export default function Fees() {
           </div>
 
           {/* Payment Form */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-6">
+            {/* bKash Payment Requests Verification Queue */}
+            <Card className="p-5 border-2 border-pink-100 shadow-xl shadow-pink-500/5 overflow-hidden">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-xl bg-pink-100 flex items-center justify-center">
+                    <Smartphone className="h-5 w-5 text-pink-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-gray-950 uppercase tracking-wide">bKash Personal</h3>
+                    <p className="text-[10px] font-bold text-gray-400">01816648831 Verification</p>
+                  </div>
+                </div>
+                {bKashRequests.filter(r => r.status === 'pending').length > 0 && (
+                  <span className="h-2 w-2 rounded-full bg-[#e2136e] animate-ping"></span>
+                )}
+              </div>
+
+              {loadingRequests ? (
+                <div className="flex items-center justify-center py-6 gap-2 text-xs text-gray-400 font-bold animate-pulse">
+                  <Loader2 className="h-4 w-4 animate-spin text-[#e2136e]" />
+                  Loading requests...
+                </div>
+              ) : bKashRequests.length === 0 ? (
+                <div className="text-center py-6 px-4 bg-slate-50/50 rounded-2xl border border-dashed border-slate-100">
+                  <HelpCircle className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs font-bold text-slate-500">No payment requests submitted yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-60 overflow-y-auto">
+                  {bKashRequests.map((req) => (
+                    <div 
+                      key={req.id} 
+                      className={`p-3 rounded-xl border transition-all text-xs ${
+                        req.status === 'pending'
+                          ? 'bg-pink-50/40 border-pink-100 shadow-sm shadow-pink-500/5'
+                          : 'bg-slate-50/50 border-slate-100'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start gap-1">
+                        <div>
+                          <p className="font-extrabold text-gray-900">{req.student_name}</p>
+                          <p className="text-[10px] text-gray-400 font-medium">ID: {req.student_id}</p>
+                          <p className="text-[10px] text-gray-400 font-bold mt-1">Sender: {req.bkash_number}</p>
+                          <p className="text-[10px] text-[#e2136e] bg-pink-50 px-1.5 py-0.5 rounded font-mono font-bold mt-1 inline-block select-all">
+                            TrxID: {req.trx_id}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-extrabold text-[#e2136e] text-sm">৳{req.amount}</p>
+                          <span className={`inline-block px-1.5 py-0.5 mt-1 text-[8px] font-black uppercase tracking-wider rounded ${
+                            req.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                            req.status === 'rejected' ? 'bg-rose-100 text-rose-700' :
+                            'bg-amber-100 text-amber-700'
+                          }`}>
+                            {req.status}
+                          </span>
+                        </div>
+                      </div>
+
+                      {req.status === 'pending' && (
+                        <div className="flex gap-2 mt-2 pt-1 border-t border-dashed border-pink-100/40">
+                          <button
+                            onClick={() => handleRejectRequest(req)}
+                            disabled={processingRequestId === req.id}
+                            className="flex-1 py-1.5 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 transition-all text-[10px] font-black uppercase rounded-lg text-slate-500 border border-slate-200"
+                          >
+                            Reject
+                          </button>
+                          <button
+                            onClick={() => handleApproveRequest(req)}
+                            disabled={processingRequestId === req.id}
+                            className="flex-1 py-1.5 bg-[#e2136e] hover:bg-[#e2136e]/95 text-white transition-all text-[10px] font-black uppercase rounded-lg shadow-md shadow-[#e2136e]/10"
+                          >
+                            {processingRequestId === req.id ? "Approving..." : "Approve"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
             <Card className="p-6 sticky top-24 border-2 border-[#BA7517]/20 shadow-xl shadow-[#BA7517]/5">
               <div className="flex items-center gap-3 mb-6">
                 <div className="h-10 w-10 rounded-xl bg-[#BA7517]/10 flex items-center justify-center">
