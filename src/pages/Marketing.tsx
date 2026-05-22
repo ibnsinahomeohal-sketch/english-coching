@@ -56,6 +56,7 @@ const Marketing = () => {
   };
   const [campaignPhoto, setCampaignPhoto] = useState<string | null>(null);
   const [showSqlModal, setShowSqlModal] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
 
   const sqlData = `-- ১. মার্কেটিং লিড টেবিল
 CREATE TABLE IF NOT EXISTS marketing_leads (
