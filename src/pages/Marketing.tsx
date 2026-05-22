@@ -55,7 +55,52 @@ const Marketing = () => {
     }
   };
   const [campaignPhoto, setCampaignPhoto] = useState<string | null>(null);
-  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [showSqlModal, setShowSqlModal] = useState(false);
+
+  const sqlData = `-- ১. মার্কেটিং লিড টেবিল
+CREATE TABLE IF NOT EXISTS marketing_leads (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT,
+  mobile TEXT NOT NULL,
+  source TEXT DEFAULT 'Manual Entry',
+  status TEXT DEFAULT 'pending',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- ২. পিডিএফ কনফিগ (প্রতিষ্ঠানের তথ্য)
+CREATE TABLE IF NOT EXISTS pdf_config (
+  id TEXT PRIMARY KEY DEFAULT 'main_pdf',
+  file_url TEXT NOT NULL,
+  coaching_name TEXT DEFAULT 'English Therapy',
+  teacher_name TEXT DEFAULT 'Coach Admin',
+  contact_number TEXT DEFAULT '01XXXXXXXXX'
+);
+
+-- ৩. পিডিএফ অ্যাসাইনমেন্ট টেবিল (ব্যাচ অনুযায়ী)
+CREATE TABLE IF NOT EXISTS pdf_assignments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  batch_name TEXT NOT NULL,
+  title TEXT NOT NULL,
+  visible_pages_start INT DEFAULT 1,
+  visible_pages_end INT DEFAULT 10,
+  is_unlocked BOOLEAN DEFAULT false,
+  unlock_expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- ৪. পিডিএফ ভিউ ট্র্যাকিং
+CREATE TABLE IF NOT EXISTS pdf_analytics (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  student_id TEXT,
+  student_name TEXT,
+  assignment_id UUID REFERENCES pdf_assignments(id),
+  viewed_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- ইনিশিয়াল কনফিগ
+INSERT INTO pdf_config (id, file_url) 
+VALUES ('main_pdf', 'PASTE_YOUR_PDF_LINK_HERE')
+ON CONFLICT (id) DO NOTHING;`;
 
   useEffect(() => {
     fetchLeads();
@@ -185,6 +230,13 @@ const Marketing = () => {
             <p className="text-slate-500 font-medium">Manage leads and run bulk campaigns</p>
           </div>
           <div className="flex gap-3">
+            <button 
+              onClick={() => setShowSqlModal(true)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-all active:scale-95 border border-slate-200"
+            >
+              <FileText className="h-5 w-5" />
+              DB Setup
+            </button>
             <button 
               onClick={() => setShowBulkModal(true)}
               className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95"
@@ -400,6 +452,46 @@ const Marketing = () => {
           </div>
         </div>
       </div>
+
+      {/* SQL Setup Modal */}
+      {showSqlModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowSqlModal(false)} />
+          <div className="relative bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <div>
+                <h2 className="text-xl font-black text-slate-900">Database Setup</h2>
+                <p className="text-xs text-slate-500 font-medium">Copy and run this in your Supabase SQL Editor</p>
+              </div>
+              <button onClick={() => setShowSqlModal(false)} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-400">
+                <Trash2 className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="relative group">
+                <pre className="w-full h-96 px-4 py-4 bg-slate-900 text-indigo-300 rounded-2xl overflow-auto font-mono text-xs leading-relaxed border-4 border-slate-800">
+                  {sqlData}
+                </pre>
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(sqlData);
+                    toast.success("SQL copied!");
+                  }}
+                  className="absolute top-4 right-4 p-2 bg-indigo-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 text-[10px] font-black"
+                >
+                  <Copy className="h-3 w-3" /> COPY CODE
+                </button>
+              </div>
+              <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex gap-3">
+                <AlertCircle className="h-5 w-5 text-blue-600 shrink-0" />
+                <p className="text-xs text-blue-800 font-bold leading-relaxed">
+                  Go to your Supabase Dashboard {'>'} SQL Editor {'>'} New Query, paste this code, and click 'Run'. This will create the necessary tables for Marketing and PDF Control.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bulk Upload Modal */}
       {showBulkModal && (

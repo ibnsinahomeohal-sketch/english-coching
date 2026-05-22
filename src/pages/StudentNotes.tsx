@@ -8,8 +8,138 @@ import { cn } from "../lib/utils";
 export default function StudentNotes() {
   const [notes, setNotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [activeAssignment, setActiveAssignment] = useState<any>(null);
+  const [pdfConfig, setPdfConfig] = useState<any>(null);
+  const [isFilteringPdf, setIsFilteringPdf] = useState(false);
+  const [studentInfo, setStudentInfo] = useState<any>(null);
+
+  useEffect(() => {
+    const sessionStr = localStorage.getItem('studentSession');
+    if (sessionStr) {
+      const session = JSON.parse(sessionStr);
+      fetchStudentDetails(session.studentId);
+    }
+  }, []);
+
+  const fetchStudentDetails = async (id: string) => {
+    const { data } = await supabase.from('students').select('*, batches(name)').eq('student_id', id).single();
+    if (data) {
+      setStudentInfo(data);
+      fetchAssignments(data.batches?.name);
+    }
+  };
+
+  const fetchAssignments = async (batchName?: string) => {
+    // Get Config
+    const { data: config } = await supabase.from('pdf_config').select('*').single();
+    if (config) setPdfConfig(config);
+
+    // Get relevant assignment
+    const { data: assignments } = await supabase
+      .from('pdf_assignments')
+      .select('*')
+      .or(`batch_name.eq.${batchName},batch_name.eq.All`)
+      .order('created_at', { ascending: false });
+
+    if (assignments && assignments.length > 0) {
+      const bestMatch = assignments[0];
+      // Check if unlock expired
+      if (bestMatch.is_unlocked && bestMatch.unlock_expires_at) {
+        if (new Date() > new Date(bestMatch.unlock_expires_at)) {
+          bestMatch.is_unlocked = false;
+        }
+      }
+      setActiveAssignment(bestMatch);
+    }
+  };
+
+  const handleSmartView = async () => {
+    if (!pdfConfig?.file_url || !activeAssignment) {
+      toast.error("Resource not available for your batch yet.");
+      return;
+    }
+
+    setIsFilteringPdf(true);
+    try {
+      // 1. Log analytics
+      await supabase.from('pdf_analytics').insert([{
+        student_id: studentInfo?.student_id,
+        student_name: studentInfo?.name,
+        assignment_id: activeAssignment.id
+      }]);
+
+      // 2. Load PDF
+      const { PDFDocument, rgb, StandardFonts, degrees } = await import('pdf-lib');
+      const existingPdfBytes = await fetch(pdfConfig.file_url).then(res => res.arrayBuffer());
+      const pdfDoc = await PDFDocument.load(existingPdfBytes);
+      const newPdfDoc = await PDFDocument.create();
+      
+      const start = Math.max(1, activeAssignment.visible_pages_start);
+      const end = activeAssignment.is_unlocked ? pdfDoc.getPageCount() : Math.min(pdfDoc.getPageCount(), activeAssignment.visible_pages_end);
+      
+      const pagesToCopy = Array.from({ length: (end - start + 1) }, (_, i) => start - 1 + i);
+      const copiedPages = await newPdfDoc.copyPages(pdfDoc, pagesToCopy);
+      
+      const fontBold = await newPdfDoc.embedFont(StandardFonts.HelveticaBold);
+      const fontRegular = await newPdfDoc.embedFont(StandardFonts.Helvetica);
+
+      copiedPages.forEach((page, idx) => {
+        const { width, height } = page.getSize();
+        
+        // --- 1. Replace Footer Branding ---
+        // Draw white box over existing footer area
+        page.drawRectangle({
+          x: 0,
+          y: 0,
+          width: width,
+          height: 45,
+          color: rgb(1, 1, 1),
+        });
+
+        // Add user branding
+        page.drawText(pdfConfig.coaching_name || 'English Therapy', {
+          x: 40,
+          y: 25,
+          size: 14,
+          font: fontBold,
+          color: rgb(79/255, 70/255, 229/255), // Indigo
+        });
+
+        page.drawText(`${pdfConfig.teacher_name || 'Expert'} • ${pdfConfig.contact_number || ''}`, {
+          x: 40,
+          y: 12,
+          size: 8,
+          font: fontRegular,
+          color: rgb(100/255, 116/255, 139/255),
+        });
+
+        // --- 2. Add Student Watermark ---
+        const watermarkText = `${studentInfo?.name || 'STUDENT'} - ${studentInfo?.mobile || 'PRIVATE'}`;
+        page.drawText(watermarkText, {
+          x: 50,
+          y: height - 100,
+          size: 40,
+          font: fontBold,
+          color: rgb(0.8, 0.8, 0.8),
+          opacity: 0.1,
+          rotate: degrees(-45),
+        });
+
+        newPdfDoc.addPage(page);
+      });
+      
+      const pdfBytes = await newPdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      toast.success(`Success! Custom PDF for ${studentInfo?.name} generated.`);
+    } catch (error: any) {
+      console.error(error);
+      toast.error("PDF Processing failed. Ensure the source URL is accessible.");
+    } finally {
+      setIsFilteringPdf(false);
+    }
+  };
 
   useEffect(() => {
     const fetchNotes = async () => {
@@ -103,6 +233,52 @@ export default function StudentNotes() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 relative z-20">
+        {/* Special Spoken English Section */}
+        {activeAssignment && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-12 p-1.5 bg-gradient-to-br from-indigo-500 via-purple-500 to-emerald-500 rounded-[3rem] shadow-2xl overflow-hidden group"
+          >
+            <div className="bg-slate-950 rounded-[2.8rem] p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-10 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-6">
+                {activeAssignment.is_unlocked ? (
+                  <span className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-slate-950 text-xs font-black rounded-full animate-bounce shadow-xl">
+                    <Clock className="h-4 w-4" /> FULL ACCESS UNLOCKED (10M)
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2 px-5 py-2.5 bg-white/5 text-indigo-300 text-xs font-black rounded-full border border-white/10 backdrop-blur-md">
+                    <BookOpen className="h-4 w-4" /> PAGES {activeAssignment.visible_pages_start} - {activeAssignment.visible_pages_end}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex-1 text-center md:text-left relative z-10">
+                <h2 className="text-4xl md:text-5xl font-display font-black text-white mb-4 tracking-tighter leading-tight">
+                  {pdfConfig?.coaching_name || 'Spoken English'} <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-indigo-400 italic">Mastery</span>
+                </h2>
+                <p className="text-slate-400 text-lg font-medium max-w-lg mb-8 leading-relaxed">
+                  Hi {studentInfo?.name}, here is your personal copy of <span className="text-white font-bold">{activeAssignment.title}</span>. Content is watermarked for your security.
+                </p>
+                <div className="flex flex-wrap justify-center md:justify-start gap-5">
+                  <button 
+                    onClick={handleSmartView}
+                    disabled={isFilteringPdf}
+                    className="px-10 py-5 bg-white text-slate-950 font-black rounded-[1.5rem] hover:bg-slate-100 transition-all flex items-center gap-4 active:scale-95 disabled:opacity-50 shadow-xl shadow-white/5 group/btn"
+                  >
+                    <Book className="h-6 w-6 text-indigo-600 group-hover/btn:rotate-12 transition-transform" />
+                    {isFilteringPdf ? "PREPARING PREMIUM PDF..." : "GENERATE MY PDF"}
+                  </button>
+                </div>
+              </div>
+              
+              <div className="hidden lg:flex w-64 h-64 bg-gradient-to-br from-indigo-500/10 to-transparent rounded-full items-center justify-center border border-white/5 group-hover:scale-105 transition-transform duration-700">
+                <FileText className="h-32 w-32 text-indigo-500/30" />
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Search and Filter Bar */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}

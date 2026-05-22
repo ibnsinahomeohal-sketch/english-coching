@@ -220,7 +220,7 @@ export default function Admission() {
           mother_name: formData.motherName,
           guardian_mobile: formData.guardianMobile,
           occupation: formData.occupation,
-          email: formData.email,
+          email: formData.email?.trim() || null,
           password: formData.password,
           course: selectedCourse?.name,
           batch: selectedBatchObj?.name,

@@ -42,6 +42,11 @@ export default function AdmissionsManagement() {
   const [selectedAdmission, setSelectedAdmission] = useState<any>(null);
   const [selectedAdmissionForReject, setSelectedAdmissionForReject] = useState<any>(null);
 
+  // Editable fields for approval to resolve constraint/uniqueness conflicts
+  const [editName, setEditName] = useState("");
+  const [editMobile, setEditMobile] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+
   const handleViewClick = (admission: any) => {
     setViewAdmission(admission);
     setShowViewModal(true);
@@ -99,6 +104,9 @@ export default function AdmissionsManagement() {
 
   const handleApproveClick = (admission: any) => {
     setSelectedAdmission(admission);
+    setEditName(admission.full_name || "");
+    setEditMobile(admission.mobile || "");
+    setEditEmail(admission.email || "");
     // Try to auto-select course if name matches
     const matchedCourse = courses.find(c => c.name.toLowerCase() === admission.course_name?.toLowerCase());
     if (matchedCourse) {
@@ -123,7 +131,7 @@ export default function AdmissionsManagement() {
       const random = Math.floor(1000 + Math.random() * 9000);
       const studentId = `${year}${random}`;
       
-      const cleanName = (selectedAdmission.full_name || "").split(" ")[0].replace(/[^a-zA-Z]/g, "") || "Student";
+      const cleanName = (editName || "").split(" ")[0].replace(/[^a-zA-Z]/g, "") || "Student";
       const last3 = studentId.slice(-3);
       const password = `ET@${cleanName}${last3}`;
 
@@ -135,9 +143,9 @@ export default function AdmissionsManagement() {
         .from('students')
         .insert([{
           student_id: studentId,
-          name: selectedAdmission.full_name,
-          mobile: selectedAdmission.mobile,
-          email: selectedAdmission.email,
+          name: editName,
+          mobile: editMobile,
+          email: editEmail?.trim() || null, // Convert blank/empty to null to prevent UNIQUE constraint violation!
           password: password,
           address: selectedAdmission.address,
           course: courseName,
@@ -160,18 +168,28 @@ export default function AdmissionsManagement() {
 
       if (deleteError) throw deleteError;
 
-      toast.success(`${selectedAdmission.full_name} approved successfully!`);
+      toast.success(`${editName} approved successfully!`);
+
+      // 4. Automatically trigger WhatsApp send message with the matched ID & password
+      const coachingName = "English Therapy";
+      const loginUrl = window.location.origin + "/login";
+      const message = `🌟 *অভিনন্দন ${editName}!* 🌟\n\nআপনার ভর্তির আবেদনটি অনুমোদিত হয়েছে।\n\nআপনার লগইন তথ্য:\n🏢 *প্রতিষ্ঠান:* ${coachingName}\n👤 *ইউজার আইডি:* ${studentId}\n🔑 *পাসওয়ার্ড:* ${password}\n\n🌐 *লগইন লিঙ্ক:* ${loginUrl}`;
+      const cleanedMobile = editMobile.replace(/[^\d+]/g, "");
+      const waLink = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(message)}`;
+      window.open(waLink, '_blank');
       
-      // Send Welcome Email
-      await fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: selectedAdmission.email,
-          subject: "ভর্তি নিশ্চিতকরণ",
-          text: `অভিনন্দন ${selectedAdmission.full_name}! আপনার ভর্তি নিশ্চিত হয়েছে। আপনার ইউজার আইডি: ${studentId} এবং পাসওয়ার্ড: ${password}`
-        })
-      });
+      // Send Welcome Email if email is present
+      if (editEmail?.trim()) {
+        await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: editEmail.trim(),
+            subject: "ভর্তি নিশ্চিতকরণ",
+            text: `অভিনন্দন ${editName}! আপনার ভর্তি নিশ্চিত হয়েছে। আপনার ইউজার আইডি: ${studentId} এবং পাসওয়ার্ড: ${password}`
+          })
+        });
+      }
 
       setShowApproveModal(false);
       fetchAdmissions();
@@ -464,10 +482,43 @@ export default function AdmissionsManagement() {
             </div>
 
             <div className="space-y-6">
-              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-                <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">Student</p>
-                <p className="font-bold text-slate-900">{selectedAdmission.full_name}</p>
-                <p className="text-sm text-slate-500">{selectedAdmission.course_name}</p>
+              <div className="space-y-3 p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100/60 shadow-inner">
+                <p className="text-xs font-black text-emerald-700 uppercase tracking-widest leading-none mb-1">Student Profile</p>
+                <p className="text-[10px] text-slate-500 font-bold mb-3 italic">Applied for: {selectedAdmission.course_name}</p>
+                
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">Full Name</label>
+                  <input 
+                    type="text" 
+                    className="w-full px-3 py-2 bg-white border border-slate-200 focus:border-[#004d40] rounded-xl text-xs font-bold outline-none transition-all" 
+                    value={editName} 
+                    onChange={e => setEditName(e.target.value)} 
+                  />
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">Mobile / WhatsApp</label>
+                  <input 
+                    type="text" 
+                    className="w-full px-3 py-2 bg-white border border-slate-200 focus:border-[#004d40] rounded-xl text-xs font-bold outline-none transition-all" 
+                    value={editMobile} 
+                    onChange={e => setEditMobile(e.target.value)} 
+                  />
+                </div>
+                
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center px-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Email Address</label>
+                    <span className="text-[8px] text-amber-600 font-bold">* Blank this if already used</span>
+                  </div>
+                  <input 
+                    type="text" 
+                    className="w-full px-3 py-2 bg-white border border-slate-200 focus:border-[#004d40] rounded-xl text-xs font-bold outline-none transition-all placeholder:text-[10px] placeholder:text-slate-300" 
+                    placeholder="student@example.com (or leave empty)"
+                    value={editEmail} 
+                    onChange={e => setEditEmail(e.target.value)} 
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 gap-4">
@@ -514,7 +565,7 @@ export default function AdmissionsManagement() {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-4 pt-4">
                 <button 
                   onClick={() => setShowApproveModal(false)}
                   className="flex-1 px-6 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-all"
@@ -522,31 +573,16 @@ export default function AdmissionsManagement() {
                   Cancel
                 </button>
                 <button 
-                  onClick={() => {
-                    const year = new Date().getFullYear();
-                    const random = Math.floor(1000 + Math.random() * 9000);
-                    const studentId = `${year}${random}`;
-                    const cleanName = (selectedAdmission.full_name || "").split(" ")[0].replace(/[^a-zA-Z]/g, "") || "Student";
-                    const last3 = studentId.slice(-3);
-                    const password = `ET@${cleanName}${last3}`;
-                    const coachingName = "Coaching Center";
-                    const loginUrl = window.location.origin + "/login";
-                    const message = `🌟 *অভিনন্দন ${selectedAdmission.full_name}!* 🌟\n\nআপনার ভর্তির আবেদনটি অনুমোদিত হয়েছে।\n\nআপনার লগইন তথ্য:\n🏢 *প্রতিষ্ঠান:* ${coachingName}\n👤 *ইউজার আইডি:* ${studentId}\n🔑 *পাসওয়ার্ড:* ${password}\n\n🌐 *লগইন লিঙ্ক:* ${loginUrl}`;
-                    const cleanedMobile = selectedAdmission.mobile.replace(/[^\d+]/g, "");
-                    const waLink = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(message)}`;
-                    window.open(waLink, '_blank');
-                  }}
-                  className="px-4 py-3 bg-[#25D366] text-white font-bold rounded-xl hover:bg-[#25D366]/90 transition-all"
-                >
-                  WhatsApp
-                </button>
-                <button 
                   onClick={handleApprove}
                   disabled={processingId === selectedAdmission.id || !selectedCourse || !selectedBatch}
-                  className="flex-1 px-6 py-3 bg-[#004d40] text-white font-bold rounded-xl hover:bg-[#004d40]/90 transition-all shadow-lg shadow-[#004d40]/20 flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="flex-[2] px-6 py-3 bg-[#004d40] text-white font-bold rounded-xl hover:bg-[#004d40]/95 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-[#004d40]/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100"
                 >
-                  {processingId === selectedAdmission.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-                  Confirm
+                  {processingId === selectedAdmission.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CheckCircle className="h-4 w-4" />
+                  )}
+                  Approve & Send WhatsApp
                 </button>
               </div>
             </div>

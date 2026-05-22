@@ -1,5 +1,5 @@
 import React, { useState, useEffect, FormEvent } from "react";
-import { Upload, FileText, Image as ImageIcon, Download, Search, BookOpen, Users } from "lucide-react";
+import { Upload, FileText, Image as ImageIcon, Download, Search, BookOpen, Users, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHero } from "../components/PageHero";
 import { supabase } from "../lib/supabaseClient";
@@ -16,9 +16,87 @@ export default function Notes() {
     file: null as File | null 
   });
 
+  const [pdfConfig, setPdfConfig] = useState<any>(null);
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState<any[]>([]);
+  const [isSavingConfig, setIsSavingConfig] = useState(false);
+  const [newAssignment, setNewAssignment] = useState({
+    batch_name: "All",
+    title: "Lesson 1",
+    visible_pages_start: 1,
+    visible_pages_end: 10
+  });
+
   useEffect(() => {
     fetchInitialData();
+    fetchPdfData();
   }, []);
+
+  const fetchPdfData = async () => {
+    const { data: config } = await supabase.from('pdf_config').select('*').single();
+    if (config) setPdfConfig(config);
+
+    const { data: assignData } = await supabase.from('pdf_assignments').select('*').order('created_at', { ascending: false });
+    if (assignData) setAssignments(assignData);
+
+    const { data: logData } = await supabase.from('pdf_analytics').select('*').order('viewed_at', { ascending: false }).limit(20);
+    if (logData) setAnalytics(logData);
+  };
+
+  const handleUpdateConfig = async (e: FormEvent) => {
+    e.preventDefault();
+    setIsSavingConfig(true);
+    try {
+      const { error } = await supabase.from('pdf_config').update(pdfConfig).eq('id', 'main_pdf');
+      if (error) throw error;
+      toast.success("PDF Institutional settings updated!");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsSavingConfig(false);
+    }
+  };
+
+  const handleAddAssignment = async (e: FormEvent) => {
+    e.preventDefault();
+    try {
+      const { error } = await supabase.from('pdf_assignments').insert([newAssignment]);
+      if (error) throw error;
+      toast.success("New assignment created!");
+      fetchPdfData();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleToggleUnlock = async (assignId: string, current: boolean) => {
+    const expiresAt = !current ? new Date(Date.now() + 10 * 60 * 1000).toISOString() : null;
+    try {
+      const { error } = await supabase
+        .from('pdf_assignments')
+        .update({ 
+          is_unlocked: !current,
+          unlock_expires_at: expiresAt
+        })
+        .eq('id', assignId);
+      if (error) throw error;
+      toast.success(!current ? "Flash unlocked (10m)!" : "Locked access");
+      fetchPdfData();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleDeleteAssignment = async (id: string) => {
+    try {
+      const { error } = await supabase.from('pdf_assignments').delete().eq('id', id);
+      if (error) throw error;
+      toast.success("Assignment removed");
+      fetchPdfData();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
 
   const fetchInitialData = async () => {
     const { data: coursesData } = await supabase.from('courses').select('*');
@@ -107,6 +185,150 @@ export default function Notes() {
           
           {/* Upload Section */}
           <div className="lg:col-span-1 space-y-6">
+            {/* Advanced PDF & Batch Control */}
+            <div className="bg-slate-950 p-6 rounded-3xl border border-slate-800 shadow-2xl text-white">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-2xl border border-indigo-500/20">
+                  <BookOpen className="h-6 w-6" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black tracking-tight">Smart PDF Manager</h2>
+                  <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest leading-none">Assignment & Customization</p>
+                </div>
+              </div>
+
+              {/* Institutional Customization */}
+              {pdfConfig && (
+                <div className="mb-8 p-4 bg-slate-900 border border-slate-800 rounded-2xl">
+                  <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3 block">Institutional Branding</label>
+                  <form onSubmit={handleUpdateConfig} className="space-y-3">
+                    <input 
+                      type="text" 
+                      placeholder="Coaching Name"
+                      value={pdfConfig.coaching_name}
+                      onChange={e => setPdfConfig({...pdfConfig, coaching_name: e.target.value})}
+                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold" 
+                    />
+                    <input 
+                      type="text" 
+                      placeholder="Teacher Name"
+                      value={pdfConfig.teacher_name}
+                      onChange={e => setPdfConfig({...pdfConfig, teacher_name: e.target.value})}
+                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold" 
+                    />
+                    <input 
+                      type="text" 
+                      placeholder="PDF URL"
+                      value={pdfConfig.file_url}
+                      onChange={e => setPdfConfig({...pdfConfig, file_url: e.target.value})}
+                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-[10px] font-mono" 
+                    />
+                    <button type="submit" disabled={isSavingConfig} className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-black transition-all">
+                      {isSavingConfig ? "SAVING..." : "UPDATE BRANDING"}
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {/* Create New Assignment */}
+              <div className="mb-8 border-t border-slate-800 pt-6">
+                <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-3 block">New Page Assignment</label>
+                <form onSubmit={handleAddAssignment} className="space-y-4">
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="Assignment Title (e.g. Week 1)"
+                    value={newAssignment.title}
+                    onChange={e => setNewAssignment({...newAssignment, title: e.target.value})}
+                    className="w-full px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold outline-none focus:border-indigo-500"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <select 
+                      value={newAssignment.batch_name}
+                      onChange={e => setNewAssignment({...newAssignment, batch_name: e.target.value})}
+                      className="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold outline-none bg-white/5"
+                    >
+                      <option value="All">All Batches</option>
+                      {courses.map(c => (
+                        <optgroup key={c.id} label={c.name}>
+                          {batches.filter(b => b.course_id === c.id).map(b => (
+                            <option key={b.id} value={b.name}>{b.name}</option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                    <div className="flex gap-2">
+                      <input 
+                        type="number" 
+                        placeholder="Start"
+                        value={newAssignment.visible_pages_start}
+                        onChange={e => setNewAssignment({...newAssignment, visible_pages_start: parseInt(e.target.value)})}
+                        className="w-full px-2 py-2 bg-slate-900 border border-slate-800 rounded-xl text-center text-xs font-bold"
+                      />
+                      <input 
+                        type="number" 
+                        placeholder="End"
+                        value={newAssignment.visible_pages_end}
+                        onChange={e => setNewAssignment({...newAssignment, visible_pages_end: parseInt(e.target.value)})}
+                        className="w-full px-2 py-2 bg-slate-900 border border-slate-800 rounded-xl text-center text-xs font-bold"
+                      />
+                    </div>
+                  </div>
+                  <button type="submit" className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2">
+                    <Plus className="h-4 w-4" /> CREATE ASSIGNMENT
+                  </button>
+                </form>
+              </div>
+
+              {/* Assignment List */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Active Assignments</label>
+                {assignments.map(assign => (
+                  <div key={assign.id} className="p-3 bg-slate-900/50 border border-slate-800 rounded-2xl group hover:border-slate-700 transition-all">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h4 className="text-xs font-black text-white">{assign.title}</h4>
+                        <p className="text-[10px] text-indigo-400 font-bold tracking-tight">{assign.batch_name} • Pages {assign.visible_pages_start}-{assign.visible_pages_end}</p>
+                      </div>
+                      <button onClick={() => handleDeleteAssignment(assign.id)} className="text-slate-600 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => handleToggleUnlock(assign.id, assign.is_unlocked)}
+                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-black transition-all ${
+                          assign.is_unlocked 
+                          ? "bg-amber-500 text-slate-900 animate-pulse" 
+                          : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                        }`}
+                      >
+                        {assign.is_unlocked ? "MANUALLY UNLOCKED (10m)" : "FLASH UNLOCK"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Analytics Summary */}
+              {analytics.length > 0 && (
+                <div className="mt-8 border-t border-slate-800 pt-6">
+                  <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3 block flex items-center gap-2">
+                    <Users className="h-3 w-3" /> Recent Activity
+                  </label>
+                  <div className="space-y-2">
+                    {analytics.map(item => (
+                      <div key={item.id} className="flex items-center gap-3 text-[10px] text-slate-400">
+                        <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                        <span className="font-bold text-slate-300">{item.student_name}</span>
+                        <span className="text-[8px] opacity-50">opened book</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Upload New Note</h3>
               

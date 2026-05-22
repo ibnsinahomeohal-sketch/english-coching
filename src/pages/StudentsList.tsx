@@ -114,7 +114,7 @@ export default function StudentsList() {
             mother_name: editingStudent.mother_name,
             guardian_mobile: editingStudent.guardian_mobile,
             occupation: editingStudent.occupation,
-            email: editingStudent.email,
+            email: editingStudent.email?.trim() || null,
             session: editingStudent.session,
             board: editingStudent.board,
             roll: editingStudent.roll,
