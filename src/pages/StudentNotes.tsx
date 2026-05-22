@@ -12,6 +12,8 @@ export default function StudentNotes() {
   const [pdfConfig, setPdfConfig] = useState<any>(null);
   const [isFilteringPdf, setIsFilteringPdf] = useState(false);
   const [studentInfo, setStudentInfo] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
 
   useEffect(() => {
     const sessionStr = localStorage.getItem('studentSession');
