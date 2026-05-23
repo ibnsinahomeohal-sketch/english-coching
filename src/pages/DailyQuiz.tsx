@@ -86,46 +86,50 @@ export default function DailyQuiz() {
 
   useEffect(() => {
     const initQuiz = async () => {
-      const sessionStr = localStorage.getItem('studentSession');
-      if (!sessionStr) return;
-      
-      const session = JSON.parse(sessionStr);
-      const studentId = session.studentId;
+      try {
+        const sessionStr = localStorage.getItem('studentSession');
+        if (!sessionStr) return;
+        
+        const session = JSON.parse(sessionStr);
+        const studentId = session.studentId;
 
-      // Check if already played today
-      const today = new Date().toDateString();
-      const lastPlayed = localStorage.getItem(`dailyQuiz_${studentId}`);
-      
-      if (lastPlayed === today) {
-        setAlreadyPlayed(true);
-      }
-
-      // Fetch student and course details
-      const { data: studentData } = await supabase
-        .from("students")
-        .select('*')
-        .eq("student_id", studentId)
-        .single();
-
-      if (studentData) {
-        setStudent(studentData);
-        if (studentData.course) {
-          setCourseName(studentData.course);
-          
-          // Seeded shuffle to give different questions every day based on course and date
-          const seed = today + studentData.course;
-          let seedNum = 0;
-          for (let i = 0; i < seed.length; i++) {
-            seedNum += seed.charCodeAt(i);
-          }
-          
-          const shuffled = [...ALL_QUESTIONS].sort(() => {
-            const x = Math.sin(seedNum++) * 10000;
-            return x - Math.floor(x) - 0.5;
-          });
-          
-          setQuestions(shuffled); 
+        // Check if already played today
+        const today = new Date().toDateString();
+        const lastPlayed = localStorage.getItem(`dailyQuiz_${studentId}`);
+        
+        if (lastPlayed === today) {
+          setAlreadyPlayed(true);
         }
+
+        // Fetch student and course details
+        const { data: studentData } = await supabase
+          .from("students")
+          .select('*')
+          .eq("student_id", studentId)
+          .single();
+
+        if (studentData) {
+          setStudent(studentData);
+          if (studentData.course) {
+            setCourseName(studentData.course);
+            
+            // Seeded shuffle to give different questions every day based on course and date
+            const seed = today + studentData.course;
+            let seedNum = 0;
+            for (let i = 0; i < seed.length; i++) {
+              seedNum += seed.charCodeAt(i);
+            }
+            
+            const shuffled = [...ALL_QUESTIONS].sort(() => {
+              const x = Math.sin(seedNum++) * 10000;
+              return x - Math.floor(x) - 0.5;
+            });
+            
+            setQuestions(shuffled); 
+          }
+        }
+      } catch (err: any) {
+        console.error("Error initializing Daily Quiz:", err);
       }
     };
 

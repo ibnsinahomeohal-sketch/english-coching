@@ -12,11 +12,15 @@ export default function ResetPassword() {
 
   useEffect(() => {
     // Check if we have a session (the hash should have been handled by Supabase)
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then((resp) => {
+      const session = resp?.data?.session;
       if (!session) {
         toast.error("Invalid or expired link");
         navigate("/login");
       }
+    }).catch(err => {
+      console.error("Error checking session in ResetPassword:", err);
+      navigate("/login");
     });
   }, [navigate]);
 

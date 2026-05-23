@@ -12,14 +12,32 @@ export default function Login() {
   const [role, setRole] = useState<"admin" | "teacher" | "student" | "parent">("admin");
   const navigate = useNavigate();
 
+  const [instituteName] = useState(() => {
+    try {
+      const cached = localStorage.getItem("portal_settings_cache");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && parsed.instituteName && parsed.instituteName !== "BASIC ENGLISH THERAPY") {
+          return parsed.instituteName;
+        }
+      }
+    } catch (e) {}
+    return "Life English Care";
+  });
+
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const studentSession = localStorage.getItem('studentSession');
-      if (session) {
-        navigate("/admin/dashboard");
-      } else if (studentSession) {
-        navigate("/student/dashboard");
+      try {
+        const resp = await supabase.auth.getSession();
+        const session = resp?.data?.session;
+        const studentSession = localStorage.getItem('studentSession');
+        if (session) {
+          navigate("/admin/dashboard");
+        } else if (studentSession) {
+          navigate("/student/dashboard");
+        }
+      } catch (err) {
+        console.error("Error checking session in Login:", err);
       }
     };
     checkUser();
@@ -98,8 +116,8 @@ export default function Login() {
             <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-primary/20">
               <GraduationCap className="h-10 w-10 text-white" />
             </div>
-            <h1 className="text-4xl font-display font-black mb-6 leading-tight tracking-tight">
-              English Therapy <br />
+            <h1 className="text-4xl font-display font-black mb-6 leading-tight tracking-tight capitalize">
+              {instituteName} <br />
               <span className="text-primary">Portal</span>
             </h1>
             <p className="text-slate-400 text-lg font-medium max-w-sm leading-relaxed">

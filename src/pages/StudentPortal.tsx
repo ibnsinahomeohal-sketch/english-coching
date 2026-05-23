@@ -126,7 +126,13 @@ export default function StudentPortal() {
       }
 
       // 2. Fallback to Supabase Auth
-      const { data: { user } } = await supabase.auth.getUser();
+      let user: any = null;
+      try {
+        const resp = await supabase.auth.getUser();
+        user = resp?.data?.user;
+      } catch (err) {
+        console.error("Error getting user in StudentPortal:", err);
+      }
       if (!user) {
         navigate("/login");
         return;

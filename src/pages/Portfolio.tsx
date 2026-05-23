@@ -31,36 +31,120 @@ import "yet-another-react-lightbox/styles.css";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
 
-export default function Portfolio() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [settings, setSettings] = useState({
-    instituteName: "BASIC ENGLISH THERAPY",
-    logo: "",
-    teacherPhoto: "",
-    phone: "01707-581180",
-    email: "basicenglishtherapy@gmail.com",
-    address: "ছাতারপাইয়া পশ্চিম বাজার, নুর জাহান কমপ্লেক্স, ওয়ান ব্যাংকের নিচ তলা, সেনবাগ, নোয়াখালী",
-    portfolioContent: {
-      heroTitle: "Unlock Your Potential with English Mastery",
-      heroSubtitle: "Join the most trusted English coaching center in the region. We provide quality education with modern techniques.",
-      heroImage: "https://images.unsplash.com/photo-1523240715639-9a6710541190?auto=format&fit=crop&q=80&w=1920",
-      heroBackgroundSize: "cover",
-      aboutTitle: "Why Choose Us?",
-      aboutText: "We believe in practical learning. Our courses are designed to help you speak English fluently and confidently in real-world situations.",
-      aboutImages: [] as string[],
-      stats: {
-        students: "1000+",
-        teachers: "20+",
-        courses: "10+",
-        successRate: "98%"
-      },
-      features: [
-        { title: "Expert Teachers", desc: "Learn from highly qualified and experienced instructors." },
-        { title: "Modern Facilities", desc: "Smart classrooms with audio-visual learning aids." },
-        { title: "Flexible Batches", desc: "Morning, afternoon, and evening batches available." }
-      ]
+class PortfolioErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
+  state: { hasError: boolean; error: any };
+  props: { children: React.ReactNode };
+
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("Portfolio Component Crash Caught by Error Boundary:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#0f4223] flex flex-col items-center justify-center p-6 text-white text-center">
+          <div className="bg-white/10 p-8 rounded-3xl max-w-xl border border-white/20 shadow-2xl backdrop-blur-sm">
+            <h2 className="text-2xl font-bold text-[#f5a625] mb-4">দুঃখিত! কোনো একটি সমস্যা হয়েছে।</h2>
+            <p className="text-sm text-slate-200 mb-6 leading-relaxed">
+              সিস্টেম লোড করার সময় একটি সাময়িক ক্রটি দেখা দিয়েছে। দয়া করে পেজটি রিফ্রেশ করুন অথবা আমাদের সাথে যোগাযোগ করুন।
+            </p>
+            <div className="bg-black/30 p-4 rounded-xl text-left text-xs text-red-300 font-mono mb-6 max-h-40 overflow-auto">
+              {this.state.error?.toString() || "Unknown Error"}
+            </div>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-6 py-2.5 bg-[#f5a625] text-[#0f4223] font-bold rounded-lg hover:bg-amber-400 transition-all font-sans"
+            >
+              🔄 আবার চেষ্টা করুন
+            </button>
+          </div>
+        </div>
+      );
     }
+
+    return this.props.children;
+  }
+}
+
+export default function Portfolio() {
+  return (
+    <PortfolioErrorBoundary>
+      <PortfolioContent />
+    </PortfolioErrorBoundary>
+  );
+}
+
+function PortfolioContent() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [settings, setSettings] = useState(() => {
+    return {
+      instituteName: "LIFE ENGLISH CARE",
+      logo: "",
+      teacherPhoto: "",
+      phone: "01707-581180",
+      email: "basicenglishtherapy@gmail.com",
+      address: "ছাতারপাইয়া পশ্চিম বাজার, নুর জাহান কমপ্লেক্স, ওয়ান ব্যাংকের নিচ তলা, সেনবাগ, নোয়াখালী",
+      portfolioContent: {
+        heroTitle: "Unlock Your Potential with English Mastery",
+        heroSubtitle: "Join the most trusted English coaching center in the region. We provide quality education with modern techniques.",
+        heroImage: "https://images.unsplash.com/photo-1523240715639-9a6710541190?auto=format&fit=crop&q=80&w=1920",
+        heroBackgroundSize: "cover",
+        aboutTitle: "Why Choose Us?",
+        aboutText: "We believe in practical learning. Our courses are designed to help you speak English fluently and confidently in real-world situations.",
+        aboutImages: [] as string[],
+        stats: {
+          students: "1000+",
+          teachers: "20+",
+          courses: "10+",
+          successRate: "98%"
+        },
+        features: [
+          { title: "Expert Teachers", desc: "Learn from highly qualified and experienced instructors." },
+          { title: "Modern Facilities", desc: "Smart classrooms with audio-visual learning aids." },
+          { title: "Flexible Batches", desc: "Morning, afternoon, and evening batches available." }
+        ]
+      }
+    };
   });
+
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  const getInstituteNameParts = () => {
+    const name = settings?.instituteName;
+    if (typeof name !== "string" || !name.trim()) {
+      return { part1: "LIFE ENGLISH", part2: "CARE" };
+    }
+    const parts = name.trim().split(/\s+/);
+    if (parts.length <= 1) {
+      return { part1: name, part2: "" };
+    }
+    return {
+      part1: parts.slice(0, -1).join(" "),
+      part2: parts[parts.length - 1]
+    };
+  };
+
+  const getInitials = () => {
+    const name = settings?.instituteName;
+    if (typeof name !== "string" || !name.trim()) {
+      return "LEC";
+    }
+    return name
+      .trim()
+      .split(/\s+/)
+      .map((n) => n ? n[0] : "")
+      .join("")
+      .toUpperCase() || "LEC";
+  };
 
   const [admissionForm, setAdmissionForm] = useState({
     fullName: "",
@@ -113,6 +197,19 @@ export default function Portfolio() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
+  const safeCourses = Array.isArray(courses) ? courses : [];
+  const safeAboutImages = Array.isArray(settings?.portfolioContent?.aboutImages)
+    ? (settings?.portfolioContent?.aboutImages || []).filter(Boolean)
+    : typeof settings?.portfolioContent?.aboutImages === 'string' && settings?.portfolioContent?.aboutImages
+      ? [settings?.portfolioContent?.aboutImages]
+      : [];
+
+  useEffect(() => {
+    if (settings?.instituteName) {
+      document.title = settings?.instituteName;
+    }
+  }, [settings?.instituteName]);
+
   useEffect(() => {
     const fetchSettings = async () => {
       try {
@@ -125,21 +222,49 @@ export default function Portfolio() {
         if (error) throw error;
         
         if (data && data.settings_data) {
-          setSettings(prev => ({
-            ...prev,
-            ...data.settings_data,
-            portfolioContent: {
-              ...prev.portfolioContent,
-              ...data.settings_data.portfolioContent,
-              aboutImages: data.settings_data.portfolioContent?.aboutImages || prev.portfolioContent.aboutImages || []
+          const fetched = { ...data.settings_data };
+          let needsUpdate = false;
+          if (!fetched.instituteName || fetched.instituteName === "BASIC ENGLISH THERAPY") {
+            fetched.instituteName = "LIFE ENGLISH CARE";
+            needsUpdate = true;
+          }
+          let finalSettingsValue: any = null;
+          setSettings(prev => {
+            const merged = {
+              ...prev,
+              ...fetched,
+              portfolioContent: {
+                ...(prev?.portfolioContent || {}),
+                ...(fetched?.portfolioContent || {}),
+                aboutImages: fetched?.portfolioContent?.aboutImages || prev?.portfolioContent?.aboutImages || []
+              }
+            };
+            finalSettingsValue = merged;
+            return merged;
+          });
+
+          if (needsUpdate && finalSettingsValue) {
+            try {
+              const { error: upsertErr } = await supabase
+                .from('app_settings')
+                .upsert({ id: 1, settings_data: finalSettingsValue }, { onConflict: 'id' });
+              if (upsertErr) {
+                console.error("Failed to automatically update DB settings branding:", upsertErr);
+              } else {
+                console.log("Successfully auto-migrated database settings to LIFE ENGLISH CARE.");
+              }
+            } catch (upsertCatchError) {
+              console.error("Exception during database upsert:", upsertCatchError);
             }
-          }));
+          }
         }
       } catch (error: any) {
         console.error("Error fetching settings:", error);
-        if (error.message === 'Failed to fetch') {
+        if (error?.message === 'Failed to fetch') {
           toast.error("Database connection lost. Please check your internet or Supabase configuration.");
         }
+      } finally {
+        setIsInitialLoading(false);
       }
     };
     fetchSettings();
@@ -210,6 +335,26 @@ export default function Portfolio() {
     }
   };
 
+  if (isInitialLoading) {
+    const initials = getInitials();
+    return (
+      <div className="min-h-screen bg-[#0f4223] flex flex-col items-center justify-center p-6 text-white text-center">
+        <div className="relative mb-6">
+          <div className="w-20 h-20 border-4 border-emerald-500/20 border-t-4 border-t-[#f5a625] rounded-full animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-[#f5a625] font-black text-xl font-mono">{initials}</span>
+          </div>
+        </div>
+        <h2 className="text-xl md:text-2xl font-black tracking-wide uppercase font-sans animate-pulse">
+          {settings?.instituteName || "LIFE ENGLISH CARE"}
+        </h2>
+        <p className="text-xs text-emerald-300 font-bold tracking-wider mt-2 bg-emerald-950/40 px-3 py-1.5 rounded-full border border-emerald-800/20">
+          তথ্য লোড করা হচ্ছে... অনুগ্রহ করে অপেক্ষা করুন
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[var(--bg-main)] font-sans text-slate-900 pt-[146px] md:pt-[130px]">
       {/* Government Approval Banner */}
@@ -232,11 +377,11 @@ export default function Portfolio() {
       {/* Navigation */}
       <nav className="fixed top-[84px] md:top-[68px] left-0 right-0 bg-[#0f4223] z-50 px-6 flex items-center justify-between h-[62px] shadow-[0_4px_25px_rgba(0,0,0,0.5)] border-t border-white/5">
         <div className="flex items-center gap-3">
-          {settings.logo && (
-            <img src={settings.logo} alt="Logo" className="h-10 w-10 object-contain brightness-110" />
+          {settings?.logo && (
+            <img src={settings?.logo} alt="Logo" className="h-10 w-10 object-contain brightness-110" />
           )}
           <div className="font-rajdhani text-[1.1rem] md:text-[1.3rem] font-bold text-[var(--secondary)] tracking-wider uppercase">
-            {settings.instituteName || "Basic English Therapy"}
+            {settings?.instituteName || "Life English Care"}
           </div>
         </div>
 
@@ -295,23 +440,24 @@ export default function Portfolio() {
       </div>
 
       {/* Hero Section */}
-      <section id="home" className="hero-pattern pt-[70px] pb-[80px] px-6 text-center" style={{ backgroundImage: settings.portfolioContent.heroImage ? `linear-gradient(rgba(15, 66, 35, 0.8), rgba(15, 66, 35, 0.8)), url(${settings.portfolioContent.heroImage})` : undefined, backgroundSize: settings.portfolioContent.heroBackgroundSize || 'cover', backgroundPosition: 'center' }}>
+      <section id="home" className="hero-pattern pt-[70px] pb-[80px] px-6 text-center" style={{ backgroundImage: settings?.portfolioContent?.heroImage ? `linear-gradient(rgba(15, 66, 35, 0.8), rgba(15, 66, 35, 0.8)), url(${settings?.portfolioContent?.heroImage})` : undefined, backgroundSize: settings?.portfolioContent?.heroBackgroundSize || 'cover', backgroundPosition: 'center' }}>
         <div className="max-w-7xl mx-auto relative z-10">
           <h1 className="font-rajdhani text-[clamp(2.5rem,8vw,4.5rem)] font-bold text-white leading-[1.1] mb-2 drop-shadow-[0_2px_20px_rgba(0,0,0,0.3)] uppercase">
-            {settings.instituteName ? (
-              <>
-                {settings.instituteName.split(' ').slice(0, -1).join(' ')} <br />
-                <span className="text-[#f5a625]">{settings.instituteName.split(' ').slice(-1)}</span>
-              </>
-            ) : (
-              <>Basic English<br /><span className="text-[#f5a625]">Therapy</span></>
-            )}
+            {(() => {
+              const parts = getInstituteNameParts();
+              return (
+                <>
+                  {parts.part1} <br />
+                  {parts.part2 && <span className="text-[#f5a625]">{parts.part2}</span>}
+                </>
+              );
+            })()}
           </h1>
           <p className="text-[1.2rem] text-white/90 mb-10">ইংলিশে দুর্বলদের জন্য — আমরা আপনাকে শেখাবোই ইনশাআল্লাহ</p>
           
           <div className="w-[140px] h-[140px] rounded-full border-4 border-[#f5a625] overflow-hidden mx-auto mb-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
             <img 
-              src={settings.teacherPhoto || "https://i.ibb.co/v4m0YmH/teacher-photo.png"} 
+              src={settings?.teacherPhoto || "https://i.ibb.co/v4m0YmH/teacher-photo.png"} 
               alt="ডা. আবদুল মোমিন" 
               className="w-full h-full object-cover"
               onError={(e) => {
@@ -366,7 +512,7 @@ export default function Portfolio() {
               <div className="teacher-card-v2">
                 <div className="teacher-photo-ring-v2">
                   <img 
-                    src={settings.teacherPhoto || "/teacher.png"} 
+                    src={settings?.teacherPhoto || "/teacher.png"} 
                     alt="ডা. আবদুল মোমিন" 
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -375,7 +521,7 @@ export default function Portfolio() {
                   />
                 </div>
                 <h3 className="text-[2rem] font-bold mb-2">ডা. আবদুল মোমিন</h3>
-                <p className="text-white/90 text-[1.1rem] mb-2 font-medium">পরিচালক: {settings.instituteName || "বেসিক ইংলিশ থেরাপি"}</p>
+                <p className="text-white/90 text-[1.1rem] mb-2 font-medium">পরিচালক: {settings?.instituteName || "বেসিক ইংলিশ থেরাপি"}</p>
                 <p className="text-white/90 text-[1rem] mb-4 font-medium">বি. এ, অনার্স, এম. এ (মাস্টার্স)<br />ইংরেজি বিভাগ</p>
                 <p className="text-white/70 text-[0.95rem] mb-10">সহকারী শিক্ষক<br />ছাতারপাইয়া আই-কে দাখিল মাদ্রাসা</p>
                 
@@ -383,8 +529,8 @@ export default function Portfolio() {
                   <div className="text-3xl">🏛️</div>
                   <p className="text-[0.9rem] font-bold leading-tight">কোর্স শেষে পরীক্ষার মাধ্যমে সরকারি সার্টিফিকেট প্রদান করা হবে</p>
                 </div>
-                </div>
               </div>
+            </div>
 
             {/* Course Details Content */}
             <div className="promise-section-v2">
@@ -416,8 +562,8 @@ export default function Portfolio() {
                 <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center text-white text-xl shrink-0">
                   <Check className="w-6 h-6" />
                 </div>
-                <p className="text-[1rem] font-bold text-emerald-900 leading-relaxed">
-                  কোর্স শেষে পরীক্ষার মাধ্যমে সরকারি সার্টিফিকেট প্রদান করা হবে। প্র্যাকটিসের জন্য পার্টনার নির্ধারণ করে দেওয়া হবে।
+                <p className="text-[1rem] font-bold text-emerald-950 leading-relaxed">
+                  কোর্স সংক্রান্ত সকল প্রকার বই ও শিট সম্পূর্ণ বিনামূল্যে প্রদান করা হবে।
                 </p>
               </div>
             </div>
@@ -425,40 +571,53 @@ export default function Portfolio() {
         </div>
       </section>
 
-      {/* Gallery Section */}
-      <section id="gallery" className="py-24 px-6 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-[2.2rem] font-bold text-[#0f4223] mb-4 flex items-center justify-center gap-3">
-              📸 আমাদের কার্যক্রমের কিছু ছবি
-            </h2>
-            <div className="w-24 h-1.5 bg-[#f5a625] mx-auto rounded-full"></div>
+      {/* Our Activities Section */}
+      <section id="gallery" className="py-20 px-6 bg-white border-t border-slate-100">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-[1.8rem] font-bold text-[var(--primary-dark)] mb-2">📸 আমাদের কার্যক্রম</h2>
+            <div className="w-16 h-1 bg-[var(--secondary)] mx-auto rounded-full"></div>
+            <p className="mt-4 text-slate-600">আমাদের ক্লাসরুম ও বিভিন্ন অ্যাক্টিভিটিসের কিছু ছবি</p>
           </div>
-          {settings.portfolioContent.aboutImages.length > 0 && (
+
+          {safeAboutImages.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {settings.portfolioContent.aboutImages.map((img, idx) => (
+              {safeAboutImages.map((img, idx) => (
                 <div 
                   key={idx} 
-                  className="rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 aspect-[3/4] cursor-pointer"
+                  className="relative group aspect-square rounded-2xl overflow-hidden cursor-pointer shadow-md hover:shadow-xl transition-all duration-300"
                   onClick={() => {
                     setLightboxIndex(idx);
                     setLightboxOpen(true);
                   }}
                 >
-                  <img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
+                  <img 
+                    src={img} 
+                    alt={`Activity ${idx + 1}`} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <span className="text-white font-bold bg-[#0f4223]/85 px-4 py-2 rounded-full text-sm font-sans">🔍 বড় করে দেখুন</span>
+                  </div>
                 </div>
               ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-slate-400 font-sans font-bold">
+              কোন ছবি পাওয়া যায়নি।
             </div>
           )}
         </div>
       </section>
 
-      <Lightbox
-        open={lightboxOpen}
-        close={() => setLightboxOpen(false)}
-        index={lightboxIndex}
-        slides={settings.portfolioContent.aboutImages.map((img) => ({ src: img }))}
-      />
+      {lightboxOpen && safeAboutImages.length > 0 && (
+        <Lightbox
+          open={lightboxOpen}
+          close={() => setLightboxOpen(false)}
+          index={lightboxIndex}
+          slides={safeAboutImages.map((img) => ({ src: img }))}
+        />
+      )}
 
       {/* Courses Section */}
       <section id="courses" className="py-20 px-6 bg-slate-50">
@@ -470,11 +629,11 @@ export default function Portfolio() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {courses.length > 0 ? (
-              courses.map((course) => (
-                <div key={course.id} className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col">
+            {safeCourses.length > 0 ? (
+              safeCourses.map((course) => (
+                <div key={course?.id || Math.random()} className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col">
                   <div className="bg-[var(--primary)] p-6 text-white text-center">
-                    <h3 className="text-[1.3rem] font-bold">{course.name}</h3>
+                    <h3 className="text-[1.3rem] font-bold">{course?.name || "কোর্স"}</h3>
                   </div>
                   <div className="p-8 flex-grow">
                     <ul className="space-y-4 mb-8">
@@ -496,7 +655,7 @@ export default function Portfolio() {
                     </ul>
                     <a 
                       href="#admission" 
-                      onClick={() => setAdmissionForm(prev => ({ ...prev, course: course.name }))}
+                      onClick={() => setAdmissionForm(prev => ({ ...prev, course: course?.name || "" }))}
                       className="block w-full py-3.5 bg-[var(--primary)] text-white text-center rounded-xl font-bold hover:bg-[var(--primary-dark)] transition-all"
                     >
                       ভর্তি হোন
@@ -805,8 +964,8 @@ export default function Portfolio() {
                       onChange={(e) => setAdmissionForm({...admissionForm, course: e.target.value})}
                     >
                       <option value="">কোর্স পছন্দ করুন</option>
-                      {courses.map(c => (
-                        <option key={c.id} value={c.name}>{c.name}</option>
+                      {safeCourses.map((c, index) => (
+                        <option key={c?.id || index} value={c?.name || ""}>{c?.name || "কোর্স"}</option>
                       ))}
                     </select>
                   </div>
@@ -924,7 +1083,7 @@ export default function Portfolio() {
                 <Phone className="w-7 h-7" />
               </div>
               <h4 className="text-[1.1rem] font-bold mb-4">ফোন নম্বর</h4>
-              <p className="text-white/70 text-[1rem] font-bold mb-1">{settings.phone}</p>
+              <p className="text-white/70 text-[1rem] font-bold mb-1">{settings?.phone}</p>
             </div>
 
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-8 rounded-3xl text-center hover:bg-white/10 transition-all group">
@@ -932,7 +1091,7 @@ export default function Portfolio() {
                 <MessageSquare className="w-7 h-7" />
               </div>
               <h4 className="text-[1.1rem] font-bold mb-4">WHATSAPP</h4>
-              <p className="text-white/70 text-[1rem] font-bold">{settings.phone}</p>
+              <p className="text-white/70 text-[1rem] font-bold">{settings?.phone}</p>
             </div>
 
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-8 rounded-3xl text-center hover:bg-white/10 transition-all group">
@@ -953,7 +1112,7 @@ export default function Portfolio() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
             <div className="space-y-6">
               <div className="font-rajdhani text-[1.5rem] font-bold text-[var(--secondary)] tracking-wider uppercase">
-                {settings.instituteName || "Basic English Therapy"}
+                {settings?.instituteName || "Life English Care"}
               </div>
               <p className="text-white/60 text-[0.92rem] leading-relaxed">
                 আমরা বিশ্বাস করি সঠিক দিকনির্দেশনা এবং কঠোর পরিশ্রমের মাধ্যমে যে কেউ ইংরেজিতে দক্ষ হয়ে উঠতে পারে। আমাদের লক্ষ্য প্রতিটি শিক্ষার্থীকে আত্মবিশ্বাসী করে তোলা।
@@ -990,11 +1149,11 @@ export default function Portfolio() {
                 </li>
                 <li className="flex items-center gap-3">
                   <Phone className="w-5 h-5 text-[var(--secondary)] shrink-0" />
-                  <span>{settings.phone}</span>
+                  <span>{settings?.phone}</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-[var(--secondary)] shrink-0" />
-                  <span>{settings.email}</span>
+                  <span>{settings?.email}</span>
                 </li>
               </ul>
             </div>
@@ -1015,7 +1174,7 @@ export default function Portfolio() {
           </div>
 
           <div className="pt-8 border-t border-white/5 text-center text-white/40 text-[0.85rem]">
-            <p className="mb-2">© {new Date().getFullYear()} {settings.instituteName || "Basic English Therapy"} — ডা. আবদুল মোমিন কর্তৃক পরিচালিত</p>
+            <p className="mb-2">© {new Date().getFullYear()} {settings?.instituteName || "Life English Care"} — ডা. আবদুল মোমিন কর্তৃক পরিচালিত</p>
             <p>Govt. Reg. No: 165451 | TICTB/BTEB অনুমোদিত | Institute Code: 76148</p>
             <p className="mt-4 opacity-50">Developed by <span className="text-white/60">Rony Talukder</span></p>
           </div>
@@ -1024,7 +1183,7 @@ export default function Portfolio() {
 
       {/* Floating WhatsApp Button */}
       <a 
-        href={`https://wa.me/88${(settings.phone || "01707581180").replace(/-/g, '')}?text=${encodeURIComponent("আসসালামু আলাইকুম, আমি আপনাদের কোর্স সম্পর্কে জানতে চাই।")}`}
+        href={`https://wa.me/88${String(settings?.phone || "01707581180").replace(/-/g, '')}?text=${encodeURIComponent("আসসালামু আলাইকুম, আমি আপনাদের কোর্স সম্পর্কে জানতে চাই।")}`}
         target="_blank" 
         rel="noopener noreferrer"
         className="wa-float"

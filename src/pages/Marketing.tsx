@@ -136,7 +136,11 @@ ON CONFLICT (id) DO NOTHING;`;
       reader.onloadend = () => {
         const base64 = reader.result as string;
         setCampaignPhoto(base64);
-        localStorage.setItem('marketing_photo', base64);
+        try {
+          localStorage.setItem('marketing_photo', base64);
+        } catch (err) {
+          console.warn("localStorage quota exceeded, campaign photo in-memory only:", err);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -149,7 +153,11 @@ ON CONFLICT (id) DO NOTHING;`;
 
   const saveMessage = (msg: string) => {
     setMarketingMessage(msg);
-    localStorage.setItem('marketing_msg', msg);
+    try {
+      localStorage.setItem('marketing_msg', msg);
+    } catch (err) {
+      console.warn("localStorage quota exceeded, campaign message in-memory:", err);
+    }
   };
 
   const fetchLeads = async () => {

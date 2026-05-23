@@ -13,7 +13,7 @@ export default function Certificates() {
   const [duration, setDuration] = useState("");
   const [grade, setGrade] = useState("");
   const [serialNo, setSerialNo] = useState("");
-  const [instituteName, setInstituteName] = useState("BASIC ENGLISH THERAPY");
+  const [instituteName, setInstituteName] = useState("LIFE ENGLISH CARE");
   const [address, setAddress] = useState("ChakBazar, Lakshmipur Sadar-3700, Lakshmipur.");
   const [regNo, setRegNo] = useState("1385461729");
   const [instCode, setInstCode] = useState("54617");

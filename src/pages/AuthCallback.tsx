@@ -6,7 +6,7 @@ export default function AuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" || event === "USER_UPDATED") {
         // If it's an invite or recovery, redirect to reset password
         const hash = window.location.hash;
@@ -21,7 +21,8 @@ export default function AuthCallback() {
     });
 
     // Also check current session immediately
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then((resp) => {
+      const session = resp?.data?.session;
       if (session) {
         const hash = window.location.hash;
         if (hash && (hash.includes("type=invite") || hash.includes("type=recovery"))) {
@@ -30,9 +31,15 @@ export default function AuthCallback() {
           navigate("/");
         }
       }
+    }).catch(err => {
+      console.error("Error checking session in AuthCallback:", err);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      if (data?.subscription) {
+        data.subscription.unsubscribe();
+      }
+    };
   }, [navigate]);
 
   return (

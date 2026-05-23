@@ -10,7 +10,7 @@ export default function Settings() {
     teacherPhoto: "",
     phone: "",
     email: "",
-    instituteName: "BASIC ENGLISH THERAPY",
+    instituteName: "LIFE ENGLISH CARE",
     address: "ChakBazar, Lakshmipur Sadar-3700, Lakshmipur.",
     portfolioContent: {
       heroTitle: "Unlock Your Potential with English Mastery",
@@ -37,22 +37,32 @@ export default function Settings() {
 
   useEffect(() => {
     const fetchSettings = async () => {
-      const { data, error } = await supabase
-        .from('app_settings')
-        .select('settings_data')
-        .eq('id', 1)
-        .single();
-      
-      if (data && data.settings_data) {
-        setSettings(prev => ({
-          ...prev,
-          ...data.settings_data,
-          portfolioContent: {
-            ...prev.portfolioContent,
-            ...data.settings_data.portfolioContent,
-            aboutImages: data.settings_data.portfolioContent?.aboutImages || prev.portfolioContent.aboutImages || []
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('settings_data')
+          .eq('id', 1)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data && data.settings_data) {
+          const fetched = { ...data.settings_data };
+          if (!fetched.instituteName || fetched.instituteName === "BASIC ENGLISH THERAPY") {
+            fetched.instituteName = "LIFE ENGLISH CARE";
           }
-        }));
+          setSettings(prev => ({
+            ...prev,
+            ...fetched,
+            portfolioContent: {
+              ...prev.portfolioContent,
+              ...fetched.portfolioContent,
+              aboutImages: fetched.portfolioContent?.aboutImages || prev.portfolioContent.aboutImages || []
+            }
+          }));
+        }
+      } catch (err: any) {
+        console.error("Error fetching settings:", err);
       }
     };
     fetchSettings();
@@ -62,16 +72,22 @@ export default function Settings() {
     e.preventDefault();
     setIsSaving(true);
     
-    const { error } = await supabase
-      .from('app_settings')
-      .upsert({ id: 1, settings_data: settings }, { onConflict: 'id' });
+    try {
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({ id: 1, settings_data: settings }, { onConflict: 'id' });
 
-    setIsSaving(false);
-    if (error) {
-      console.error("Error saving settings:", error);
-      alert("Failed to save settings.");
-    } else {
-      alert("Settings saved successfully!");
+      setIsSaving(false);
+      if (error) {
+        console.error("Error saving settings:", error);
+        alert("Failed to save settings.");
+      } else {
+        alert("Settings saved successfully!");
+      }
+    } catch (err: any) {
+      setIsSaving(false);
+      console.error("Exception during save settings:", err);
+      alert("Failed to save settings: " + (err.message || err));
     }
   };
 
@@ -196,7 +212,7 @@ export default function Settings() {
               value={settings.instituteName}
               onChange={(e) => setSettings({...settings, instituteName: e.target.value})}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" 
-              placeholder="e.g. BASIC ENGLISH THERAPY" 
+              placeholder="e.g. LIFE ENGLISH CARE" 
             />
           </div>
 

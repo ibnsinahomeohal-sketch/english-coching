@@ -66,8 +66,10 @@ export function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
+    supabase.auth.getUser().then((resp) => {
+      setUser(resp?.data?.user || null);
+    }).catch(err => {
+      console.error("Error getting user in Layout:", err);
     });
   }, []);
 
