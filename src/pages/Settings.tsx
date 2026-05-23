@@ -91,39 +91,65 @@ export default function Settings() {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, field: "logo" | "profilePhoto" | "teacherPhoto") => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setSettings(prevSettings => ({
-          ...prevSettings,
-          [field]: event.target?.result as string
-        }));
-      };
-      reader.readAsDataURL(file);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  const uploadToStorage = async (file: File): Promise<string | null> => {
+    try {
+      setIsUploadingImage(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+      const filePath = `settings/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('assets')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data } = supabase.storage.from('assets').getPublicUrl(filePath);
+      return data.publicUrl;
+    } catch (err: any) {
+      console.error("Error uploading image:", err);
+      alert("Failed to upload image: " + err.message);
+      return null;
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
-  const handlePortfolioImageUpload = (e: React.ChangeEvent<HTMLInputElement>, field: "heroImage" | "aboutImages") => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: "logo" | "profilePhoto" | "teacherPhoto") => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
+      const publicUrl = await uploadToStorage(file);
+      if (publicUrl) {
+        setSettings(prevSettings => ({
+          ...prevSettings,
+          [field]: publicUrl
+        }));
+      }
+    }
+  };
+
+  const handlePortfolioImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: "heroImage" | "aboutImages") => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const publicUrl = await uploadToStorage(file);
+      if (publicUrl) {
         setSettings(prevSettings => {
           const newPortfolioContent = { ...prevSettings.portfolioContent };
           if (field === "heroImage") {
-            newPortfolioContent.heroImage = event.target?.result as string;
+            newPortfolioContent.heroImage = publicUrl;
           } else {
-            newPortfolioContent.aboutImages = [...newPortfolioContent.aboutImages, event.target?.result as string];
+            newPortfolioContent.aboutImages = [...(newPortfolioContent.aboutImages || []), publicUrl];
           }
           return {
             ...prevSettings,
             portfolioContent: newPortfolioContent
           };
         });
-      };
-      reader.readAsDataURL(file);
+      }
     }
   };
 
