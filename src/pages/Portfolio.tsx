@@ -31,59 +31,7 @@ import "yet-another-react-lightbox/styles.css";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
 
-class PortfolioErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
-  state: { hasError: boolean; error: any };
-  props: { children: React.ReactNode };
-
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: any) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: any, errorInfo: any) {
-    console.error("Portfolio Component Crash Caught by Error Boundary:", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen bg-[#0f4223] flex flex-col items-center justify-center p-6 text-white text-center">
-          <div className="bg-white/10 p-8 rounded-3xl max-w-xl border border-white/20 shadow-2xl backdrop-blur-sm">
-            <h2 className="text-2xl font-bold text-[#f5a625] mb-4">দুঃখিত! কোনো একটি সমস্যা হয়েছে।</h2>
-            <p className="text-sm text-slate-200 mb-6 leading-relaxed">
-              সিস্টেম লোড করার সময় একটি সাময়িক ক্রটি দেখা দিয়েছে। দয়া করে পেজটি রিফ্রেশ করুন অথবা আমাদের সাথে যোগাযোগ করুন।
-            </p>
-            <div className="bg-black/30 p-4 rounded-xl text-left text-xs text-red-300 font-mono mb-6 max-h-40 overflow-auto">
-              {this.state.error?.toString() || "Unknown Error"}
-            </div>
-            <button 
-              onClick={() => window.location.reload()}
-              className="px-6 py-2.5 bg-[#f5a625] text-[#0f4223] font-bold rounded-lg hover:bg-amber-400 transition-all font-sans"
-            >
-              🔄 আবার চেষ্টা করুন
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
 export default function Portfolio() {
-  return (
-    <PortfolioErrorBoundary>
-      <PortfolioContent />
-    </PortfolioErrorBoundary>
-  );
-}
-
-function PortfolioContent() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [settings, setSettings] = useState(() => {
     return {
