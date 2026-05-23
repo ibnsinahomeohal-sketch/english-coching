@@ -116,7 +116,7 @@ function PortfolioContent() {
     };
   });
 
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
 
   const getInstituteNameParts = () => {
     const name = settings?.instituteName;
@@ -271,21 +271,18 @@ function PortfolioContent() {
 
     const fetchInitialData = async () => {
       try {
-        // Fetch Courses
-        const { data: coursesData, error: coursesError } = await supabase.from('courses').select('*').order('name');
-        if (coursesError) throw coursesError;
-        if (coursesData) setCourses(coursesData);
+        const [coursesResult, teachersResult] = await Promise.all([
+          supabase.from('courses').select('*').order('name'),
+          supabase.from('teachers').select('*').order('created_at', { ascending: true })
+        ]);
 
-        // Fetch Teachers
-        const { data: teachersData, error: teachersError } = await supabase
-          .from('teachers')
-          .select('*')
-          .order('created_at', { ascending: true });
-        
-        if (teachersError) throw teachersError;
-        if (teachersData) setTeachers(teachersData);
+        if (coursesResult.error) throw coursesResult.error;
+        if (coursesResult.data) setCourses(coursesResult.data);
+
+        if (teachersResult.error) throw teachersResult.error;
+        if (teachersResult.data) setTeachers(teachersResult.data);
       } catch (error: any) {
-        console.error("Error fetching initial data:", error);
+        console.error("Error fetching initial data in parallel:", error);
       }
     };
     
